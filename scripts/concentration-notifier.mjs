@@ -55,7 +55,7 @@ Hooks.on('updateActor', async (actor, data, dmg) => {
 	if(!game.user.isGM) return;
 	
 	const damageTaken = dmg.dhp ?? 0;
-	const effect = actor.effects.find(i => i.data.flags.concentrationNotifier.spellName) ?? false;
+	const effect = actor.effects.find(i => i.data.flags?.concentrationNotifier?.spellName) ?? false;
 	if(!effect || damageTaken >= 0) return;
 	
 	const itemName = effect.data.flags.concentrationNotifier.spellName;
@@ -82,8 +82,11 @@ Hooks.on('updateActor', async (actor, data, dmg) => {
 			<button data-action="concentrationsave">Saving Throw DC ${dc} ${CONFIG.DND5E.abilities[ability]}</button>
 			<button data-action="removeeffect">Remove Concentration</button>
 		</div>`;
+	const owners = Object.entries(actor.data.permission).filter(i => i[0] !== 'default' && i[1] === 3).map(i => i[0]); // array of users with owner permission
+	const playerOwners = owners.filter(i => !game.users.get(i).isGM);
 	messageData.speaker.alias = 'Concentration Notifier';
-	messageData.whisper = Object.entries(actor.data.permission).filter(i => i[0] !== 'default' && i[1] === 3).map(i => i[0]); // array of users with owner permission
+	messageData.whisper = owners;
+	messageData.user = playerOwners.length > 0 ? playerOwners[0] : game.user.id;
 	ChatMessage.create(messageData);
 });
 
