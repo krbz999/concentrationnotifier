@@ -1,7 +1,8 @@
-# Zhell's Formulaic Recharging
-Adds a field (when the recharge method is set to 'dawn' or 'dusk') where users can input a dice formula. This formula is used to recharge the item on a rest if 'New Day' is selected.
-
-
-https://user-images.githubusercontent.com/50169243/160103866-c7f74952-2278-42dd-b086-bccfd73f6a16.mp4
-
-Confirmed to work with the core sheet and Tidy5e sheet.
+# Concentration Notifier
+This is a module for helping Dungeon Masters track concentration on PCs and NPCs.
+* A short chat message will notify all active users when an actor starts concentrating on a spell or loses concentration on a spell.
+* When an actor casts a spell that requires concentration, an Active Effect will be placed on them. The active effect is named after the spell, e.g., "Concentrating - Bless". If you use DFred's Effects Panel, a description is included.
+* If an actor who is already concentrating on a spell casts another spell, the active effect will get swapped.
+* If an actor who is concentrating on a spell takes damage, they will receive a whispered message from the DM (or the DM whispers to themselves if the actor is not owned by a player, or is owned by a currently inactive player). The message details the spell, the DC for the Constitution saving throw, and supplies two buttons - one for rolling the saving throw and one for removing the effect. The module does no automation beyond this.
+* The button to remove the effect will only work for the effect that triggered it and does not require an actor to be selected.
+* The module supplies a new flag (found under Special Traits) where actors can give themselves a bonus to Concentration (good for Wizard Bladesingers), and works with Active Effects; i.e., you can give an actor a bonus using an active effect with the path `flags.dnd5e.concentrationBonus` as you would with for example the Bless spell. This is added to the Constitution saving throw automatically when an actor clicks the supplied button after taking damage. It is not added to regular Constitution saving throws. You do not need to add anything here that is not specifically for Constitution saving throws to maintain concentration, i.e., all bonuses that affect saving throws will already affect the saving throw triggered by the supplied button in the chat message. The field also supports dynamic roll data, such as the actor's wizard level or proficiency bonus.
