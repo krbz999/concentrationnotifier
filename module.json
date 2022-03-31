@@ -1,14 +1,14 @@
 {
-    "name": "dicerecharge",
-    "title": "Zhell's Formulaic Recharging",
-    "description": "Adds a field for recharging items using dice formula.",
+    "name": "concentrationnotifier",
+    "title": "Z's Concentration Notifier",
+    "description": "Notifies GM and players about concentration.",
     "system": ["dnd5e"],
     "version": "v1.0.0",
     "author": "Zhell",
     "minimumCoreVersion": "9",
     "compatibleCoreVersion": "9",
-    "esmodules": ["./setup.js", "./scripts/custom-recharge.mjs"],
-    "url": "https://github.com/krbz999/dicerecharge",
-    "manifest": "https://github.com/krbz999/dicerecharge/releases/latest/download/module.json",
-    "download": "https://github.com/krbz999/dicerecharge/releases/latest/download/module.zip"
+    "esmodules": ["./setup.js", "./scripts/concentration-notifier.mjs"],
+    "url": "https://github.com/krbz999/concentrationnotifier",
+    "manifest": "https://github.com/krbz999/concentrationnotifier/releases/latest/download/module.json",
+    "download": "https://github.com/krbz999/concentrationnotifier/releases/latest/download/module.zip"
 }
