@@ -69,6 +69,7 @@ Hooks.on('updateActor', async (actor, data, dmg) => {
 	messageData.flags['dnd5e.itemData'] = {name, type: 'loot'};
 	messageData.flags['concentrationNotifier.effectUuid'] = effect.uuid;
 	messageData.flags['concentrationNotifier.actorUuid'] = actor.uuid;
+	messageData.flags['concentrationNotifier.saveDC'] = dc;
 	messageData.content = `
 		<div class="dnd5e chat-card item-card" data-actor-id="${actorId}">
 		<header class="card-header flexrow">
@@ -132,8 +133,10 @@ const onClickSaveButton = (_chatLog, html) => {
 		if(!theActor) return;
 		
 		const concentrationFlag = theActor.data.flags?.dnd5e?.concentrationBonus;
+		const saveDC = message.data.flags?.concentrationNotifier?.saveDC;
 		const parts = concentrationFlag ? [concentrationFlag] : [];
-		theActor.rollAbilitySave('con', {parts});
+		const targetValue = saveDC ? saveDC : [];
+		theActor.rollAbilitySave('con', {parts, targetValue});
 	});
 };
 
