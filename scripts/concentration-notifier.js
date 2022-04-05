@@ -3,18 +3,26 @@ Hooks.on("preCreateChatMessage", async (msg, caster) => {
 	const cardData = html[0].querySelector('.dnd5e.chat-card.item-card');
 	const tokenId = caster.speaker?.token;
 	const itemId = cardData?.getAttribute('data-item-id');
-	const spellLevel = cardData?.getAttribute('data-spell-level');
+	const spellLevel = Number(cardData?.getAttribute('data-spell-level'));
+	const message = msg.toObject();
 	
-	if(!tokenId || !itemId || !spellLevel) return;
+	if(!tokenId || !itemId || isNaN(spellLevel)) return;
 	
-	/* Create the effect. */
 	const token = canvas.tokens.placeables.find(i => i.id === tokenId);
 	if(!token || !token?.actor) return ui.notifications.error("Could not find token.");
 	
 	const item = token.actor.items.get(itemId);
-	if(!item?.data.data.components?.concentration) return;
 	
-	ConcentrationNotifier.applyConcentrationOnItem(item);
+	const itemChatData = item?.getChatData();
+	if(!itemChatData?.components?.concentration) return;
+	
+	const school = itemChatData.school;
+	const components = itemChatData.components;
+	const duration = itemChatData.duration;
+	const baseLevel = itemChatData.level;
+	
+	/* Create the effect. */
+	ConcentrationNotifier.applyConcentrationOnItem(item, {spellLevel, school, components, duration, baseLevel, message});
 });
 
 Hooks.on("preDeleteActiveEffect", async (effect) => {
@@ -24,7 +32,7 @@ Hooks.on("preDeleteActiveEffect", async (effect) => {
 	
 	ChatMessage.create({
 		content: `${tokenActor.name} lost concentration on ${concentrating}.`,
-		"speaker.alias": 'Concentration Notifier'
+		"speaker.alias": ConcentrationNotifier.MODULE_SPEAKER
 	});
 });
 
@@ -35,7 +43,7 @@ Hooks.on("preCreateActiveEffect", async (effect) => {
 	
 	ChatMessage.create({
 		content: `${tokenActor.name} is concentrating on ${concentrating}.`,
-		"speaker.alias": 'Concentration Notifier'
+		"speaker.alias": ConcentrationNotifier.MODULE_SPEAKER
 	});
 });
 
@@ -50,7 +58,6 @@ Hooks.on("updateActor", async (actor, data, dmg) => {
 	const dc = Math.max(10, Math.floor(Math.abs(damageTaken) / 2));
 	
 	const {abilityShort, abilityLong} = ConcentrationNotifier.getConcentrationAbility(actor);
-	const actorId = actor.id;
 	const name = "Concentration";
 	const fakeMessage = new ChatMessage();
 	const messageData = fakeMessage.toObject();
@@ -60,7 +67,7 @@ Hooks.on("updateActor", async (actor, data, dmg) => {
 	messageData.flags["concentrationNotifier.actorUuid"] = actor.uuid;
 	messageData.flags["concentrationNotifier.saveDC"] = dc;
 	messageData.content = `
-		<div class="dnd5e chat-card item-card" data-actor-id="${actorId}">
+		<div class="dnd5e chat-card item-card" data-actor-id="${actor.id}">
 		<header class="card-header flexrow">
 			<img src="icons/magic/light/orb-lightbulb-gray.webp" title="${name}" width="36" height="36"/>
 			<h3 class="item-name">${name}</h3>
@@ -74,7 +81,7 @@ Hooks.on("updateActor", async (actor, data, dmg) => {
 		</div>`;
 	const owners = Object.entries(actor.data.permission).filter(i => i[0] !== "default" && i[1] === 3).map(i => i[0]); // array of users with owner permission
 	const playerOwners = owners.filter(i => !game.users.get(i).isGM);
-	messageData.speaker.alias = 'Concentration Notifier';
+	messageData.speaker.alias = ConcentrationNotifier.MODULE_SPEAKER;
 	messageData.whisper = owners;
 	messageData.user = playerOwners.length > 0 ? playerOwners[0] : game.user.id;
 	ChatMessage.create(messageData);
@@ -146,7 +153,10 @@ const onClickSaveButton = (_chatLog, html) => {
 		const reliableTalent = concentrationReliable;
 		
 		const {abilityShort} = ConcentrationNotifier.getConcentrationAbility(actor);
-		actor.rollAbilitySave(abilityShort, {parts, targetValue, reliableTalent});
+		const fastForward = event.altKey || event.ctrlKey || event.shiftKey || event.metaKey;
+		const advantage = event.altKey;
+		const disadvantage = event.ctrlKey;
+		actor.rollAbilitySave(abilityShort, {parts, targetValue, reliableTalent, fumble: -1, critical: 21, fastForward, advantage, disadvantage});
 	});
 };
 
@@ -159,21 +169,30 @@ Hooks.on("renderChatPopout", onClickSaveButton);
 class ConcentrationNotifier {
 	static MODULE_NAME = "concentrationnotifier";
 	static MODULE_TITLE = "Z's Concentration Notifier";
+	static MODULE_SPEAKER = "Concentration Notifier";
 	
-	/* Method to apply concentration when using a specific item. */
-	static applyConcentrationOnItem = async (item = null)  => {
+	/** Method to apply concentration when using a specific item.
+	*
+	* @function applyConcentrationOnItem
+	* @param {item5e} item			The item to concentrate on.
+	* @param {Object} [details]		Additional details to save in the effect.
+	* 
+	* @return {Document[]}			Array with the created effect.
+	*/
+	static applyConcentrationOnItem = async (item = null, details = {})  => {
 		if(item instanceof Item.implementation){
 			const origin = item.uuid;
 			const concentrating = item.parent?.effects?.find(i => i.data.flags?.concentrationNotifier?.spellName);
 			if(!concentrating || concentrating.data.origin !== origin){
 				await concentrating?.delete();
-				const effectData = this.createEffectData(item);
+				const effectData = this.createEffectData(item, details);
 				return item.parent?.createEmbeddedDocuments("ActiveEffect", [effectData]);
 			}
 		}
+		return [];
 	}
 	
-	static createEffectData = (item = null) => {
+	static createEffectData = (item = null, details = {}) => {
 		const name = item?.name;
 		const origin = item?.uuid;
 		
@@ -186,7 +205,7 @@ class ConcentrationNotifier {
 			"flags.core.statusId": `Concentration - ${name}`,
 			"flags.convenientDescription": `You are concentrating on ${name}.`
 		};
-		return effectData;
+		return mergeObject(expandObject(effectData), {flags: {concentrationNotifier: details}});
 	};
 	
 	static getConcentrationAbility = (actor = null) => {
