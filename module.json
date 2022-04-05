@@ -3,7 +3,7 @@
     "title": "Z's Concentration Notifier",
     "description": "Notifies GM and players about concentration.",
     "system": ["dnd5e"],
-    "version": "v1.0.3",
+    "version": "v1.0.4",
     "author": "Zhell",
     "minimumCoreVersion": "9",
     "compatibleCoreVersion": "9",
