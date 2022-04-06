@@ -1,7 +1,7 @@
 import { MODULE_NAME } from "./const.mjs";
 
 export const SETTING_NAMES = {
-	CONCENTRATION_NOTIFIER: "concentrationNotifier"
+	CONCENTRATION_NOTIFIER: "concentrationnotifier"
 }
 
 export function registerSettings() {
