@@ -27,7 +27,7 @@ Hooks.on("preCreateChatMessage", async (msg, caster) => {
 
 Hooks.on("preDeleteActiveEffect", async (effect) => {
 	const tokenActor = effect.parent;
-	const concentrating = effect.data.flags?.concentrationNotifier?.spellName ?? false;
+	const concentrating = effect.getFlag(ConcentrationNotifier.MODULE_NAME, ConcentrationNotifier.FLAG_SPELL_NAME) ?? false;
 	if(!concentrating) return;
 	
 	ChatMessage.create({
@@ -38,7 +38,7 @@ Hooks.on("preDeleteActiveEffect", async (effect) => {
 
 Hooks.on("preCreateActiveEffect", async (effect) => {
 	const tokenActor = effect.parent;
-	const concentrating = effect.data.flags?.concentrationNotifier?.spellName ?? false;
+	const concentrating = effect.getFlag(ConcentrationNotifier.MODULE_NAME, ConcentrationNotifier.FLAG_SPELL_NAME) ?? false;
 	if(!concentrating) return;
 	
 	ChatMessage.create({
@@ -51,10 +51,10 @@ Hooks.on("updateActor", async (actor, data, dmg) => {
 	if(!game.user.isGM) return;
 	
 	const damageTaken = dmg.dhp ?? 0;
-	const effect = actor.effects.find(i => i.data.flags?.concentrationNotifier?.spellName) ?? false;
+	const effect = actor.effects.find(i => i.getFlag(ConcentrationNotifier.MODULE_NAME, ConcentrationNotifier.FLAG_SPELL_NAME)) ?? false;
 	if(!effect || damageTaken >= 0) return;
 	
-	const itemName = effect.data.flags.concentrationNotifier.spellName;
+	const itemName = effect.getFlag(ConcentrationNotifier.MODULE_NAME, ConcentrationNotifier.FLAG_SPELL_NAME);
 	const dc = Math.max(10, Math.floor(Math.abs(damageTaken) / 2));
 	
 	const {abilityShort, abilityLong} = ConcentrationNotifier.getConcentrationAbility(actor);
@@ -62,10 +62,10 @@ Hooks.on("updateActor", async (actor, data, dmg) => {
 	const fakeMessage = new ChatMessage();
 	const messageData = fakeMessage.toObject();
 	
-	messageData.flags['dnd5e.itemData'] = {name, type: "loot"};
-	messageData.flags["concentrationNotifier.effectUuid"] = effect.uuid;
-	messageData.flags["concentrationNotifier.actorUuid"] = actor.uuid;
-	messageData.flags["concentrationNotifier.saveDC"] = dc;
+	messageData.flags[`dnd5e.itemData`] = {name, type: "loot"};
+	messageData.flags[`${ConcentrationNotifier.MODULE_NAME}.effectUuid`] = effect.uuid;
+	messageData.flags[`${ConcentrationNotifier.MODULE_NAME}.actorUuid`] = actor.uuid;
+	messageData.flags[`${ConcentrationNotifier.MODULE_NAME}.saveDC`] = dc;
 	messageData.content = `
 		<div class="dnd5e chat-card item-card" data-actor-id="${actor.id}">
 		<header class="card-header flexrow">
@@ -89,7 +89,7 @@ Hooks.on("updateActor", async (actor, data, dmg) => {
 
 Hooks.on("ready", () => {
 	/* Add bonus on top of the saving throw. */
-	CONFIG.DND5E.characterFlags.concentrationBonus = {
+	CONFIG.DND5E.characterFlags[ConcentrationNotifier.FLAG_CONCENTRATION_BONUS] = {
 		name: 'Concentration Bonus',
 		hint: 'Bonus to saving throws to maintain concentration.',
 		section: 'DND5E.Feats',
@@ -97,15 +97,15 @@ Hooks.on("ready", () => {
 	};
 	
 	/* Change the ability being used for the saving throw. */
-	CONFIG.DND5E.characterFlags.concentrationAbility = {
-		hint: "The ability this character uses for saving throws to maintain concentration. Use a three-letter shorthand such as 'str' or 'cha'. Default: 'con'.",
+	CONFIG.DND5E.characterFlags[ConcentrationNotifier.FLAG_CONCENTRATION_ABILITY] = {
+		hint: "The ability this character uses for saving throws to maintain concentration. Use a three-letter shorthand such as 'str' or 'cha'.",
 		name: "Concentration Ability",
 		section: "DND5E.Feats",
 		type: String
 	};
 	
 	/* Set a flag for not being able to roll below 10. */
-	CONFIG.DND5E.characterFlags.concentrationReliable = {
+	CONFIG.DND5E.characterFlags[ConcentrationNotifier.FLAG_CONCENTRATION_RELIABLE] = {
 		hint: "This character cannot roll below 10 to maintain concentration.",
 		name: "Reliable Concentration",
 		section: "DND5E.Feats",
@@ -120,7 +120,7 @@ const onClickDeleteButton = (_chatLog, html) => {
 		const messageId = card.closest(".message").dataset.messageId;
 		const message = game.messages.get(messageId);
 		
-		const effectUuid = message.data.flags?.concentrationNotifier?.effectUuid ?? "";
+		const effectUuid = message.getFlag(ConcentrationNotifier.MODULE_NAME, "effectUuid") ?? false;
 		if(!effectUuid) return;
 		
 		const effect = await fromUuid(effectUuid);
@@ -137,17 +137,17 @@ const onClickSaveButton = (_chatLog, html) => {
 		const messageId = card.closest(".message").dataset.messageId;
 		const message = game.messages.get(messageId);
 		
-		const actorUuid = message.data.flags?.concentrationNotifier?.actorUuid ?? "";
+		const actorUuid = message.getFlag(ConcentrationNotifier.MODULE_NAME, "actorUuid") ?? false;
 		if(!actorUuid) return;
 		
 		let actor = await fromUuid(actorUuid);
 		if(actor instanceof TokenDocument) actor = actor.actor;
 		if(!actor) return;
 		
-		const concentrationBonus = actor.data.flags?.dnd5e?.concentrationBonus;
-		const concentrationReliable = actor.data.flags?.dnd5e?.concentrationReliable ?? false;
+		const concentrationBonus = actor.getFlag("dnd5e", "concentrationBonus") ?? false;
+		const concentrationReliable = actor.getFlag("dnd5e", "concentrationReliable") ?? false;
+		const saveDC = message.getFlag(ConcentrationNotifier.MODULE_NAME, "saveDC") ?? false;
 		
-		const saveDC = message.data.flags?.concentrationNotifier?.saveDC;
 		const parts = concentrationBonus ? [concentrationBonus] : [];
 		const targetValue = saveDC ? saveDC : [];
 		const reliableTalent = concentrationReliable;
@@ -170,6 +170,10 @@ class ConcentrationNotifier {
 	static MODULE_NAME = "concentrationnotifier";
 	static MODULE_TITLE = "Z's Concentration Notifier";
 	static MODULE_SPEAKER = "Concentration Notifier";
+	static FLAG_SPELL_NAME = "spellName";
+	static FLAG_CONCENTRATION_BONUS = "concentrationBonus";
+	static FLAG_CONCENTRATION_ABILITY = "concentrationAbility";
+	static FLAG_CONCENTRATION_RELIABLE = "concentrationReliable";
 	
 	/** Method to apply concentration when using a specific item.
 	*
@@ -182,9 +186,9 @@ class ConcentrationNotifier {
 	static applyConcentrationOnItem = async (item = null, details = {})  => {
 		if(item instanceof Item.implementation){
 			const origin = item.uuid;
-			const concentrating = item.parent?.effects?.find(i => i.data.flags?.concentrationNotifier?.spellName);
-			if(!concentrating || concentrating.data.origin !== origin){
-				await concentrating?.delete();
+			const concentrating = item.parent?.effects?.find(i => i.getFlag(this.MODULE_NAME, this.FLAG_SPELL_NAME)) ?? false;
+			if(!concentrating || concentrating?.data.origin !== origin){
+				if(concentrating) await concentrating?.delete();
 				const effectData = this.createEffectData(item, details);
 				return item.parent?.createEmbeddedDocuments("ActiveEffect", [effectData]);
 			}
@@ -201,16 +205,18 @@ class ConcentrationNotifier {
 			label: `Concentration - ${name}`,
 			origin,
 			tint: "#000000",
-			"flags.concentrationNotifier.spellName": name,
-			"flags.core.statusId": `Concentration - ${name}`,
-			"flags.convenientDescription": `You are concentrating on ${name}.`
+			flags: {
+				[this.MODULE_NAME]: {[this.FLAG_SPELL_NAME]: name},
+				core: {statusId: `Concentration - ${name}`},
+				convenientDescription: `You are concentrating on ${name}.`
+			}
 		};
-		return mergeObject(expandObject(effectData), {flags: {concentrationNotifier: details}});
+		return mergeObject(expandObject(effectData), {flags: {[this.MODULE_NAME]: details}});
 	};
 	
 	static getConcentrationAbility = (actor = null) => {
 		const abilities = CONFIG.DND5E.abilities;
-		const concentrationAbility = actor?.data?.flags?.dnd5e?.concentrationAbility;
+		const concentrationAbility = actor?.getFlag("dnd5e", this.FLAG_CONCENTRATION_ABILITY) ?? "con";
 		const abilityShort = Object.keys(abilities).includes(concentrationAbility) ? concentrationAbility : "con";
 		const abilityLong = abilities[abilityShort] ?? "Constitution";
 		return {abilityShort, abilityLong};
