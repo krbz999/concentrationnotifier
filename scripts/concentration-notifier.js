@@ -1,9 +1,9 @@
 Hooks.on("preCreateChatMessage", async (msg, caster) => {
 	const html = await msg.getHTML();
-	const cardData = html[0].querySelector('.dnd5e.chat-card.item-card');
+	const cardData = html[0].querySelector(".dnd5e.chat-card.item-card");
 	const tokenId = caster.speaker?.token;
-	const itemId = cardData?.getAttribute('data-item-id');
-	const spellLevel = Number(cardData?.getAttribute('data-spell-level'));
+	const itemId = cardData?.getAttribute("data-item-id");
+	const spellLevel = Number(cardData?.getAttribute("data-spell-level"));
 	const message = msg.toObject();
 	
 	if(!tokenId || !itemId || isNaN(spellLevel)) return;
@@ -22,7 +22,8 @@ Hooks.on("preCreateChatMessage", async (msg, caster) => {
 	const baseLevel = itemChatData.level;
 	
 	/* Create the effect. */
-	ConcentrationNotifier.applyConcentrationOnItem(item, {spellLevel, school, components, duration, baseLevel, message});
+	const details = {spellLevel, school, components, duration, baseLevel, message};
+	ConcentrationNotifier.applyConcentrationOnItem(item, details);
 });
 
 Hooks.on("preDeleteActiveEffect", async (effect) => {
@@ -47,52 +48,42 @@ Hooks.on("preCreateActiveEffect", async (effect) => {
 	});
 });
 
+Hooks.on("preUpdateActor", (actor, data, dmg) => {
+	/* Store values for use in "updateActor" hook if HP has changed. */
+	if(data.data?.attributes?.hp?.temp || data.data?.attributes?.hp?.temp === null || data.data?.attributes?.hp?.value){
+		let {temp, value} = actor.getRollData().attributes.hp; // old values before updating
+		temp = temp || 0;
+		dmg.storedValues = {temp, value};
+	}
+});
+
 Hooks.on("updateActor", async (actor, data, dmg) => {
 	if(!game.user.isGM) return;
 	
-	const damageTaken = dmg.dhp ?? 0;
+	/* Compute DC from the damage taken. */
+	if(!dmg.storedValues) return;
+	let {temp, value} = actor.getRollData().attributes.hp;
+	temp = temp || 0;
+	const damageTaken = (dmg.storedValues.temp + dmg.storedValues.value) - (temp + value);
+	
 	const effect = actor.effects.find(i => i.getFlag(ConcentrationNotifier.MODULE_NAME, ConcentrationNotifier.FLAG_SPELL_NAME)) ?? false;
-	if(!effect || damageTaken >= 0) return;
+	if(!effect || damageTaken <= 0) return;
 	
 	const itemName = effect.getFlag(ConcentrationNotifier.MODULE_NAME, ConcentrationNotifier.FLAG_SPELL_NAME);
 	const dc = Math.max(10, Math.floor(Math.abs(damageTaken) / 2));
-	
 	const {abilityShort, abilityLong} = ConcentrationNotifier.getConcentrationAbility(actor);
-	const name = "Concentration";
-	const fakeMessage = new ChatMessage();
-	const messageData = fakeMessage.toObject();
 	
-	messageData.flags[`dnd5e.itemData`] = {name, type: "loot"};
-	messageData.flags[`${ConcentrationNotifier.MODULE_NAME}.effectUuid`] = effect.uuid;
-	messageData.flags[`${ConcentrationNotifier.MODULE_NAME}.actorUuid`] = actor.uuid;
-	messageData.flags[`${ConcentrationNotifier.MODULE_NAME}.saveDC`] = dc;
-	messageData.content = `
-		<div class="dnd5e chat-card item-card" data-actor-id="${actor.id}">
-		<header class="card-header flexrow">
-			<img src="icons/magic/light/orb-lightbulb-gray.webp" title="${name}" width="36" height="36"/>
-			<h3 class="item-name">${name}</h3>
-		</header>
-		<div class="card-content">
-			${actor.name} has taken ${Math.abs(damageTaken)} damage and must make a DC ${dc} ${abilityLong} saving throw to maintain concentration on ${itemName}.
-		</div>
-		<div class="card-buttons">
-			<button data-action="concentrationsave">Saving Throw DC ${dc} ${abilityLong}</button>
-			<button data-action="removeeffect">Remove Concentration</button>
-		</div>`;
-	const owners = Object.entries(actor.data.permission).filter(i => i[0] !== "default" && i[1] === 3).map(i => i[0]); // array of users with owner permission
-	const playerOwners = owners.filter(i => !game.users.get(i).isGM);
-	messageData.speaker.alias = ConcentrationNotifier.MODULE_SPEAKER;
-	messageData.whisper = owners;
-	messageData.user = playerOwners.length > 0 ? playerOwners[0] : game.user.id;
-	ChatMessage.create(messageData);
+	const cardContent = `${actor.name} has taken ${Math.abs(damageTaken)} damage and must make a DC ${dc} ${abilityLong} saving throw to maintain concentration on ${itemName}.`;
+	
+	ConcentrationNotifier.triggerSavingThrow(actor, dc, {cardContent});
 });
 
 Hooks.on("ready", () => {
 	/* Add bonus on top of the saving throw. */
 	CONFIG.DND5E.characterFlags[ConcentrationNotifier.FLAG_CONCENTRATION_BONUS] = {
-		name: 'Concentration Bonus',
-		hint: 'Bonus to saving throws to maintain concentration.',
-		section: 'DND5E.Feats',
+		name: "Concentration Bonus",
+		hint: "Bonus to saving throws to maintain concentration.",
+		section: "DND5E.Feats",
 		type: String
 	};
 	
@@ -111,6 +102,14 @@ Hooks.on("ready", () => {
 		section: "DND5E.Feats",
 		type: Boolean
 	};
+	
+	/* Set a flag for having advantage on Concentration saves. */
+	CONFIG.DND5E.characterFlags[ConcentrationNotifier.FLAG_CONCENTRATION_ADVANTAGE] = {
+		hint: "This character rolls with advantage to maintain concentration.",
+		name: "Concentration Advantage",
+		section: "DND5E.Feats",
+		type: Boolean
+	};
 });
 
 const onClickDeleteButton = (_chatLog, html) => {
@@ -126,7 +125,16 @@ const onClickDeleteButton = (_chatLog, html) => {
 		const effect = await fromUuid(effectUuid);
 		if(!effect) return;
 		
-		effect.delete();
+		if(event.shiftKey) effect.delete();
+		else{
+			const spellName = effect.getFlag(ConcentrationNotifier.MODULE_NAME, ConcentrationNotifier.FLAG_SPELL_NAME);
+			return Dialog.confirm({
+				title: `End concentration on ${spellName}?`,
+				content: `<h4>${game.i18n.localize("AreYouSure")}</h4><p>This will end concentration on ${spellName}.</p>`,
+				yes: effect.delete.bind(effect),
+				options: {}
+			});
+		}
 	});
 };
 
@@ -144,8 +152,9 @@ const onClickSaveButton = (_chatLog, html) => {
 		if(actor instanceof TokenDocument) actor = actor.actor;
 		if(!actor) return;
 		
-		const concentrationBonus = actor.getFlag("dnd5e", "concentrationBonus") ?? false;
-		const concentrationReliable = actor.getFlag("dnd5e", "concentrationReliable") ?? false;
+		const concentrationBonus = actor.getFlag("dnd5e", ConcentrationNotifier.FLAG_CONCENTRATION_BONUS) ?? false;
+		const concentrationReliable = actor.getFlag("dnd5e", ConcentrationNotifier.FLAG_CONCENTRATION_RELIABLE) ?? false;
+		const concentrationAdvantage = actor.getFlag("dnd5e", ConcentrationNotifier.FLAG_CONCENTRATION_ADVANTAGE) ?? false;
 		const saveDC = message.getFlag(ConcentrationNotifier.MODULE_NAME, "saveDC") ?? false;
 		
 		const parts = concentrationBonus ? [concentrationBonus] : [];
@@ -153,10 +162,10 @@ const onClickSaveButton = (_chatLog, html) => {
 		const reliableTalent = concentrationReliable;
 		
 		const {abilityShort} = ConcentrationNotifier.getConcentrationAbility(actor);
-		const fastForward = event.altKey || event.ctrlKey || event.shiftKey || event.metaKey;
-		const advantage = event.altKey;
-		const disadvantage = event.ctrlKey;
-		actor.rollAbilitySave(abilityShort, {parts, targetValue, reliableTalent, fumble: -1, critical: 21, fastForward, advantage, disadvantage});
+		const saveModifiers = {parts, targetValue, reliableTalent, fumble: -1, critical: 21, event};
+		if(concentrationAdvantage) saveModifiers.advantage = true;
+		
+		actor.rollAbilitySave(abilityShort, saveModifiers);
 	});
 };
 
@@ -174,6 +183,7 @@ class ConcentrationNotifier {
 	static FLAG_CONCENTRATION_BONUS = "concentrationBonus";
 	static FLAG_CONCENTRATION_ABILITY = "concentrationAbility";
 	static FLAG_CONCENTRATION_RELIABLE = "concentrationReliable";
+	static FLAG_CONCENTRATION_ADVANTAGE = "concentrationAdvantage";
 	
 	/** Method to apply concentration when using a specific item.
 	*
@@ -220,5 +230,46 @@ class ConcentrationNotifier {
 		const abilityShort = Object.keys(abilities).includes(concentrationAbility) ? concentrationAbility : "con";
 		const abilityLong = abilities[abilityShort] ?? "Constitution";
 		return {abilityShort, abilityLong};
+	};
+
+	static triggerSavingThrow = (actor, dc = 10, options = {}) => {
+		if(!actor) return ui.notifications.error("You must provide an actor to perform the saving throw.");
+		if(actor instanceof Token || actor instanceof TokenDocument) actor = actor.actor;
+		
+		const effect = actor.effects.find(i => i.getFlag(ConcentrationNotifier.MODULE_NAME, ConcentrationNotifier.FLAG_SPELL_NAME)) ?? false;
+		if(!effect) return ui.notifications.error("The provided actor is not concentrating on anything.");
+		
+		const itemName = effect.getFlag(ConcentrationNotifier.MODULE_NAME, ConcentrationNotifier.FLAG_SPELL_NAME);
+		
+		const {abilityShort, abilityLong} = ConcentrationNotifier.getConcentrationAbility(actor);
+		const name = "Concentration";
+		const fakeMessage = new ChatMessage();
+		const messageData = fakeMessage.toObject();
+		
+		messageData.flags[`dnd5e.itemData`] = {name, type: "loot"};
+		messageData.flags[`${ConcentrationNotifier.MODULE_NAME}.effectUuid`] = effect.uuid;
+		messageData.flags[`${ConcentrationNotifier.MODULE_NAME}.actorUuid`] = actor.uuid;
+		messageData.flags[`${ConcentrationNotifier.MODULE_NAME}.saveDC`] = dc;
+		
+		const cardContent = options.cardContent ?? `${actor.name} is being prompted for a DC ${dc} ${abilityLong} saving throw to maintain concentration on ${itemName}.`;
+		messageData.content = `
+			<div class="dnd5e chat-card item-card" data-actor-id="${actor.id}">
+			<header class="card-header flexrow">
+				<img src="icons/magic/light/orb-lightbulb-gray.webp" title="${name}" width="36" height="36"/>
+				<h3 class="item-name">${name}</h3>
+			</header>
+			<div class="card-content">
+				${cardContent}
+			</div>
+			<div class="card-buttons">
+				<button data-action="concentrationsave">Saving Throw DC ${dc} ${abilityLong}</button>
+				<button data-action="removeeffect">Remove Concentration</button>
+			</div>`;
+		const owners = Object.entries(actor.data.permission).filter(i => i[0] !== "default" && i[1] === 3).map(i => i[0]); // array of users with owner permission
+		const playerOwners = owners.filter(i => !game.users.get(i).isGM);
+		messageData.speaker.alias = ConcentrationNotifier.MODULE_SPEAKER;
+		messageData.whisper = owners;
+		messageData.user = playerOwners.length > 0 ? playerOwners[0] : game.user.id;
+		ChatMessage.create(messageData);
 	};
 }
