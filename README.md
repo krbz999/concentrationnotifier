@@ -15,6 +15,7 @@ The module supplies new fields (found under Special Traits). These fields work w
 * `flags.dnd5e.concentrationBonus`: give an actor a bonus to Concentration (such as `@abilities.int.mod` or `1d6` - intended for Wizard Bladesingers).
 * `flags.dnd5e.concentrationAbility`: change the ability that is used for the actor's concentration saves, e.g., use Wisdom instead of Constitution.
 * `flags.dnd5e.concentrationReliable`: change concentration saves such that rolls on the d20s cannot go below 10.
+* `flags.dnd5e.concentrationAdvantage`: set default of concentration saves to have Advantage. This does not skip the roll dialog unless hotkeys or other modules are involved.
 
 The effect placed on an actor to denote concentration contains several flags by default, intended to make macros easier for persistently activated spells such as Call Lightning or Moonbeam:
 * The level at which the spell was cast.
