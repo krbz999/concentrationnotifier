@@ -10,6 +10,7 @@ An active effect is created on the actor when they start concentrating on a spel
 * If you use DFred's Effects Panel, a description is included.
 * If an actor who is already concentrating on a spell casts another (different) spell, the active effect will get swapped.
 * A method `ConcentrationNotifier.applyConcentrationOnItem` can be used to apply concentration using non-spell items.
+* A method `ConcentrationNotifier.triggerSavingThrow` can be used by GMs to prompt an actor for a concentration save directly without them having to take damage. The method takes a token, token document, or actor, and optionally a DC (default 10).
 
 The module supplies new fields (found under Special Traits). These fields work with Active effects.
 * `flags.dnd5e.concentrationBonus`: give an actor a bonus to Concentration (such as `@abilities.int.mod` or `1d6` - intended for Wizard Bladesingers).
