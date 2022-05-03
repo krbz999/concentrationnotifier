@@ -7,8 +7,12 @@
     "author": "Zhell",
     "minimumCoreVersion": "9",
     "compatibleCoreVersion": "9",
-    "esmodules": ["./setup.js"],
-	"scripts": ["./scripts/concentration-notifier.js"],
+    "esmodules": [
+		"./setup.js",
+		"./scripts/concentration-notifier.mjs",
+		"./scripts/api.mjs"
+	],
+	"scripts": [],
     "url": "https://github.com/krbz999/concentrationnotifier",
     "manifest": "https://github.com/krbz999/concentrationnotifier/releases/latest/download/module.json",
     "download": "https://github.com/krbz999/concentrationnotifier/releases/latest/download/module.zip"
