@@ -32,4 +32,4 @@ The effect placed on an actor to denote concentration contains several flags by 
 
 #### Incompatible:
 * `Better Rolls for 5e` completely stops this module from working.
-* `Midi-QoL` already has many features that this module has.
+* `Midi-QoL` already has many features that this module has, and also likely stops it from working.

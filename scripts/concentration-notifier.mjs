@@ -1,24 +1,38 @@
 import { CONST } from "./const.mjs";
 import { SETTING_NAMES } from "./settings.mjs";
 
-Hooks.on("preCreateChatMessage", async (msg, caster) => {
+Hooks.on("preCreateChatMessage", async (msg, msgData, _1, _2) => {
 	const html = await msg.getHTML();
 	const cardData = html[0].querySelector(".dnd5e.chat-card.item-card");
-	const tokenId = caster.speaker?.token;
+	
+	// get ids from chat message.
+	const syntheticActorId = cardData?.getAttribute("data-token-id");
+	const actorId = cardData?.getAttribute("data-actor-id");
+	
+	// set caster as token uuid if it exists.
+	// else use the actor id, but only if linked actor.
+	let caster;
+	if(syntheticActorId){
+		const split = syntheticActorId.split(".");
+		const tokenDoc = game.scenes.get(split[1])?.tokens.get(split[3]);
+		caster = tokenDoc?.actor;
+	}else if(game.actors.get(actorId)?.data?.token?.actorLink) caster = game.actors.get(actorId);
+	else return;
+	
+	// get item and spell level.
 	const itemId = cardData?.getAttribute("data-item-id");
 	const spellLevel = Number(cardData?.getAttribute("data-spell-level"));
 	const message = msg.toObject();
 	
-	if(!tokenId || !itemId || isNaN(spellLevel)) return;
+	// bail out if something could not be found.
+	if(!caster || !itemId || isNaN(spellLevel)) return;
+	const item = caster.items.get(itemId);
 	
-	const token = canvas.tokens.placeables.find(i => i.id === tokenId);
-	if(!token || !token?.actor) return ui.notifications.error("Could not find token.");
-	
-	const item = token.actor.items.get(itemId);
-	
+	// make sure it's a concentration spell.
 	const itemChatData = item?.getChatData();
 	if(!itemChatData?.components?.concentration) return;
 	
+	// get item data to save in the effect.
 	const school = itemChatData.school;
 	const components = itemChatData.components;
 	const duration = itemChatData.duration;
@@ -60,8 +74,9 @@ Hooks.on("preUpdateActor", (actor, data, dmg) => {
 	}
 });
 
-Hooks.on("updateActor", async (actor, data, dmg) => {
-	if(!game.user.isGM) return;
+Hooks.on("updateActor", async (actor, data, dmg, userId) => {
+	//if(!game.user.isGM) return;
+	if(userId !== game.user.id) return;
 	
 	/* Compute DC from the damage taken. */
 	if(!dmg.storedValues) return;
@@ -78,7 +93,7 @@ Hooks.on("updateActor", async (actor, data, dmg) => {
 	
 	const cardContent = `${actor.name} has taken ${Math.abs(damageTaken)} damage and must make a DC ${dc} ${abilityLong} saving throw to maintain concentration on ${itemName}.`;
 	
-	ConcentrationNotifier.triggerSavingThrow(actor, dc, {cardContent});
+	ConcentrationNotifier.triggerSavingThrow(actor, dc, {cardContent, userId});
 });
 
 Hooks.on("ready", () => {
@@ -169,6 +184,7 @@ export class ConcentrationNotifier {
 		messageData.flags[`dnd5e.itemData`] = {name, type: "loot"};
 		messageData.flags[`${CONST.MODULE.NAME}.effectUuid`] = effect.uuid;
 		messageData.flags[`${CONST.MODULE.NAME}.actorUuid`] = actor.uuid;
+		messageData.flags[`${CONST.MODULE.NAME}.itemUuid`] = effect.data.origin;
 		messageData.flags[`${CONST.MODULE.NAME}.saveDC`] = dc;
 		
 		const moduleImage = this._getModuleImage();
@@ -184,14 +200,27 @@ export class ConcentrationNotifier {
 				${cardContent}
 			</div>
 			<div class="card-buttons">
-				<button data-action="concentrationsave">Saving Throw DC ${dc} ${abilityLong}</button>
-				<button data-action="removeeffect">Remove Concentration</button>
+				<button id="concentrationsave" data-action="concentrationsave">Saving Throw DC ${dc} ${abilityLong}</button>
+				<button id="removeeffect" data-action="removeeffect">Remove Concentration</button>
 			</div>`;
-		const owners = Object.entries(actor.data.permission).filter(i => i[0] !== "default" && i[1] === 3).map(i => i[0]); // array of users with owner permission
-		const playerOwners = owners.filter(i => !game.users.get(i).isGM);
-		messageData.speaker.alias = CONST.MODULE.SPEAKER;
+		
+		// get array of users with Owner permission of the actor.
+		const owners = Object.entries(actor.data.permission).filter(i => i[0] !== "default" && i[1] === 3).map(i => i[0]);
 		messageData.whisper = owners;
-		messageData.user = playerOwners.length > 0 ? playerOwners[0] : game.user.id;
+		
+		// get array of users with Owner permission of the actor who are not GMs.
+		const playerOwners = owners.filter(i => !game.users.get(i).isGM);
+		
+		// creator of the message is the first player owner, otherwise what is passed as option (the one doing the update), otherwise the current user.
+		//messageData.user = playerOwners.length > 0 ? playerOwners[0] : options.userId ? options.userId : game.user.id;
+		
+		// creator of the message is the player owner doing the damage, if they exist, otherwise the first player owner, otherwise the one doing the update, otherwise the current user.
+		messageData.user = (playerOwners.length > 0) ? (playerOwners.includes(options.userId) ? options.userId : playerOwners[0]) : options.userId ? options.userId : game.user.id;
+		
+		// set message speaker alias.
+		messageData.speaker.alias = CONST.MODULE.SPEAKER;
+		
+		// create message.
 		return ChatMessage.create(messageData);
 	};
 	
@@ -213,6 +242,11 @@ export class ConcentrationNotifier {
 				convenientDescription: `You are concentrating on ${name}.`
 			}
 		};
+		
+		// add duration to effect
+		const effectDuration = this._getItemDuration(details.duration);
+		if(effectDuration) effectData.duration = effectDuration;
+		
 		return mergeObject(expandObject(effectData), {flags: {[CONST.MODULE.NAME]: details}});
 	};
 	
@@ -225,8 +259,9 @@ export class ConcentrationNotifier {
 	};
 	
 	static _onClickDeleteButton = (_chatLog, html) => {
-		html.on("click", "button[data-action='removeeffect']", async (event) => {
-			const button = event.currentTarget;
+		html[0].addEventListener("click", async (event) => {
+			const button = event.target;
+			if(event.target.id !== "removeeffect") return;
 			const card = button.closest(".chat-card");
 			const messageId = card.closest(".message").dataset.messageId;
 			const message = game.messages.get(messageId);
@@ -251,8 +286,9 @@ export class ConcentrationNotifier {
 	};
 	
 	static _onClickSaveButton = (_chatLog, html) => {
-		html.on("click", "button[data-action='concentrationsave']", async (event) => {
-			const button = event.currentTarget;
+		html[0].addEventListener("click", async (event) => {
+			const button = event.target;
+			if(event.target.id !== "concentrationsave") return;
 			const card = button.closest(".chat-card");
 			const messageId = card.closest(".message").dataset.messageId;
 			const message = game.messages.get(messageId);
@@ -285,6 +321,21 @@ export class ConcentrationNotifier {
 		const moduleImage = game.settings.get(CONST.MODULE.NAME, SETTING_NAMES.CONCENTRATION_ICON);
 		if(!moduleImage) return CONST.MODULE.IMAGE;
 		return moduleImage;
+	};
+	
+	static _getItemDuration = (duration) => {
+		if(!duration?.value) return false;
+		const {value, units} = duration;
+		
+		// do not bother for these duration types:
+		if(["inst", "month", "perm", "spec", "year"].includes(units)) return false;
+		
+		// cases for the remaining units of time:
+		if(units === "round") return {rounds: value};
+		if(units === "turn") return {turns: value};
+		if(units === "minute") return {seconds: value * 60};
+		if(units === "hour") return {seconds: value * 60 * 60};
+		if(units === "day") return {seconds: value * 24 * 60 * 60};
 	};
 }
 
