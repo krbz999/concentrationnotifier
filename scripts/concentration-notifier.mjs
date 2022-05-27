@@ -37,9 +37,10 @@ Hooks.on("preCreateChatMessage", async (msg, msgData, _1, _2) => {
 	const components = itemChatData.components;
 	const duration = itemChatData.duration;
 	const baseLevel = itemChatData.level;
+	const img = item.img;
 	
 	/* Create the effect. */
-	const details = {spellLevel, school, components, duration, baseLevel, message};
+	const details = {spellLevel, school, components, duration, baseLevel, message, img};
 	ConcentrationNotifier.applyConcentrationOnItem(item, details);
 });
 
@@ -187,7 +188,8 @@ export class ConcentrationNotifier {
 		messageData.flags[`${CONST.MODULE.NAME}.itemUuid`] = effect.data.origin;
 		messageData.flags[`${CONST.MODULE.NAME}.saveDC`] = dc;
 		
-		const moduleImage = this._getModuleImage();
+		//const moduleImage = this._getModuleImage();
+		const moduleImage = effect.data.icon;
 		
 		const cardContent = options.cardContent ?? `${actor.name} is being prompted for a DC ${dc} ${abilityLong} saving throw to maintain concentration on ${itemName}.`;
 		messageData.content = `
@@ -226,14 +228,18 @@ export class ConcentrationNotifier {
 	
 	static _createEffectData = (item = null, details = {}) => {
 		
-		const moduleImage = this._getModuleImage();
+		const item_img = details.img ?? item?.data.img;
+		const icon = this._getModuleImage(item_img);
 		
 		const name = item?.name;
 		const origin = item?.uuid;
 		
+		const prepend = game.settings.get(CONST.MODULE.NAME, SETTING_NAMES.PREPEND_EFFECT_LABELS);
+		const label = prepend ? `Concentration - ${name}` : name;
+		
 		const effectData = {
-			icon: moduleImage,
-			label: `Concentration - ${name}`,
+			icon,
+			label,
 			origin,
 			tint: "#000000",
 			flags: {
@@ -317,8 +323,10 @@ export class ConcentrationNotifier {
 		});
 	};
 	
-	static _getModuleImage = () => {
+	static _getModuleImage = (item_img) => {
 		const moduleImage = game.settings.get(CONST.MODULE.NAME, SETTING_NAMES.CONCENTRATION_ICON);
+		const useItemImage = game.settings.get(CONST.MODULE.NAME, SETTING_NAMES.CONCENTRATION_ICON_ITEM);
+		if(useItemImage && item_img) return item_img;
 		if(!moduleImage) return CONST.MODULE.IMAGE;
 		return moduleImage;
 	};

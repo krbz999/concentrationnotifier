@@ -24,7 +24,7 @@ The effect placed on an actor to denote concentration contains several flags by 
 * An object with the details of the chat message that triggered the effect (can be used as is with `ChatMessage.create()`).
 
 ### Compatibility
-* The module is compatible with custom ability scores (dnd5e 1.6).
+* The module is compatible with custom ability scores (dnd5e 1.6.x).
 
 #### Compatible:
 * `Minimal Rolling Enhancements`. Zero issues.
