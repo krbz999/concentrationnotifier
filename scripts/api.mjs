@@ -9,7 +9,8 @@ export class api {
 	static globals(){
 		globalThis.ConcentrationNotifier = {
 			applyConcentrationOnItem: ConcentrationNotifier.applyConcentrationOnItem,
-			triggerSavingThrow: ConcentrationNotifier.triggerSavingThrow
+			triggerSavingThrow: ConcentrationNotifier.triggerSavingThrow,
+			concentratingOn: ConcentrationNotifier.concentratingOn
 		};
 	}
 }

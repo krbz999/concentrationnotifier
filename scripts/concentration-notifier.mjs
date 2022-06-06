@@ -38,13 +38,14 @@ Hooks.on("preCreateChatMessage", async (msg, msgData, _1, _2) => {
 	const duration = itemChatData.duration;
 	const baseLevel = itemChatData.level;
 	const img = item.img;
+	const itemUuid = item.uuid;
 	
 	/* Create the effect. */
-	const details = {spellLevel, school, components, duration, baseLevel, message, img};
+	const details = {spellLevel, school, components, duration, baseLevel, message, img, itemUuid};
 	ConcentrationNotifier.applyConcentrationOnItem(item, details);
 });
 
-Hooks.on("preDeleteActiveEffect", async (effect) => {
+Hooks.on("preDeleteActiveEffect", (effect) => {
 	const tokenActor = effect.parent;
 	const concentrating = effect.getFlag(CONST.MODULE.NAME, CONST.FLAG.SPELL_NAME) ?? false;
 	if(!concentrating) return;
@@ -55,7 +56,7 @@ Hooks.on("preDeleteActiveEffect", async (effect) => {
 	});
 });
 
-Hooks.on("preCreateActiveEffect", async (effect) => {
+Hooks.on("preCreateActiveEffect", (effect) => {
 	const tokenActor = effect.parent;
 	const concentrating = effect.getFlag(CONST.MODULE.NAME, CONST.FLAG.SPELL_NAME) ?? false;
 	if(!concentrating) return;
@@ -76,7 +77,6 @@ Hooks.on("preUpdateActor", (actor, data, dmg) => {
 });
 
 Hooks.on("updateActor", async (actor, data, dmg, userId) => {
-	//if(!game.user.isGM) return;
 	if(userId !== game.user.id) return;
 	
 	/* Compute DC from the damage taken. */
@@ -136,6 +136,10 @@ Hooks.on("ready", () => {
 
 export class ConcentrationNotifier {
 	
+	/** Method to determine if you are concentrating on an item. **/
+	static concentratingOn = (actor, item) => {
+		return actor?.effects?.find(i => i.getFlag(CONST.MODULE.NAME, "itemUuid") === item?.uuid);
+	};
 	
 	/** Method to apply concentration when using a specific item.
 	 *
@@ -244,7 +248,7 @@ export class ConcentrationNotifier {
 			tint: "#000000",
 			flags: {
 				[CONST.MODULE.NAME]: {[CONST.FLAG.SPELL_NAME]: name},
-				core: {statusId: `Concentration - ${name}`},
+				core: {statusId: "concentration"},
 				convenientDescription: `You are concentrating on ${name}.`
 			}
 		};
