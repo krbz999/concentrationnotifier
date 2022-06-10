@@ -1,4 +1,4 @@
-export const CONST = {
+export const CONSTS = {
 	MODULE: {
 		NAME: "concentrationnotifier",
 		TITLE: "Z's Concentration Notifier",

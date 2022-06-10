@@ -3,14 +3,13 @@
     "title": "Z's Concentration Notifier",
     "description": "Notifies GM and players about concentration.",
     "system": ["dnd5e"],
-    "version": "v1.1.0",
+    "version": "v1.1.1",
     "author": "Zhell",
     "minimumCoreVersion": "9",
     "compatibleCoreVersion": "9",
     "esmodules": [
 		"./setup.js",
-		"./scripts/concentration-notifier.mjs",
-		"./scripts/api.mjs"
+		"./scripts/concentration-notifier.mjs"
 	],
 	"scripts": [],
     "url": "https://github.com/krbz999/concentrationnotifier",
