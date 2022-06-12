@@ -4,7 +4,11 @@
     "description": "Notifies GM and players about concentration.",
     "system": ["dnd5e"],
     "version": "v1.1.1",
-    "author": "Zhell",
+    "authors": [{
+		"name": "Zhell",
+		"url": "https://github.com/krbz999",
+		"discord": "Zhell#9201"
+	}],
     "minimumCoreVersion": "9",
     "compatibleCoreVersion": "9",
     "esmodules": [
