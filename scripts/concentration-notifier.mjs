@@ -71,7 +71,7 @@ export class ConcentrationNotifier {
 		// the description in the chat message.
 		const cardContent = options.cardContent ?? "";
 		
-		// the full contents of the chat message.  item-card
+		// the full contents of the chat message.
 		const content = `
 			<div class="dnd5e chat-card">
 			<header class="card-header flexrow">
