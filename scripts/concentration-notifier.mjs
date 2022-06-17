@@ -31,7 +31,6 @@ export class ConcentrationNotifier {
 		if(!concentrating) return caster.createEmbeddedDocuments("ActiveEffect", [effectData]);
 		
 		// case 2: concentrating on a different item.
-		console.log(concentrating.getFlag(CONSTS.MODULE.NAME, "itemId"), details.itemId);
 		if(concentrating.getFlag(CONSTS.MODULE.NAME, "itemId") !== details.itemId){
 			await concentrating.delete();
 			return caster.createEmbeddedDocuments("ActiveEffect", [effectData]);
@@ -42,7 +41,7 @@ export class ConcentrationNotifier {
 	};
 	
 	// Method to request a save for concentration.
-	static triggerSavingThrow = (caster, dc = 10, options = {}) => {
+	static triggerSavingThrow = async (caster, dc = 10, options = {}) => {
 		if(!caster) return ui.notifications.error("You must provide an actor to perform the saving throw.");
 		
 		// get actor from token.
@@ -54,7 +53,6 @@ export class ConcentrationNotifier {
 		
 		// get the name of the item being concentrated on.
 		const itemName = effect.getFlag(CONSTS.MODULE.NAME, "name");
-		console.log(itemName, effect);
 		
 		// build the message.
 		const {abilityShort, abilityLong} = this._getConcentrationAbility(actor);
@@ -73,9 +71,9 @@ export class ConcentrationNotifier {
 		// the description in the chat message.
 		const cardContent = options.cardContent ?? "";
 		
-		// the full contents of the chat message.
+		// the full contents of the chat message.  item-card
 		const content = `
-			<div class="dnd5e chat-card item-card" >
+			<div class="dnd5e chat-card">
 			<header class="card-header flexrow">
 				<img src="${moduleImage}" title="${name}" width="36" height="36"/>
 				<h3 class="item-name">${name}</h3>
@@ -84,8 +82,8 @@ export class ConcentrationNotifier {
 				${cardContent}
 			</div>
 			<div class="card-buttons">
-				<button id="concentrationsave" data-action="concentrationsave">Saving Throw DC ${dc} ${abilityLong}</button>
-				<button id="removeeffect" data-action="removeeffect">Remove Concentration</button>
+				<button id="${CONSTS.BUTTON_ID.SAVE}">Saving Throw DC ${dc} ${abilityLong}</button>
+				<button id="${CONSTS.BUTTON_ID.DELETE}">Remove Concentration</button>
 			</div>`;
 		
 		// get array of users with Owner permission of the actor.
@@ -98,7 +96,7 @@ export class ConcentrationNotifier {
 		// get array of users with Owner permission of the actor who are not GMs.
 		const playerOwners = whisper.filter(i => !game.users.get(i)?.isGM);
 		
-		// creator of the message is the player owner doing the damage, if they exist, otherwise the first player owner, otherwise the one doing the update, otherwise the current user.
+		// creator of the message is the PLAYER owner doing the damage, if they exist, otherwise the first player owner, otherwise the one doing the update, otherwise the current user.
 		const user = (playerOwners.length > 0) ? (playerOwners.includes(options.userId) ? options.userId : playerOwners[0]) : options.userId ? options.userId : game.user.id;
 		
 		// set message speaker alias.
@@ -180,7 +178,7 @@ export class ConcentrationNotifier {
 			const button = event.target;
 			
 			// bail out if it is not the 'removeeffect' button.
-			if(event.target.id !== "removeeffect") return;
+			if(event.target.id !== CONSTS.BUTTON_ID.DELETE) return;
 			
 			// get the chat card of the button.
 			const card = button.closest(".chat-card");
@@ -228,7 +226,7 @@ export class ConcentrationNotifier {
 			const button = event.target;
 			
 			// bail out if it is not the 'concentrationsave' button.
-			if(event.target.id !== "concentrationsave") return;
+			if(event.target.id !== CONSTS.BUTTON_ID.SAVE) return;
 			
 			// get the chat card of the button.
 			const card = button.closest(".chat-card");
@@ -400,36 +398,39 @@ export class ConcentrationNotifier {
 	};
 	
 	// store values for use in "updateActor" hook if HP has changed.
-	static _storeOldValues = (actor, data, dmg) => {
-		if(data.data?.attributes?.hp?.temp || data.data?.attributes?.hp?.temp === null || data.data?.attributes?.hp?.value){
-			// the old values on the actor before an update.
-			let {temp, value} = actor.data.data.attributes.hp;
-			
-			// store them for later.
-			dmg.storedValues = {temp: temp || 0, value};
-		}
+	static _storeOldValues = (actor, data, context) => {
+		
+		// get old values. These always exist, but temp is null when 0.
+		const old_temp = getProperty(actor, "data.data.attributes.hp.temp") ?? 0;
+		const old_value = getProperty(actor, "data.data.attributes.hp.value");
+		
+		// get new values. If they are undefined, there was no change to them, so we use old values.
+		const new_temp = getProperty(data, "data.attributes.hp.temp") === undefined ? old_temp : (getProperty(data, "data.attributes.hp.temp") ?? 0);
+		const new_value = getProperty(data, "data.attributes.hp.value") ?? old_value;
+		
+		// calculate health difference.
+		const damageTaken = (old_temp + old_value) - (new_temp + new_value);
+		
+		// if damageTaken > 0, tag context for a saving throw.
+		if(damageTaken > 0) context[CONSTS.MODULE.NAME] = {save: true, damage: damageTaken};
 	};
 	
-	// set up all the data needed to make a saving throw.
-	static _buildSavingThrowData = async (actor, data, dmg, userId) => {
+	// if the user is concentrating, and has taken damage, build a chat card, and call for a saving throw.
+	static _buildSavingThrowData = async (actor, data, context, userId) => {
 		// only do this for the one doing the update.
 		if(userId !== game.user.id) return;
 		
-		// bail out if there was no hp change.
-		if(!dmg.storedValues) return;
+		// bail out if there is no save needed.
+		if(!getProperty(context, `${CONSTS.MODULE.NAME}.save`)) return;
 		
-		// get current hp values.
-		let {temp, value} = actor.data.data.attributes.hp;
-		temp = temp || 0;
-		
-		// calculate damage taken.
-		const damageTaken = (dmg.storedValues.temp + dmg.storedValues.value) - (temp + value);
+		// get damage taken.
+		const damageTaken = context[CONSTS.MODULE.NAME].damage;
 		
 		// find a concentration effect.
 		const effect = ConcentrationNotifier.concentratingAny(actor);
 		
-		// bail out if not concentrating or if no damage taken.
-		if(!effect || damageTaken <= 0) return;
+		// bail out if actor is not concentrating.
+		if(!effect) return;
 		
 		// get the name of the item being concentrated on.
 		const name = effect.getFlag(CONSTS.MODULE.NAME, "name");
@@ -444,7 +445,7 @@ export class ConcentrationNotifier {
 		const cardContent = `${actor.name} has taken <strong>${Math.abs(damageTaken)}</strong> damage and must make a <strong>DC ${dc}</strong> ${abilityLong} saving throw to maintain concentration on <strong>${name}</strong>.`;
 		
 		// pass to saving throw.
-		ConcentrationNotifier.triggerSavingThrow(actor, dc, {cardContent, userId});
+		return ConcentrationNotifier.triggerSavingThrow(actor, dc, {cardContent, userId});
 	};
 	
 	// create the concentration flags on actor Special Traits.

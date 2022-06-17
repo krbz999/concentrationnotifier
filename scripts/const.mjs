@@ -17,5 +17,9 @@ export const CONSTS = {
 		CONCENTRATION_ICON: "concentration_icon",
 		CONCENTRATION_ICON_ITEM: "concentration_icon_item",
 		PREPEND_EFFECT_LABELS: "prepend_effect_labels"
+	},
+	BUTTON_ID: {
+		SAVE: "concentration-notifier-saving-throw",
+		DELETE: "concentration-notifier-delete-effect"
 	}
 };
