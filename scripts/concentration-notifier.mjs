@@ -1,20 +1,33 @@
 import { CONSTS } from "./const.mjs";
 
-export class ConcentrationNotifier {
+export class CN {
 	// determine if you are concentrating on a specific item.
 	static concentratingOn = (actor, item) => {
-		return actor?.effects?.find(i => i.getFlag(CONSTS.MODULE.NAME, "itemUuid") === item?.uuid);
-	};
+		const caster = actor.actor ? actor.actor : actor;
+		return caster.effects.find(i => i.getFlag(CONSTS.MODULE.NAME, "itemUuid") === item.uuid);
+	}
 	
 	// determine if you are concentrating on ANY item.
 	static concentratingAny = (actor) => {
-		return actor?.effects?.find(i => ConcentrationNotifier.concentrationEffect(i));
-	};
+		const caster = actor.actor ? actor.actor : actor;
+		return caster.effects.find(i => CN.concentrationEffect(i));
+	}
 	
 	// determine if effect is concentration effect.
 	static concentrationEffect = (effect) => {
 		return effect.getFlag("core", "statusId") === CONSTS.MODULE.CONC;
-	};
+	}
+	
+	// end all concentration effects on an actor.
+	static concentrationEnd = async (actor) => {
+		const caster = actor.actor ? actor.actor : actor;
+		const effects = caster.effects.filter(i => CN.concentrationEffect(i));
+		if(effects.length > 0){
+			const deleteIds = effects.map(i => i.id);
+			return caster.deleteEmbeddedDocuments("ActiveEffect", deleteIds);
+		}
+		return [];
+	}
 	
 	// apply concentration when using a specific item.
 	static applyConcentrationOnItem = async (item, details = {})  => {
@@ -22,10 +35,10 @@ export class ConcentrationNotifier {
 		// make the origin of the effect the item uuid if the uuid exists, else the actor uuid (intended for temporary items).
 		const casterFromUuid = await fromUuid(details.actorUuid ?? item.parent.uuid);
 		const caster = casterFromUuid.actor ? casterFromUuid.actor : casterFromUuid;
-		const concentrating = this.concentratingAny(caster);
+		const concentrating = CN.concentratingAny(caster);
 		
 		// create effect data.
-		const effectData = await this._createEffectData(item, details);
+		const effectData = await CN._createEffectData(item, details);
 		
 		// case 1: not concentrating.
 		if(!concentrating) return caster.createEmbeddedDocuments("ActiveEffect", [effectData]);
@@ -42,21 +55,21 @@ export class ConcentrationNotifier {
 	
 	// Method to request a save for concentration.
 	static triggerSavingThrow = async (caster, dc = 10, options = {}) => {
-		if(!caster) return ui.notifications.error("You must provide an actor to perform the saving throw.");
+		if(!caster) return ui.notifications.warn(game.i18n.localize("CN.WARN.MISSING_ACTOR"));
 		
 		// get actor from token.
 		const actor = caster.actor ? caster.actor : caster;
 		
 		// find a concentration effect.
-		const effect = ConcentrationNotifier.concentratingAny(actor);
-		if(!effect) return ui.notifications.error("The provided actor is not concentrating on anything.");
+		const effect = CN.concentratingAny(actor);
+		if(!effect) return ui.notifications.error(game.i18n.localize("CN.WARN.MISSING_CONC"));
 		
 		// get the name of the item being concentrated on.
 		const itemName = effect.getFlag(CONSTS.MODULE.NAME, "name");
 		
 		// build the message.
-		const {abilityShort, abilityLong} = this._getConcentrationAbility(actor);
-		const name = "Concentration";
+		const {abilityShort, abilityLong} = CN._getConcentrationAbility(actor);
+		const name = game.i18n.localize("CN.NAME.CARD_NAME");
 		
 		// flags needed for message button listeners.
 		const flags = {
@@ -72,6 +85,10 @@ export class ConcentrationNotifier {
 		const cardContent = options.cardContent ?? "";
 		
 		// the full contents of the chat message.
+		
+		const saveLabel = game.i18n.format("CN.LABEL.SAVING_THROW", {dc, ability: abilityLong});
+		const deleteLabel = game.i18n.localize("CN.LABEL.DELETE_CONC");
+		
 		const content = `
 			<div class="dnd5e chat-card">
 			<header class="card-header flexrow">
@@ -82,8 +99,8 @@ export class ConcentrationNotifier {
 				${cardContent}
 			</div>
 			<div class="card-buttons">
-				<button id="${CONSTS.BUTTON_ID.SAVE}">Saving Throw DC ${dc} ${abilityLong}</button>
-				<button id="${CONSTS.BUTTON_ID.DELETE}">Remove Concentration</button>
+				<button id="${CONSTS.BUTTON_ID.SAVE}">${saveLabel}</button>
+				<button id="${CONSTS.BUTTON_ID.DELETE}">${deleteLabel}</button>
 			</div>`;
 		
 		// get array of users with Owner permission of the actor.
@@ -114,10 +131,10 @@ export class ConcentrationNotifier {
 		if(!details.actorUuid) details.actorUuid = item.parent.uuid;
 		
 		if(!details.duration) details.duration = item.data?.data?.duration ?? {};
-		const effectDuration = this._getItemDuration(details.duration);
+		const effectDuration = CN._getItemDuration(details.duration);
 		
 		if(!details.img) details.img = item.data?.img ?? item.img ?? CONSTS.MODULE.IMAGE;
-		details.img = this._getModuleImage(details.img);
+		details.img = CN._getModuleImage(details.img);
 		
 		if(!details.itemId) details.itemId = item.id;
 		if(!details.itemUuid) details.itemUuid = item.uuid ?? details.actorUuid;
@@ -125,7 +142,7 @@ export class ConcentrationNotifier {
 		
 		// get the correct img.
 		const item_img = details.img ?? item?.data.img ?? item?.img ?? CONSTS.MODULE.IMAGE;
-		const icon = this._getModuleImage(item_img);
+		const icon = CN._getModuleImage(item_img);
 		
 		// create origin of item; if the item does not exist, use the actor.
 		const fromItemUuid = await fromUuid(details.itemUuid);
@@ -133,7 +150,7 @@ export class ConcentrationNotifier {
 		
 		// create effect label, depending on module settings.
 		const prepend = game.settings.get(CONSTS.MODULE.NAME, CONSTS.SETTINGS.PREPEND_EFFECT_LABELS);
-		const label = prepend ? `Concentration - ${details.name}` : details.name;
+		const label = prepend ? `${game.i18n.localize("CN.NAME.CARD_NAME")} - ${details.name}` : details.name;
 		
 		// create effect data.
 		const effectData = {
@@ -144,7 +161,7 @@ export class ConcentrationNotifier {
 			duration: effectDuration ? effectDuration : details.duration,
 			flags: {
 				core: {statusId: CONSTS.MODULE.CONC},
-				convenientDescription: `You are concentrating on ${details.name}.`
+				convenientDescription: game.i18n.format("CN.CONVENIENT_DESCRIPTION", {name: details.name})
 			}
 		};
 		
@@ -211,7 +228,9 @@ export class ConcentrationNotifier {
 			const itemName = effect.getFlag(CONSTS.MODULE.NAME, "name");
 			return Dialog.confirm({
 				title: `End concentration on ${itemName}?`,
-				content: `<h4>${game.i18n.localize("AreYouSure")}</h4><p>This will end concentration on ${itemName}.</p>`,
+				content: `
+					<h4>${game.i18n.localize("AreYouSure")}</h4>
+					<p>${game.i18n.format("CN.DELETE_DIALOG_TEXT", {name: itemname})}</p>`,
 				yes: effect.delete.bind(effect),
 				options: {}
 			});
@@ -270,7 +289,7 @@ export class ConcentrationNotifier {
 			const reliableTalent = concentrationReliable;
 			
 			// get the shorthand key of the ability used for the save.
-			const {abilityShort} = this._getConcentrationAbility(actor);
+			const {abilityShort} = CN._getConcentrationAbility(actor);
 			
 			// create object of saving throw options.
 			const saveModifiers = {parts, targetValue, reliableTalent, fumble: -1, critical: 21, event};
@@ -368,17 +387,17 @@ export class ConcentrationNotifier {
 			spellLevel, baseLevel, school, components, duration, img, name,
 			message, itemUuid, actorUuid, itemId, actorId
 		};
-		ConcentrationNotifier.applyConcentrationOnItem(item, details);
+		CN.applyConcentrationOnItem(item, details);
 	};
 	
 	// send a message when an actor LOSES concentration.
 	static _messageConcLoss = (effect) => {
 		// get whether the effect being deleted is a concentration effect.
-		if(!ConcentrationNotifier.concentrationEffect(effect)) return;
+		if(!CN.concentrationEffect(effect)) return;
 		
 		// build the chat message.
 		const name = effect.getFlag(CONSTS.MODULE.NAME, "name");
-		const content = `${effect.parent.name} lost concentration on ${name}.`
+		const content = game.i18n.format("CN.MESSAGE.CONC_LOSS", {name: effect.parent.name, item: name});
 		const speaker = {alias: CONSTS.MODULE.SPEAKER};
 		
 		ChatMessage.create({content, speaker});
@@ -387,11 +406,11 @@ export class ConcentrationNotifier {
 	// send a message when an actor GAINS concentration.
 	static _messageConcGain = (effect) => {
 		// get whether the effect being created is a concentration effect.
-		if(!ConcentrationNotifier.concentrationEffect(effect)) return;
+		if(!CN.concentrationEffect(effect)) return;
 		
 		// build the chat message.
 		const name = effect.getFlag(CONSTS.MODULE.NAME, "name");
-		const content = `${effect.parent.name} is concentrating on ${name}.`;
+		const content = game.i18n.format("CN.MESSAGE.CONC_GAIN", {name: effect.parent.name, item: name});
 		const speaker = {alias: CONSTS.MODULE.SPEAKER};
 		
 		ChatMessage.create({content, speaker});
@@ -427,7 +446,7 @@ export class ConcentrationNotifier {
 		const damageTaken = context[CONSTS.MODULE.NAME].damage;
 		
 		// find a concentration effect.
-		const effect = ConcentrationNotifier.concentratingAny(actor);
+		const effect = CN.concentratingAny(actor);
 		
 		// bail out if actor is not concentrating.
 		if(!effect) return;
@@ -439,48 +458,48 @@ export class ConcentrationNotifier {
 		const dc = Math.max(10, Math.floor(Math.abs(damageTaken) / 2));
 		
 		// get the ability being used for concentration saves.
-		const {abilityShort, abilityLong} = ConcentrationNotifier._getConcentrationAbility(actor);
+		const {abilityShort, abilityLong} = CN._getConcentrationAbility(actor);
 		
 		// the chat message contents.
-		const cardContent = `${actor.name} has taken <strong>${Math.abs(damageTaken)}</strong> damage and must make a <strong>DC ${dc}</strong> ${abilityLong} saving throw to maintain concentration on <strong>${name}</strong>.`;
+		const cardContent = game.i18n.format("CN.MESSAGE.CONC_SAVE", {name: actor.name, damage: Math.abs(damageTaken), dc, ability: abilityLong, item: name});
 		
 		// pass to saving throw.
-		return ConcentrationNotifier.triggerSavingThrow(actor, dc, {cardContent, userId});
+		return CN.triggerSavingThrow(actor, dc, {cardContent, userId});
 	};
 	
 	// create the concentration flags on actor Special Traits.
 	static _createActorFlags = () => {
-		const section = "Concentration";
+		const section = game.i18n.localize("CN.NAME.CARD_NAME");
 		const abilityScoreKeys = Object.keys(CONFIG.DND5E.abilities).map(i => `'${i}'`).join(", ");
 		
 		/* Add bonus on top of the saving throw. */
 		CONFIG.DND5E.characterFlags[CONSTS.FLAG.CONCENTRATION_BONUS] = {
-			name: "Concentration Bonus",
-			hint: `A bonus to saving throws to maintain concentration. This field supports dynamic values such as @classes.sorcerer.levels as well as dice expressions.`,
+			name: game.i18n.localize("CN.CHARACTER_FLAGS.BONUS.NAME"),
+			hint: game.i18n.localize("CN.CHARACTER_FLAGS.BONUS.HINT"),
 			section,
 			type: String
 		};
 		
 		/* Change the ability being used for the saving throw. */
 		CONFIG.DND5E.characterFlags[CONSTS.FLAG.CONCENTRATION_ABILITY] = {
-			hint: `The ability this character uses for saving throws to maintain concentration. The possible values are ${abilityScoreKeys}.`,
-			name: "Concentration Ability",
+			name: game.i18n.localize("CN.CHARACTER_FLAGS.ABILITY.NAME"),
+			hint: game.i18n.format("CN.CHARACTER_FLAGS.ABILITY.HINT", {keys: abilityScoreKeys}),
 			section,
 			type: String
 		};
 		
 		/* Set a flag for not being able to roll below 10. */
 		CONFIG.DND5E.characterFlags[CONSTS.FLAG.CONCENTRATION_RELIABLE] = {
-			hint: "This character cannot roll below 10 to maintain concentration.",
-			name: "Reliable Concentration",
+			name: game.i18n.localize("CN.CHARACTER_FLAGS.RELIABLE.NAME"),
+			hint: game.i18n.localize("CN.CHARACTER_FLAGS.RELIABLE.HINT"),
 			section,
 			type: Boolean
 		};
 		
 		/* Set a flag for having advantage on Concentration saves. */
 		CONFIG.DND5E.characterFlags[CONSTS.FLAG.CONCENTRATION_ADVANTAGE] = {
-			hint: "This character rolls with advantage to maintain concentration.",
-			name: "Concentration Advantage",
+			name: game.i18n.localize("CN.CHARACTER_FLAGS.ADVANTAGE.NAME"),
+			hint: game.i18n.localize("CN.CHARACTER_FLAGS.ADVANTAGE.HINT"),
 			section,
 			type: Boolean
 		};
@@ -488,17 +507,17 @@ export class ConcentrationNotifier {
 }
 
 // button-click hooks:
-Hooks.on("renderChatLog", ConcentrationNotifier._onClickDeleteButton);
-Hooks.on("renderChatPopout", ConcentrationNotifier._onClickDeleteButton);
-Hooks.on("renderChatLog", ConcentrationNotifier._onClickSaveButton);
-Hooks.on("renderChatPopout", ConcentrationNotifier._onClickSaveButton);
+Hooks.on("renderChatLog", CN._onClickDeleteButton);
+Hooks.on("renderChatPopout", CN._onClickDeleteButton);
+Hooks.on("renderChatLog", CN._onClickSaveButton);
+Hooks.on("renderChatPopout", CN._onClickSaveButton);
 
 // functionality hooks:
-Hooks.on("preCreateChatMessage", ConcentrationNotifier._getMessageDetails);
-Hooks.on("preUpdateActor", ConcentrationNotifier._storeOldValues);
-Hooks.on("updateActor", ConcentrationNotifier._buildSavingThrowData);
-Hooks.once("ready", ConcentrationNotifier._createActorFlags);
+Hooks.on("preCreateChatMessage", CN._getMessageDetails);
+Hooks.on("preUpdateActor", CN._storeOldValues);
+Hooks.on("updateActor", CN._buildSavingThrowData);
+Hooks.once("ready", CN._createActorFlags);
 
 // gain and loss messages.
-Hooks.on("preDeleteActiveEffect", ConcentrationNotifier._messageConcLoss);
-Hooks.on("preCreateActiveEffect", ConcentrationNotifier._messageConcGain);
+Hooks.on("preDeleteActiveEffect", CN._messageConcLoss);
+Hooks.on("preCreateActiveEffect", CN._messageConcGain);

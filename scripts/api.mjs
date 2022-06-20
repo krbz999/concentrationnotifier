@@ -1,4 +1,4 @@
-import { ConcentrationNotifier } from "./concentration-notifier.mjs";
+import { CN } from "./concentration-notifier.mjs";
 
 export class api {
 	
@@ -8,10 +8,12 @@ export class api {
 	
 	static globals(){
 		globalThis.ConcentrationNotifier = {
-			applyConcentrationOnItem: ConcentrationNotifier.applyConcentrationOnItem,
-			triggerSavingThrow: ConcentrationNotifier.triggerSavingThrow,
-			concentratingOn: ConcentrationNotifier.concentratingOn,
-			concentratingAny: ConcentrationNotifier.concentratingAny
+			applyConcentrationOnItem: CN.applyConcentrationOnItem,
+			triggerSavingThrow: CN.triggerSavingThrow,
+			concentratingOn: CN.concentratingOn,
+			concentratingAny: CN.concentratingAny,
+			concentrationEffect: CN.concentratingEffect,
+			endConcentration: CN.concentratingEnd
 		};
 	}
 }

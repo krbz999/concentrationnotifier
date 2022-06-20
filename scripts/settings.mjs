@@ -7,8 +7,8 @@ export function registerSettings() {
 function _registerSettings(){
 	
 	game.settings.register(CONSTS.MODULE.NAME, CONSTS.SETTINGS.CONCENTRATION_ICON, {
-		name: "Custom Icon",
-		hint: "An image path here will replace the default icon used for the concentration effect.",
+		name: game.i18n.localize("CN.SETTINGS.DEFAULT_ICON.NAME"),
+		hint: game.i18n.localize("CN.SETTINGS.DEFAULT_ICON.HINT"),
 		scope: "world",
 		config: true,
 		type: String,
@@ -16,8 +16,8 @@ function _registerSettings(){
 	});
 	
 	game.settings.register(CONSTS.MODULE.NAME, CONSTS.SETTINGS.CONCENTRATION_ICON_ITEM, {
-		name: "Use Item Icon",
-		hint: "If checked, the image used for concentration effects will be overridden by the item's image.",
+		name: game.i18n.localize("CN.SETTINGS.ITEM_ICON.NAME"),
+		hint: game.i18n.localize("CN.SETTINGS.ITEM_ICON.HINT"),
 		scope: "world",
 		config: true,
 		type: Boolean,
@@ -25,8 +25,8 @@ function _registerSettings(){
 	});
 	
 	game.settings.register(CONSTS.MODULE.NAME, CONSTS.SETTINGS.PREPEND_EFFECT_LABELS, {
-		name: "Prepend Effect Labels",
-		hint: "If checked, concentration effects are prepended with 'Concentration' to distinguish them from other effects.",
+		name: game.i18n.localize("CN.SETTINGS.PREPEND.NAME"),
+		hint: game.i18n.localize("CN.SETTINGS.PREPEND.HINT"),
 		scope: "world",
 		config: true,
 		type: Boolean,
