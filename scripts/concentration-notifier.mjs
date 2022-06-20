@@ -230,7 +230,7 @@ export class CN {
 				title: `End concentration on ${itemName}?`,
 				content: `
 					<h4>${game.i18n.localize("AreYouSure")}</h4>
-					<p>${game.i18n.format("CN.DELETE_DIALOG_TEXT", {name: itemname})}</p>`,
+					<p>${game.i18n.format("CN.DELETE_DIALOG_TEXT", {name: itemName})}</p>`,
 				yes: effect.delete.bind(effect),
 				options: {}
 			});
