@@ -15,7 +15,6 @@
 	"CN.MESSAGE.CONC_LOSS": "{name} lost concentration on {item}.",
 	"CN.MESSAGE.CONC_GAIN": "{name} is concentrating on {item}.",
 	"CN.MESSAGE.CONC_SAVE": "{name} has taken <strong>{damage}</strong> damage and must make a <strong>DC {dc}</strong> {ability} saving throw to maintain concentration on <strong>{item}</strong>.",
-	"CN.MESSAGE.DETAILS": "Item Details",
 	"CN.CHARACTER_FLAGS.BONUS.NAME": "Concentration Bonus",
 	"CN.CHARACTER_FLAGS.BONUS.HINT": "A bonus to saving throws to maintain concentration. This field supports dynamic values such as @classes.sorcerer.levels as well as dice expressions.",
 	"CN.CHARACTER_FLAGS.ABILITY.NAME": "Concentration Ability",

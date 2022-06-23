@@ -12,8 +12,8 @@ export class api {
 			triggerSavingThrow: CN.triggerSavingThrow,
 			concentratingOn: CN.concentratingOn,
 			concentratingAny: CN.concentratingAny,
-			concentrationEffect: CN.concentratingEffect,
-			endConcentration: CN.concentratingEnd
+			concentrationEffect: CN.concentrationEffect,
+			endConcentration: CN.concentrationEnd
 		};
 	}
 }

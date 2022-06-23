@@ -134,15 +134,12 @@ export class CN {
 		const effectDuration = CN._getItemDuration(details.duration);
 		
 		if(!details.img) details.img = item.data?.img ?? item.img ?? CONSTS.MODULE.IMAGE;
-		details.img = CN._getModuleImage(details.img);
+		const icon = CN._getModuleImage(details.img);
 		
 		if(!details.itemId) details.itemId = item.id;
 		if(!details.itemUuid) details.itemUuid = item.uuid ?? details.actorUuid;
 		if(!details.name) details.name = item.name;
-		
-		// get the correct img.
-		const item_img = details.img ?? item?.data.img ?? item?.img ?? CONSTS.MODULE.IMAGE;
-		const icon = CN._getModuleImage(item_img);
+		if(!details.description) details.description = getProperty(item, "data.data.description.value");
 		
 		// create origin of item; if the item does not exist, use the actor.
 		const fromItemUuid = await fromUuid(details.itemUuid);
@@ -153,17 +150,11 @@ export class CN {
 		const label = prepend ? `${game.i18n.localize("CN.NAME.CARD_NAME")} - ${details.name}` : details.name;
 		
 		// create effect data.
-		const effectData = {
-			icon: details.img,
-			label,
-			origin,
-			tint: "#000000",
+		const effectData = {icon, label, origin,
 			duration: effectDuration ? effectDuration : details.duration,
-			flags: {
-				core: {statusId: CONSTS.MODULE.CONC},
-				convenientDescription: game.i18n.format("CN.CONVENIENT_DESCRIPTION", {name: details.name})
-			}
-		};
+			"flags.core.statusId": CONSTS.MODULE.CONC,
+			"flags.convenientDescription": game.i18n.format("CN.CONVENIENT_DESCRIPTION", {name: details.name})
+		}
 		
 		// merge object and put all of the details in the flags.
 		return mergeObject(expandObject(effectData), {flags: {[CONSTS.MODULE.NAME]: details}});
@@ -397,7 +388,13 @@ export class CN {
 		
 		// build the chat message.
 		const name = effect.getFlag(CONSTS.MODULE.NAME, "name");
-		const content = game.i18n.format("CN.MESSAGE.CONC_LOSS", {name: effect.parent.name, item: name});
+		const description = effect.getFlag(CONSTS.MODULE.NAME, "description");
+		const content = `
+			<p>${game.i18n.format("CN.MESSAGE.CONC_LOSS", {name: effect.parent.name, item: name})}</p>
+			<hr>
+			<details>
+				<summary>${game.i18n.localize("CN.MESSAGE.DETAILS")}</summary> <hr> ${description}
+			</details> <hr>`;
 		const speaker = {alias: CONSTS.MODULE.SPEAKER};
 		
 		ChatMessage.create({content, speaker});
@@ -410,7 +407,13 @@ export class CN {
 		
 		// build the chat message.
 		const name = effect.getFlag(CONSTS.MODULE.NAME, "name");
-		const content = game.i18n.format("CN.MESSAGE.CONC_GAIN", {name: effect.parent.name, item: name});
+		const description = effect.getFlag(CONSTS.MODULE.NAME, "description");
+		const content = `
+			<p>${game.i18n.format("CN.MESSAGE.CONC_GAIN", {name: effect.parent.name, item: name})}</p>
+			<hr>
+			<details>
+				<summary>${game.i18n.localize("CN.MESSAGE.DETAILS")}</summary> <hr> ${description}
+			</details> <hr>`;
 		const speaker = {alias: CONSTS.MODULE.SPEAKER};
 		
 		ChatMessage.create({content, speaker});
