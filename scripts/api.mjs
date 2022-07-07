@@ -4,7 +4,6 @@ export class api {
 	
 	static register(){
 		api.globals();
-		game.concnotif = game.concnotif ?? {};
 		Actor.prototype.rollConcentrationSave = CN.roll_concentration_save;
 	}
 	

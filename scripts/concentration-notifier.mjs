@@ -583,7 +583,7 @@ export class CN {
 	};
 	
 	// apply min and max to the roll if they exist.
-	static min_max_roll_on_save = async (actor, message) => {
+	static min_max_roll_on_save = async (actor, message, options) => {
 		const msg = message;
 		const floor = actor.getFlag("dnd5e", CONSTS.FLAG.CONCENTRATION_FLOOR) ?? 1;
 		const ceil = actor.getFlag("dnd5e", CONSTS.FLAG.CONCENTRATION_CEILING) ?? 20;
@@ -604,15 +604,15 @@ export class CN {
 				d20.count = ceil;
 			}
 		}
-		msg._total = (await new Roll(msg.result).evaluate({async: true})).total;
-		const speaker = msg.speaker;
-		return msg.toMessage({speaker});
+		msg._total = eval(msg.result);
+		const speaker = options.speaker ?? ChatMessage.getSpeaker({actor});
+		return !options.chatMessage ? msg.toMessage({speaker}) : msg;
 	}
 	
 	// roll for concentration. This will be added to the Actor prototype.
 	static roll_concentration_save = async function(options = {}){
 		// create object of saving throw options.
-		const saveModifiers = {fumble: -1, critical: 21, event};
+		const saveModifiers = foundry.utils.mergeObject({fumble: -1, critical: 21, event}, options);
 		
 		// get the DC of the saving throw.
 		const targetValue = options.targetValue ?? false;
@@ -620,7 +620,8 @@ export class CN {
 		
 		// add any additional bonuses to the saving throw.
 		const concentrationBonus = this.getFlag("dnd5e", CONSTS.FLAG.CONCENTRATION_BONUS) ?? false;
-		if(!!concentrationBonus) saveModifiers.parts = [concentrationBonus];
+		saveModifiers.parts = options.parts ? [options.parts] : [];
+		if(!!concentrationBonus) saveModifiers.parts.push(concentrationBonus);
 		
 		// apply min10.
 		const concentrationReliable = !!this.getFlag("dnd5e", CONSTS.FLAG.CONCENTRATION_RELIABLE);
@@ -631,28 +632,12 @@ export class CN {
 		if(concentrationAdvantage) saveModifiers.advantage = true;
 		
 		// get the shorthand key of the ability used for the save.
-		const {abilityShort} = CN._getConcentrationAbility(this);
+		const saveAbility = options.ability ? options.ability : CN._getConcentrationAbility(this).abilityShort;
 		
 		// roll the save.
-		const initial_roll = await this.rollAbilitySave(abilityShort, {...saveModifiers, chatMessage: false});
+		const initial_roll = await this.rollAbilitySave(saveAbility, {...saveModifiers, chatMessage: false});
 		
 		// pass the saving throw through the min/max modifier.
 		return CN.min_max_roll_on_save(this, initial_roll, options);
 	}
 }
-
-// button-click hooks:
-Hooks.on("renderChatLog", CN._onClickDeleteButton);
-Hooks.on("renderChatPopout", CN._onClickDeleteButton);
-Hooks.on("renderChatLog", CN._onClickSaveButton);
-Hooks.on("renderChatPopout", CN._onClickSaveButton);
-
-// functionality hooks:
-Hooks.on("preCreateChatMessage", CN._getMessageDetails);
-Hooks.on("preUpdateActor", CN._storeOldValues);
-Hooks.on("updateActor", CN._buildSavingThrowData);
-Hooks.once("ready", CN._createActorFlags);
-
-// gain and loss messages.
-Hooks.on("preDeleteActiveEffect", CN._messageConcLoss);
-Hooks.on("preCreateActiveEffect", CN._messageConcGain);

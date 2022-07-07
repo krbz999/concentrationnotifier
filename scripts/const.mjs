@@ -1,7 +1,7 @@
 export const CONSTS = {
 	MODULE: {
 		NAME: "concentrationnotifier",
-		TITLE: "Z's Concentration Notifier",
+		TITLE: "Concentration Notifier",
 		SHORT: "ZHELL",
 		SPEAKER: "Concentration Notifier",
 		IMAGE: "icons/magic/light/orb-lightbulb-gray.webp",
