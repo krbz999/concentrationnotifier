@@ -7,11 +7,14 @@
 	"CN.SETTINGS.PREPEND.HINT": "If checked, concentration effects are prepended with 'Concentration' to distinguish them from other effects.",
 	"CN.WARN.MISSING_ACTOR": "You must provide an actor to perform the saving throw.",
 	"CN.WARN.MISSING_CONC": "The provided actor is not concentrating on anything.",
+	"CN.WARN.MISSING_CONC_ON_ITEM": "The provided actor is not concentrating on that item.",
 	"CN.NAME.CARD_NAME": "Concentration",
 	"CN.LABEL.SAVING_THROW": "Saving Throw DC {dc} {ability}",
 	"CN.LABEL.DELETE_CONC": "Remove Concentration",
 	"CN.CONVENIENT_DESCRIPTION": "You are concentrating on {name}.",
+	"CN.DELETE_DIALOG_TITLE": "End concentration on {name}?",
 	"CN.DELETE_DIALOG_TEXT": "This will end concentration on {name}.",
+	"CN.MESSAGE.SPEAKER": "Concentration Notifier",
 	"CN.MESSAGE.CONC_LOSS": "{name} lost concentration on {item}.",
 	"CN.MESSAGE.CONC_GAIN": "{name} is concentrating on {item}.",
 	"CN.MESSAGE.CONC_SAVE": "{name} has taken <strong>{damage}</strong> damage and must make a <strong>DC {dc}</strong> {ability} saving throw to maintain concentration on <strong>{item}</strong>.",
@@ -23,5 +26,9 @@
 	"CN.CHARACTER_FLAGS.RELIABLE.NAME": "Reliable Concentration",
 	"CN.CHARACTER_FLAGS.RELIABLE.HINT": "This character cannot roll below 10 to maintain concentration.",
 	"CN.CHARACTER_FLAGS.ADVANTAGE.NAME": "Concentration Advantage",
-	"CN.CHARACTER_FLAGS.ADVANTAGE.HINT": "This character rolls with advantage to maintain concentration."
+	"CN.CHARACTER_FLAGS.ADVANTAGE.HINT": "This character rolls with advantage to maintain concentration.",
+	"CN.CHARACTER_FLAGS.FLOOR.NAME": "Concentration Floor",
+	"CN.CHARACTER_FLAGS.FLOOR.HINT": "This character cannot roll below this value with the d20 when attempting to maintain concentration.",
+	"CN.CHARACTER_FLAGS.CEILING.NAME": "Concentration Ceiling",
+	"CN.CHARACTER_FLAGS.CEILING.HINT": "This character cannot roll above this value with the d20 when attempting to maintain concentration."
 }

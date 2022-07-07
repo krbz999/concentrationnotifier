@@ -11,7 +11,9 @@ export const CONSTS = {
 		CONCENTRATION_ABILITY: "concentrationAbility",
 		CONCENTRATION_ADVANTAGE: "concentrationAdvantage",
 		CONCENTRATION_BONUS: "concentrationBonus",
-		CONCENTRATION_RELIABLE: "concentrationReliable"
+		CONCENTRATION_RELIABLE: "concentrationReliable",
+		CONCENTRATION_FLOOR: "concentrationFloor",
+		CONCENTRATION_CEILING: "concentrationCeiling"
 	},
 	SETTINGS: {
 		CONCENTRATION_ICON: "concentration_icon",

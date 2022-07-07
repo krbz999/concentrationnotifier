@@ -2,26 +2,26 @@ import { CONSTS } from "./const.mjs";
 
 export class CN {
 	// determine if you are concentrating on a specific item.
-	static concentratingOn = (actor, item) => {
+	static actor_is_concentrating_on_item = (actor, item) => {
 		const caster = actor.actor ? actor.actor : actor;
-		return caster.effects.find(i => i.getFlag(CONSTS.MODULE.NAME, "itemUuid") === item.uuid);
+		return caster.effects.find(i => i.getFlag(CONSTS.MODULE.NAME, "castingData.itemUuid") === item.uuid);
 	}
 	
 	// determine if you are concentrating on ANY item.
-	static concentratingAny = (actor) => {
+	static actor_is_concentrating_on_anything = (actor) => {
 		const caster = actor.actor ? actor.actor : actor;
-		return caster.effects.find(i => CN.concentrationEffect(i));
+		return caster.effects.find(i => CN.effect_is_concentration_effect(i));
 	}
 	
 	// determine if effect is concentration effect.
-	static concentrationEffect = (effect) => {
+	static effect_is_concentration_effect = (effect) => {
 		return effect.getFlag("core", "statusId") === CONSTS.MODULE.CONC;
 	}
 	
 	// end all concentration effects on an actor.
-	static concentrationEnd = async (actor) => {
+	static end_concentration_on_actor = async (actor) => {
 		const caster = actor.actor ? actor.actor : actor;
-		const effects = caster.effects.filter(i => CN.concentrationEffect(i));
+		const effects = caster.effects.filter(i => CN.effect_is_concentration_effect(i));
 		if(effects.length > 0){
 			const deleteIds = effects.map(i => i.id);
 			return caster.deleteEmbeddedDocuments("ActiveEffect", deleteIds);
@@ -29,39 +29,82 @@ export class CN {
 		return [];
 	}
 	
-	// apply concentration when using a specific item.
-	static applyConcentrationOnItem = async (item, details = {})  => {
+	// end concentration on single item.
+	static end_concentration_on_item = async (actor, item) => {
+		const caster = actor.actor ? actor.actor : actor;
+		const effect = CN.actor_is_concentrating_on_item(actor, item);
+		if(!!effect) return effect.delete();
+		else return ui.notifications.warn(game.i18n.localize("CN.WARN.MISSING_CONC_ON_ITEM"));
+	}
+	
+	// wait for concentration on item to be applied on actor.
+	static wait_for_concentration_to_begin_on_item = async (actor, item, max_wait = 10000) => {
+		async function wait(ms){return new Promise(resolve => {setTimeout(resolve, ms)})}
 		
-		// make the origin of the effect the item uuid if the uuid exists, else the actor uuid (intended for temporary items).
-		const casterFromUuid = await fromUuid(details.actorUuid ?? item.parent.uuid);
-		const caster = casterFromUuid.actor ? casterFromUuid.actor : casterFromUuid;
-		const concentrating = CN.concentratingAny(caster);
+		let conc = CN.actor_is_concentrating_on_item(actor, item);
+		let waited = 0;
+		while(!conc && waited < max_wait){
+			await wait(100);
+			waited = waited + 100;
+			console.log(waited);
+			conc = CN.actor_is_concentrating_on_item(actor, item);
+		}
+		if(!!conc) return conc;
+		return false;
+	}
+	
+	// apply concentration when using a specific item.
+	static start_concentration_on_item = async (item, castingData = {}, messageData = {}, actorData = {})  => {
+		
+		// get the caster.
+		let caster = item.parent;
+		
+		// if this is a temporary item, actorId or actorUuid must be provided in actorData.
+		if(!caster) caster = actorData.actorUuid ? await fromUuid(actorData.actorUuid) : undefined;
+		
+		// bail out if caster is still undefined.
+		if(!caster) return;
+		
+		// get whether the caster is already concentrating.
+		const concentrating = CN.actor_is_concentrating_on_anything(caster);
 		
 		// create effect data.
-		const effectData = await CN._createEffectData(item, details);
+		const effectData = await CN._createEffectData(item, castingData, messageData, actorData);
+		
+		// get some needed properties for the following cases.
+		const castLevel = getProperty(effectData, `flags.${CONSTS.MODULE.NAME}.castingData.castLevel`);
+		const itemId = getProperty(effectData, `flags.${CONSTS.MODULE.NAME}.castingData.itemId`);
 		
 		// case 1: not concentrating.
-		if(!concentrating) return caster.createEmbeddedDocuments("ActiveEffect", [effectData]);
-		
-		// case 2: concentrating on a different item.
-		if(concentrating.getFlag(CONSTS.MODULE.NAME, "itemId") !== details.itemId){
-			await concentrating.delete();
+		if(!concentrating){
 			return caster.createEmbeddedDocuments("ActiveEffect", [effectData]);
 		}
 		
-		// case 3: concentrating on the same item.
-		return;
+		// case 2: concentrating on a different item.
+		if(concentrating.getFlag(CONSTS.MODULE.NAME, "castingData.itemId") !== itemId){
+			await CN.end_concentration_on_actor(caster);
+			return caster.createEmbeddedDocuments("ActiveEffect", [effectData]);
+		}
+		
+		// case 3: concentrating on the same item but at a different level.
+		if(concentrating.getFlag(CONSTS.MODULE.NAME, "castingData.castLevel") !== castLevel){
+			await CN.end_concentration_on_actor(caster);
+			return caster.createEmbeddedDocuments("ActiveEffect", [effectData]);
+		}
+		
+		// case 4: concentrating on the same item at the same level.
+		return [];
 	};
 	
-	// Method to request a save for concentration.
-	static triggerSavingThrow = async (caster, dc = 10, options = {}) => {
+	// method to request a save for concentration.
+	static request_saving_throw = async (caster, dc = 10, options = {}) => {
 		if(!caster) return ui.notifications.warn(game.i18n.localize("CN.WARN.MISSING_ACTOR"));
 		
 		// get actor from token.
 		const actor = caster.actor ? caster.actor : caster;
 		
 		// find a concentration effect.
-		const effect = CN.concentratingAny(actor);
+		const effect = CN.actor_is_concentrating_on_anything(actor);
 		if(!effect) return ui.notifications.error(game.i18n.localize("CN.WARN.MISSING_CONC"));
 		
 		// get the name of the item being concentrated on.
@@ -71,12 +114,14 @@ export class CN {
 		const {abilityShort, abilityLong} = CN._getConcentrationAbility(actor);
 		const name = game.i18n.localize("CN.NAME.CARD_NAME");
 		
+		// start constructing the message.
+		const messageData = {};
+		
 		// flags needed for message button listeners.
-		const flags = {
-			[`${CONSTS.MODULE.NAME}.effectUuid`]: effect.uuid,
-			[`${CONSTS.MODULE.NAME}.actorUuid`]: actor.uuid,
-			[`${CONSTS.MODULE.NAME}.saveDC`]: dc
-		};
+		messageData[`flags.${CONSTS.MODULE.NAME}.effectUuid`] = effect.uuid;
+		messageData[`flags.${CONSTS.MODULE.NAME}.actorUuid`] = actor.uuid;
+		messageData[`flags.${CONSTS.MODULE.NAME}.saveDC`] = dc;
+		messageData[`flags.core.canPopOut`] = true;
 		
 		// icon of the effect, used in the chat message.
 		const moduleImage = effect.data.icon;
@@ -85,19 +130,16 @@ export class CN {
 		const cardContent = options.cardContent ?? "";
 		
 		// the full contents of the chat message.
-		
 		const saveLabel = game.i18n.format("CN.LABEL.SAVING_THROW", {dc, ability: abilityLong});
 		const deleteLabel = game.i18n.localize("CN.LABEL.DELETE_CONC");
 		
-		const content = `
+		messageData["content"] = `
 			<div class="dnd5e chat-card">
 			<header class="card-header flexrow">
 				<img src="${moduleImage}" title="${name}" width="36" height="36"/>
 				<h3 class="item-name">${name}</h3>
 			</header>
-			<div class="card-content">
-				${cardContent}
-			</div>
+			<div class="card-content"> ${cardContent} </div>
 			<div class="card-buttons">
 				<button id="${CONSTS.BUTTON_ID.SAVE}">${saveLabel}</button>
 				<button id="${CONSTS.BUTTON_ID.DELETE}">${deleteLabel}</button>
@@ -109,55 +151,65 @@ export class CN {
 			if(perm !== CONST.DOCUMENT_PERMISSION_LEVELS.OWNER) return false;
 			return true;
 		}).map(([id, perm]) => id);
+		messageData["whisper"] = whisper;
 		
 		// get array of users with Owner permission of the actor who are not GMs.
 		const playerOwners = whisper.filter(i => !game.users.get(i)?.isGM);
 		
 		// creator of the message is the PLAYER owner doing the damage, if they exist, otherwise the first player owner, otherwise the one doing the update, otherwise the current user.
-		const user = (playerOwners.length > 0) ? (playerOwners.includes(options.userId) ? options.userId : playerOwners[0]) : options.userId ? options.userId : game.user.id;
+		messageData["user"] = (playerOwners.length > 0) ? (playerOwners.includes(options.userId) ? options.userId : playerOwners[0]) : options.userId ? options.userId : game.user.id;
 		
 		// set message speaker alias.
-		const speaker = {alias: CONSTS.MODULE.SPEAKER};
+		messageData["speaker.alias"] = game.i18n.localize("CN.MESSAGE.SPEAKER");
 		
 		// create message.
-		return ChatMessage.create({flags, content, whisper, user, speaker});
+		return ChatMessage.create(messageData);
 	};
 	
 	// create the data for the new concentration effect.
-	static _createEffectData = async (item, details = {}) => {
+	static _createEffectData = async (item, castingData = {}, messageData = {}, actorData = {}) => {
 		
-		// make fixes to details.
-		if(!details.actorId) details.actorId = item.parent.id;
-		if(!details.actorUuid) details.actorUuid = item.parent.uuid;
+		// get the caster.
+		let caster = item.parent;
 		
-		if(!details.duration) details.duration = item.data?.data?.duration ?? {};
-		const effectDuration = CN._getItemDuration(details.duration);
+		// if this is a temporary item, actorId or actorUuid must be provided in actorData.
+		if(!caster) caster = actorData.actorUuid ? await fromUuid(actorData.actorUuid) : undefined;
 		
-		if(!details.img) details.img = item.data?.img ?? item.img ?? CONSTS.MODULE.IMAGE;
-		const icon = CN._getModuleImage(details.img);
+		// bail out if caster is still undefined.
+		if(!caster) return ui.notifications.warn("Caster was somehow undefined.");
 		
-		if(!details.itemId) details.itemId = item.id;
-		if(!details.itemUuid) details.itemUuid = item.uuid ?? details.actorUuid;
-		if(!details.name) details.name = item.name;
-		if(!details.description) details.description = getProperty(item, "data.data.description.value");
-		
-		// create origin of item; if the item does not exist, use the actor.
-		const fromItemUuid = await fromUuid(details.itemUuid);
-		const origin = !!fromItemUuid ? details.itemUuid : details.actorUuid;
-		
-		// create effect label, depending on module settings.
-		const prepend = game.settings.get(CONSTS.MODULE.NAME, CONSTS.SETTINGS.PREPEND_EFFECT_LABELS);
-		const label = prepend ? `${game.i18n.localize("CN.NAME.CARD_NAME")} - ${details.name}` : details.name;
-		
-		// create effect data.
-		const effectData = {icon, label, origin,
-			duration: effectDuration ? effectDuration : details.duration,
-			"flags.core.statusId": CONSTS.MODULE.CONC,
-			"flags.convenientDescription": game.i18n.format("CN.CONVENIENT_DESCRIPTION", {name: details.name})
+		// create embedded details for the effect to save for later and other functions.
+		const flags = {
+			core: {statusId: CONSTS.MODULE.CONC},
+			convenientDescription: game.i18n.format("CN.CONVENIENT_DESCRIPTION", {name: item.name}),
+			[CONSTS.MODULE.NAME]: {
+				actorData: {actorId: caster.id, actorUuid: caster.uuid},
+				itemData: !!item.toObject ? item.toObject() : item,
+				castingData: mergeObject(castingData, {
+					itemId: item.id,
+					itemUuid: item.uuid,
+					baseLevel: getProperty(item, "data.data.level") ?? getProperty(item, "data.level")
+				}),
+				messageData
+			}
 		}
 		
-		// merge object and put all of the details in the flags.
-		return mergeObject(expandObject(effectData), {flags: {[CONSTS.MODULE.NAME]: details}});
+		// get duration for the effect.
+		const itemDuration = getProperty(item, "data.data.duration") ?? getProperty(item, "data.duration") ?? {};
+		const duration = CN._getItemDuration(itemDuration);
+		
+		// get icon for the effect.
+		const icon = CN._getModuleImage(item);
+		
+		// get origin for the effect. If the item is temporary, use actor uuid.
+		const origin = item.uuid ?? caster.uuid;
+		
+		// get effect label, depending on settings.
+		const prepend = game.settings.get(CONSTS.MODULE.NAME, CONSTS.SETTINGS.PREPEND_EFFECT_LABELS);
+		const label = prepend ? `${game.i18n.localize("CN.NAME.CARD_NAME")} - ${item.name}` : item.name;
+		
+		// return constructed effect data.
+		return {icon, label, origin, duration, flags}
 	};
 	
 	// get the ability the actor uses for concentration saves.
@@ -218,7 +270,7 @@ export class CN {
 			// create the dialog to prompt for deletion of the effect.
 			const itemName = effect.getFlag(CONSTS.MODULE.NAME, "name");
 			return Dialog.confirm({
-				title: `End concentration on ${itemName}?`,
+				title: game.i18n.format("CN.DELETE_DIALOG_TITLE", {name: itemName}),
 				content: `
 					<h4>${game.i18n.localize("AreYouSure")}</h4>
 					<p>${game.i18n.format("CN.DELETE_DIALOG_TEXT", {name: itemName})}</p>`,
@@ -262,64 +314,69 @@ export class CN {
 			// bail out if the actor could not be found.
 			if(!actor) return;
 			
-			// get the actor's relevant flags that modify specifically concentration saving throws.
-			const concentrationBonus = actor.getFlag("dnd5e", CONSTS.FLAG.CONCENTRATION_BONUS) ?? false;
-			const concentrationReliable = actor.getFlag("dnd5e", CONSTS.FLAG.CONCENTRATION_RELIABLE) ?? false;
-			const concentrationAdvantage = actor.getFlag("dnd5e", CONSTS.FLAG.CONCENTRATION_ADVANTAGE) ?? false;
+			// create object of saving throw options.
+			//const saveModifiers = {fumble: -1, critical: 21, event};
+			const options = {}
 			
 			// get the DC of the saving throw.
 			const saveDC = message.getFlag(CONSTS.MODULE.NAME, "saveDC") ?? false;
+			//if(!!saveDC) saveModifiers.targetValue = saveDC;
+			if(!!saveDC) options.targetValue = saveDC;
 			
 			// add any additional bonuses to the saving throw.
-			const parts = concentrationBonus ? [concentrationBonus] : [];
-			
-			// set the target value from the DC.
-			const targetValue = saveDC ? saveDC : [];
+			//const concentrationBonus = actor.getFlag("dnd5e", CONSTS.FLAG.CONCENTRATION_BONUS) ?? false;
+			//if(!!concentrationBonus) saveModifiers.parts = [concentrationBonus];
 			
 			// apply min10.
-			const reliableTalent = concentrationReliable;
-			
-			// get the shorthand key of the ability used for the save.
-			const {abilityShort} = CN._getConcentrationAbility(actor);
-			
-			// create object of saving throw options.
-			const saveModifiers = {parts, targetValue, reliableTalent, fumble: -1, critical: 21, event};
+			//const concentrationReliable = !!actor.getFlag("dnd5e", CONSTS.FLAG.CONCENTRATION_RELIABLE);
+			//if(concentrationReliable) saveModifiers.reliableTalent = true;
 			
 			// apply advantage if flag exists.
-			if(concentrationAdvantage) saveModifiers.advantage = true;
+			//const concentrationAdvantage = !!actor.getFlag("dnd5e", CONSTS.FLAG.CONCENTRATION_ADVANTAGE);
+			//if(concentrationAdvantage) saveModifiers.advantage = true;
+			
+			// get the shorthand key of the ability used for the save.
+			//const {abilityShort} = CN._getConcentrationAbility(actor);
 			
 			// enable button again; it should never be off.
 			button.removeAttribute("disabled");
 			
 			// roll the save.
-			await actor.rollAbilitySave(abilityShort, saveModifiers);
+			//return actor.rollAbilitySave(abilityShort, saveModifiers);
+			//const initial_roll = await actor.rollAbilitySave(abilityShort, {...saveModifiers, chatMessage: false});
+			
+			// pass the saving throw through the min/max modifier.
+			//return CN.min_max_roll_on_save(actor, initial_roll);
+			
+			return actor.rollConcentrationSave(options);
 		});
 	};
 	
 	// get the image used for the effect.
-	static _getModuleImage = (item_img) => {
+	static _getModuleImage = (item) => {
 		// the custom icon in the settings.
 		const moduleImage = game.settings.get(CONSTS.MODULE.NAME, CONSTS.SETTINGS.CONCENTRATION_ICON);
 		
 		// whether or not to use the item img instead.
 		const useItemImage = game.settings.get(CONSTS.MODULE.NAME, CONSTS.SETTINGS.CONCENTRATION_ICON_ITEM);
 		
-		// use the provided img if it exists and item images are prioritised.
-		if(useItemImage && item_img) return item_img;
+		// Case 1: the item has an image, and it is prioritised.
+		if(useItemImage && !!item?.img) return item.img;
 		
-		// if there is no module image, use the default one.
+		// Case 2: there is no custom image in the settings, so use the default image.
 		if(!moduleImage) return CONSTS.MODULE.IMAGE;
 		
-		// use the module image.
+		// Case 3: Use the custom image in the settings.
 		return moduleImage;
 	};
 	
+	// set up the duration of the effect depending on the item.
 	static _getItemDuration = (duration) => {
-		if(!duration?.value) return false;
+		if(!duration?.value) return {};
 		const {value, units} = duration;
 		
 		// do not bother for these duration types:
-		if(["inst", "month", "perm", "spec", "year"].includes(units)) return false;
+		if(["inst", "month", "perm", "spec", "year"].includes(units)) return {};
 		
 		// cases for the remaining units of time:
 		if(units === "round") return {rounds: value};
@@ -355,40 +412,39 @@ export class CN {
 		
 		// get item and spell level.
 		const itemId = html.getAttribute("data-item-id");
-		const spellLevel = Number(html.getAttribute("data-spell-level"));
-		const message = msg.toObject();
+		const castLevel = Number(html.getAttribute("data-spell-level"));
+		const messageData = msg.toObject();
 		
 		// bail out if something could not be found.
-		if(!caster || !itemId || isNaN(spellLevel)) return;
+		if(!caster || !itemId || isNaN(castLevel)) return;
+		
+		// get item data; if the item does not exist on the actor, use the embedded flag data.
 		const itemActor = caster.items.get(itemId);
 		const itemFlags = msg.getFlag("dnd5e", "itemData");
+		const item = itemActor ? itemActor : itemFlags;
 		
 		// make sure it's a concentration spell.
-		const item = itemActor ? itemActor : itemFlags;
-		const itemData = item?.data?.data ? duplicate(item.data.data) : item?.data ? duplicate(item.data) : {};
-		if(!itemData?.components?.concentration) return;
+		const is_concentration = !!getProperty(item, "data.data.components.concentration") || !!getProperty(item, "data.components.concentration");
+		if(!is_concentration) return;
 		
-		// get item data to save in the effect.
-		const {school, components, duration, level: baseLevel} = itemData;
-		const {img, uuid: itemUuid, name} = item;
-		const actorUuid = caster.uuid;
+		// create castingData.
+		const castingData = {itemId, castLevel};
 		
-		/* Create the effect. */
-		const details = {
-			spellLevel, baseLevel, school, components, duration, img, name,
-			message, itemUuid, actorUuid, itemId, actorId
-		};
-		CN.applyConcentrationOnItem(item, details);
+		// create actorData.
+		const actorData = {actorId, actorUuid: caster.uuid}
+		
+		// apply concentration.
+		return CN.start_concentration_on_item(item, castingData, messageData, actorData);
 	};
 	
 	// send a message when an actor LOSES concentration.
 	static _messageConcLoss = (effect) => {
 		// get whether the effect being deleted is a concentration effect.
-		if(!CN.concentrationEffect(effect)) return;
+		if(!CN.effect_is_concentration_effect(effect)) return;
 		
 		// build the chat message.
-		const name = effect.getFlag(CONSTS.MODULE.NAME, "name");
-		const description = effect.getFlag(CONSTS.MODULE.NAME, "description");
+		const name = effect.getFlag(CONSTS.MODULE.NAME, "itemData.name");
+		const description = effect.getFlag(CONSTS.MODULE.NAME, "itemData.data.description.value");
 		const content = `
 			<p>${game.i18n.format("CN.MESSAGE.CONC_LOSS", {name: effect.parent.name, item: name})}</p>
 			<hr>
@@ -396,18 +452,19 @@ export class CN {
 				<summary>${game.i18n.localize("CN.MESSAGE.DETAILS")}</summary> <hr> ${description}
 			</details> <hr>`;
 		const speaker = {alias: CONSTS.MODULE.SPEAKER};
+		const flags = {core: {canPopOut: true}};
 		
-		ChatMessage.create({content, speaker});
+		return ChatMessage.create({content, speaker, flags});
 	};
 	
 	// send a message when an actor GAINS concentration.
 	static _messageConcGain = (effect) => {
 		// get whether the effect being created is a concentration effect.
-		if(!CN.concentrationEffect(effect)) return;
+		if(!CN.effect_is_concentration_effect(effect)) return;
 		
 		// build the chat message.
-		const name = effect.getFlag(CONSTS.MODULE.NAME, "name");
-		const description = effect.getFlag(CONSTS.MODULE.NAME, "description");
+		const name = effect.getFlag(CONSTS.MODULE.NAME, "itemData.name");
+		const description = effect.getFlag(CONSTS.MODULE.NAME, "itemData.data.description.value");
 		const content = `
 			<p>${game.i18n.format("CN.MESSAGE.CONC_GAIN", {name: effect.parent.name, item: name})}</p>
 			<hr>
@@ -415,8 +472,9 @@ export class CN {
 				<summary>${game.i18n.localize("CN.MESSAGE.DETAILS")}</summary> <hr> ${description}
 			</details> <hr>`;
 		const speaker = {alias: CONSTS.MODULE.SPEAKER};
+		const flags = {core: {canPopOut: true}};
 		
-		ChatMessage.create({content, speaker});
+		return ChatMessage.create({content, speaker, flags});
 	};
 	
 	// store values for use in "updateActor" hook if HP has changed.
@@ -449,13 +507,13 @@ export class CN {
 		const damageTaken = context[CONSTS.MODULE.NAME].damage;
 		
 		// find a concentration effect.
-		const effect = CN.concentratingAny(actor);
+		const effect = CN.actor_is_concentrating_on_anything(actor);
 		
 		// bail out if actor is not concentrating.
 		if(!effect) return;
 		
 		// get the name of the item being concentrated on.
-		const name = effect.getFlag(CONSTS.MODULE.NAME, "name");
+		const name = effect.getFlag(CONSTS.MODULE.NAME, "itemData.name");
 		
 		// calculate DC from the damage taken.
 		const dc = Math.max(10, Math.floor(Math.abs(damageTaken) / 2));
@@ -467,7 +525,7 @@ export class CN {
 		const cardContent = game.i18n.format("CN.MESSAGE.CONC_SAVE", {name: actor.name, damage: Math.abs(damageTaken), dc, ability: abilityLong, item: name});
 		
 		// pass to saving throw.
-		return CN.triggerSavingThrow(actor, dc, {cardContent, userId});
+		return CN.request_saving_throw(actor, dc, {cardContent, userId});
 	};
 	
 	// create the concentration flags on actor Special Traits.
@@ -491,6 +549,14 @@ export class CN {
 			type: String
 		};
 		
+		/* Set a flag for having advantage on Concentration saves. */
+		CONFIG.DND5E.characterFlags[CONSTS.FLAG.CONCENTRATION_ADVANTAGE] = {
+			name: game.i18n.localize("CN.CHARACTER_FLAGS.ADVANTAGE.NAME"),
+			hint: game.i18n.localize("CN.CHARACTER_FLAGS.ADVANTAGE.HINT"),
+			section,
+			type: Boolean
+		};
+		
 		/* Set a flag for not being able to roll below 10. */
 		CONFIG.DND5E.characterFlags[CONSTS.FLAG.CONCENTRATION_RELIABLE] = {
 			name: game.i18n.localize("CN.CHARACTER_FLAGS.RELIABLE.NAME"),
@@ -499,14 +565,80 @@ export class CN {
 			type: Boolean
 		};
 		
-		/* Set a flag for having advantage on Concentration saves. */
-		CONFIG.DND5E.characterFlags[CONSTS.FLAG.CONCENTRATION_ADVANTAGE] = {
-			name: game.i18n.localize("CN.CHARACTER_FLAGS.ADVANTAGE.NAME"),
-			hint: game.i18n.localize("CN.CHARACTER_FLAGS.ADVANTAGE.HINT"),
+		/* Set a number a character cannot roll below. */
+		CONFIG.DND5E.characterFlags[CONSTS.FLAG.CONCENTRATION_FLOOR] = {
+			name: game.i18n.localize("CN.CHARACTER_FLAGS.FLOOR.NAME"),
+			hint: game.i18n.localize("CN.CHARACTER_FLAGS.FLOOR.HINT"),
 			section,
-			type: Boolean
-		};
+			type: Number
+		}
+		
+		/* Set a number a character cannot roll above. */
+		CONFIG.DND5E.characterFlags[CONSTS.FLAG.CONCENTRATION_CEILING] = {
+			name: game.i18n.localize("CN.CHARACTER_FLAGS.CEILING.NAME"),
+			hint: game.i18n.localize("CN.CHARACTER_FLAGS.CEILING.HINT"),
+			section,
+			type: Number
+		}
 	};
+	
+	// apply min and max to the roll if they exist.
+	static min_max_roll_on_save = async (actor, message) => {
+		const msg = message;
+		const floor = actor.getFlag("dnd5e", CONSTS.FLAG.CONCENTRATION_FLOOR) ?? 1;
+		const ceil = actor.getFlag("dnd5e", CONSTS.FLAG.CONCENTRATION_CEILING) ?? 20;
+		
+		const useFloor = 20 >= floor && floor > 1;
+		const useCeil = 20 > ceil && ceil > 0;
+				
+		if(useFloor) msg.dice[0].modifiers.push(`min${floor}`);
+		if(useCeil) msg.dice[0].modifiers.push(`max${ceil}`);
+		msg._formula = msg._formula.replace("d20", "d20" + (useFloor ? `min${floor}` : "") + (useCeil > 0 ? `max${ceil}` : ""));
+		for(let d20 of msg.dice[0].results){
+			if(useFloor && d20.result < floor){
+				d20.rerolled = true;
+				d20.count = floor;
+			}
+			if(useCeil && d20.result > ceil){
+				d20.rerolled = true;
+				d20.count = ceil;
+			}
+		}
+		msg._total = (await new Roll(msg.result).evaluate({async: true})).total;
+		const speaker = msg.speaker;
+		return msg.toMessage({speaker});
+	}
+	
+	// roll for concentration. This will be added to the Actor prototype.
+	static roll_concentration_save = async function(options = {}){
+		// create object of saving throw options.
+		const saveModifiers = {fumble: -1, critical: 21, event};
+		
+		// get the DC of the saving throw.
+		const targetValue = options.targetValue ?? false;
+		if(!!targetValue) saveModifiers.targetValue = targetValue;
+		
+		// add any additional bonuses to the saving throw.
+		const concentrationBonus = this.getFlag("dnd5e", CONSTS.FLAG.CONCENTRATION_BONUS) ?? false;
+		if(!!concentrationBonus) saveModifiers.parts = [concentrationBonus];
+		
+		// apply min10.
+		const concentrationReliable = !!this.getFlag("dnd5e", CONSTS.FLAG.CONCENTRATION_RELIABLE);
+		if(concentrationReliable) saveModifiers.reliableTalent = true;
+		
+		// apply advantage if flag exists.
+		const concentrationAdvantage = !!this.getFlag("dnd5e", CONSTS.FLAG.CONCENTRATION_ADVANTAGE);
+		if(concentrationAdvantage) saveModifiers.advantage = true;
+		
+		// get the shorthand key of the ability used for the save.
+		const {abilityShort} = CN._getConcentrationAbility(this);
+		
+		// roll the save.
+		const initial_roll = await this.rollAbilitySave(abilityShort, {...saveModifiers, chatMessage: false});
+		
+		// pass the saving throw through the min/max modifier.
+		return CN.min_max_roll_on_save(this, initial_roll, options);
+	}
 }
 
 // button-click hooks:
