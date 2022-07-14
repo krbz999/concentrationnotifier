@@ -46,7 +46,6 @@ export class CN {
 		while(!conc && waited < max_wait){
 			await wait(100);
 			waited = waited + 100;
-			console.log(waited);
 			conc = CN.actor_is_concentrating_on_item(actor, item);
 		}
 		if(!!conc) return conc;
@@ -60,7 +59,7 @@ export class CN {
 		let caster = item.parent;
 		
 		// if this is a temporary item, actorId or actorUuid must be provided in actorData.
-		if(!caster) caster = actorData.actorUuid ? await fromUuid(actorData.actorUuid) : undefined;
+		if(!caster) caster = actorData.actorUuid ? fromUuidSync(actorData.actorUuid) : undefined;
 		
 		// bail out if caster is still undefined.
 		if(!caster) return;
@@ -72,8 +71,8 @@ export class CN {
 		const effectData = await CN._createEffectData(item, castingData, messageData, actorData);
 		
 		// get some needed properties for the following cases.
-		const castLevel = getProperty(effectData, `flags.${CONSTS.MODULE.NAME}.castingData.castLevel`);
-		const itemId = getProperty(effectData, `flags.${CONSTS.MODULE.NAME}.castingData.itemId`);
+		const castLevel = foundry.utils.getProperty(effectData, `flags.${CONSTS.MODULE.NAME}.castingData.castLevel`);
+		const itemId = foundry.utils.getProperty(effectData, `flags.${CONSTS.MODULE.NAME}.castingData.itemId`);
 		
 		// case 1: not concentrating.
 		if(!concentrating){
@@ -107,8 +106,8 @@ export class CN {
 		const effect = CN.actor_is_concentrating_on_anything(actor);
 		if(!effect) return ui.notifications.error(game.i18n.localize("CN.WARN.MISSING_CONC"));
 		
-		// get the name of the item being concentrated on.
-		const itemName = effect.getFlag(CONSTS.MODULE.NAME, "name");
+		/*// get the name of the item being concentrated on.
+		const itemName = effect.getFlag(CONSTS.MODULE.NAME, "itemData.name");*/
 		
 		// build the message.
 		const {abilityShort, abilityLong} = CN._getConcentrationAbility(actor);
@@ -124,7 +123,7 @@ export class CN {
 		messageData[`flags.core.canPopOut`] = true;
 		
 		// icon of the effect, used in the chat message.
-		const moduleImage = effect.data.icon;
+		const moduleImage = effect.icon;
 		
 		// the description in the chat message.
 		const cardContent = options.cardContent ?? "";
@@ -146,9 +145,9 @@ export class CN {
 			</div>`;
 		
 		// get array of users with Owner permission of the actor.
-		const whisper = Object.entries(actor.data.permission).filter(([id, perm]) => {
+		const whisper = Object.entries(actor.ownership).filter(([id, perm]) => {
 			if(!game.users.get(id)) return false;
-			if(perm !== CONST.DOCUMENT_PERMISSION_LEVELS.OWNER) return false;
+			if(perm !== CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER) return false;
 			return true;
 		}).map(([id, perm]) => id);
 		messageData["whisper"] = whisper;
@@ -173,7 +172,7 @@ export class CN {
 		let caster = item.parent;
 		
 		// if this is a temporary item, actorId or actorUuid must be provided in actorData.
-		if(!caster) caster = actorData.actorUuid ? await fromUuid(actorData.actorUuid) : undefined;
+		if(!caster) caster = actorData.actorUuid ? fromUuidSync(actorData.actorUuid) : undefined;
 		
 		// bail out if caster is still undefined.
 		if(!caster) return ui.notifications.warn("Caster was somehow undefined.");
@@ -185,17 +184,17 @@ export class CN {
 			[CONSTS.MODULE.NAME]: {
 				actorData: {actorId: caster.id, actorUuid: caster.uuid},
 				itemData: !!item.toObject ? item.toObject() : item,
-				castingData: mergeObject(castingData, {
+				castingData: foundry.utils.mergeObject(castingData, {
 					itemId: item.id,
 					itemUuid: item.uuid,
-					baseLevel: getProperty(item, "data.data.level") ?? getProperty(item, "data.level")
+					baseLevel: foundry.utils.getProperty(item, "system.level") ?? foundry.utils.getProperty(item, "system.level")
 				}),
 				messageData
 			}
 		}
 		
 		// get duration for the effect.
-		const itemDuration = getProperty(item, "data.data.duration") ?? getProperty(item, "data.duration") ?? {};
+		const itemDuration = foundry.utils.getProperty(item, "system.duration") ?? foundry.utils.getProperty(item, "system.duration") ?? {};
 		const duration = CN._getItemDuration(itemDuration);
 		
 		// get icon for the effect.
@@ -256,7 +255,7 @@ export class CN {
 			if(!effectUuid) return;
 			
 			// get the actual effect.
-			const effect = await fromUuid(effectUuid);
+			const effect = fromUuidSync(effectUuid);
 			
 			// bail out if the effect could not be found for some reason.
 			if(!effect) return;
@@ -268,7 +267,7 @@ export class CN {
 			if(event.shiftKey) return effect.delete();
 			
 			// create the dialog to prompt for deletion of the effect.
-			const itemName = effect.getFlag(CONSTS.MODULE.NAME, "name");
+			const itemName = effect.getFlag(CONSTS.MODULE.NAME, "itemData.name");
 			return Dialog.confirm({
 				title: game.i18n.format("CN.DELETE_DIALOG_TITLE", {name: itemName}),
 				content: `
@@ -306,7 +305,7 @@ export class CN {
 			if(!actorUuid) return;
 			
 			// get the actor from the uuid.
-			const uuidActor = await fromUuid(actorUuid);
+			const uuidActor = fromUuidSync(actorUuid);
 			
 			// if the actor is a token, use the token actor.
 			const actor = uuidActor?.actor ? uuidActor.actor : uuidActor;
@@ -315,39 +314,16 @@ export class CN {
 			if(!actor) return;
 			
 			// create object of saving throw options.
-			//const saveModifiers = {fumble: -1, critical: 21, event};
 			const options = {}
 			
 			// get the DC of the saving throw.
 			const saveDC = message.getFlag(CONSTS.MODULE.NAME, "saveDC") ?? false;
-			//if(!!saveDC) saveModifiers.targetValue = saveDC;
 			if(!!saveDC) options.targetValue = saveDC;
-			
-			// add any additional bonuses to the saving throw.
-			//const concentrationBonus = actor.getFlag("dnd5e", CONSTS.FLAG.CONCENTRATION_BONUS) ?? false;
-			//if(!!concentrationBonus) saveModifiers.parts = [concentrationBonus];
-			
-			// apply min10.
-			//const concentrationReliable = !!actor.getFlag("dnd5e", CONSTS.FLAG.CONCENTRATION_RELIABLE);
-			//if(concentrationReliable) saveModifiers.reliableTalent = true;
-			
-			// apply advantage if flag exists.
-			//const concentrationAdvantage = !!actor.getFlag("dnd5e", CONSTS.FLAG.CONCENTRATION_ADVANTAGE);
-			//if(concentrationAdvantage) saveModifiers.advantage = true;
-			
-			// get the shorthand key of the ability used for the save.
-			//const {abilityShort} = CN._getConcentrationAbility(actor);
 			
 			// enable button again; it should never be off.
 			button.removeAttribute("disabled");
 			
 			// roll the save.
-			//return actor.rollAbilitySave(abilityShort, saveModifiers);
-			//const initial_roll = await actor.rollAbilitySave(abilityShort, {...saveModifiers, chatMessage: false});
-			
-			// pass the saving throw through the min/max modifier.
-			//return CN.min_max_roll_on_save(actor, initial_roll);
-			
 			return actor.rollConcentrationSave(options);
 		});
 	};
@@ -424,7 +400,7 @@ export class CN {
 		const item = itemActor ? itemActor : itemFlags;
 		
 		// make sure it's a concentration spell.
-		const is_concentration = !!getProperty(item, "data.data.components.concentration") || !!getProperty(item, "data.components.concentration");
+		const is_concentration = !!foundry.utils.getProperty(item, "system.components.concentration") || !!foundry.utils.getProperty(item, "system.components.concentration");
 		if(!is_concentration) return;
 		
 		// create castingData.
@@ -444,7 +420,7 @@ export class CN {
 		
 		// build the chat message.
 		const name = effect.getFlag(CONSTS.MODULE.NAME, "itemData.name");
-		const description = effect.getFlag(CONSTS.MODULE.NAME, "itemData.data.description.value");
+		const description = effect.getFlag(CONSTS.MODULE.NAME, "itemData.system.description.value");
 		const content = `
 			<p>${game.i18n.format("CN.MESSAGE.CONC_LOSS", {name: effect.parent.name, item: name})}</p>
 			<hr>
@@ -464,7 +440,7 @@ export class CN {
 		
 		// build the chat message.
 		const name = effect.getFlag(CONSTS.MODULE.NAME, "itemData.name");
-		const description = effect.getFlag(CONSTS.MODULE.NAME, "itemData.data.description.value");
+		const description = effect.getFlag(CONSTS.MODULE.NAME, "itemData.system.description.value");
 		const content = `
 			<p>${game.i18n.format("CN.MESSAGE.CONC_GAIN", {name: effect.parent.name, item: name})}</p>
 			<hr>
@@ -481,12 +457,12 @@ export class CN {
 	static _storeOldValues = (actor, data, context) => {
 		
 		// get old values. These always exist, but temp is null when 0.
-		const old_temp = getProperty(actor, "data.data.attributes.hp.temp") ?? 0;
-		const old_value = getProperty(actor, "data.data.attributes.hp.value");
+		const old_temp = foundry.utils.getProperty(actor, "system.attributes.hp.temp") ?? 0;
+		const old_value = foundry.utils.getProperty(actor, "system.attributes.hp.value");
 		
 		// get new values. If they are undefined, there was no change to them, so we use old values.
-		const new_temp = getProperty(data, "data.attributes.hp.temp") === undefined ? old_temp : (getProperty(data, "data.attributes.hp.temp") ?? 0);
-		const new_value = getProperty(data, "data.attributes.hp.value") ?? old_value;
+		const new_temp = foundry.utils.getProperty(data, "system.attributes.hp.temp") === undefined ? old_temp : (foundry.utils.getProperty(data, "system.attributes.hp.temp") ?? 0);
+		const new_value = foundry.utils.getProperty(data, "system.attributes.hp.value") ?? old_value;
 		
 		// calculate health difference.
 		const damageTaken = (old_temp + old_value) - (new_temp + new_value);
@@ -501,7 +477,7 @@ export class CN {
 		if(userId !== game.user.id) return;
 		
 		// bail out if there is no save needed.
-		if(!getProperty(context, `${CONSTS.MODULE.NAME}.save`)) return;
+		if(!foundry.utils.getProperty(context, `${CONSTS.MODULE.NAME}.save`)) return;
 		
 		// get damage taken.
 		const damageTaken = context[CONSTS.MODULE.NAME].damage;

@@ -24,4 +24,4 @@ export const CONSTS = {
 		SAVE: "concentration-notifier-saving-throw",
 		DELETE: "concentration-notifier-delete-effect"
 	}
-};
+}
