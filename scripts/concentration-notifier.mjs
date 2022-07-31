@@ -120,7 +120,7 @@ export class CN {
 		messageData[`flags.${CONSTS.MODULE.NAME}.effectUuid`] = effect.uuid;
 		messageData[`flags.${CONSTS.MODULE.NAME}.actorUuid`] = actor.uuid;
 		messageData[`flags.${CONSTS.MODULE.NAME}.saveDC`] = dc;
-		messageData[`flags.core.canPopOut`] = true;
+		messageData[`flags.core.canPopout`] = true;
 		
 		// icon of the effect, used in the chat message.
 		const moduleImage = effect.icon;
@@ -382,7 +382,7 @@ export class CN {
 			const split = syntheticActorId.split(".");
 			const tokenDoc = game.scenes.get(split[1])?.tokens.get(split[3]);
 			caster = tokenDoc?.actor;
-		}else if(game.actors.get(actorId)?.data?.token?.actorLink){
+		}else if(game.actors.get(actorId)?.prototypeToken.actorLink){
 			caster = game.actors.get(actorId);
 		}else return;
 		
@@ -390,6 +390,7 @@ export class CN {
 		const itemId = html.getAttribute("data-item-id");
 		const castLevel = Number(html.getAttribute("data-spell-level"));
 		const messageData = msg.toObject();
+		delete messageData.timestamp;
 		
 		// bail out if something could not be found.
 		if(!caster || !itemId || isNaN(castLevel)) return;
@@ -428,7 +429,7 @@ export class CN {
 				<summary>${game.i18n.localize("CN.MESSAGE.DETAILS")}</summary> <hr> ${description}
 			</details> <hr>`;
 		const speaker = {alias: CONSTS.MODULE.SPEAKER};
-		const flags = {core: {canPopOut: true}};
+		const flags = {core: {canPopout: true}};
 		
 		return ChatMessage.create({content, speaker, flags});
 	};
@@ -448,7 +449,7 @@ export class CN {
 				<summary>${game.i18n.localize("CN.MESSAGE.DETAILS")}</summary> <hr> ${description}
 			</details> <hr>`;
 		const speaker = {alias: CONSTS.MODULE.SPEAKER};
-		const flags = {core: {canPopOut: true}};
+		const flags = {core: {canPopout: true}};
 		
 		return ChatMessage.create({content, speaker, flags});
 	};
