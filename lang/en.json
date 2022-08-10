@@ -5,6 +5,8 @@
 	"CN.SETTINGS.ITEM_ICON.HINT": "If checked, the image used for concentration effects will be overridden by the item's image.",
 	"CN.SETTINGS.PREPEND.NAME": "Prepend Effect Labels",
 	"CN.SETTINGS.PREPEND.HINT": "If checked, concentration effects are prepended with 'Concentration' to distinguish them from other effects.",
+	"CN.SETTINGS.VERBOSE.NAME": "Verbose Effect Descriptions",
+	"CN.SETTINGS.VERBOSE.HINT": "If using a module like Effects Panel, and if it supports html tags, this will make the description of the effect more verbose.",
 	"CN.WARN.MISSING_ACTOR": "You must provide an actor to perform the saving throw.",
 	"CN.WARN.MISSING_CONC": "The provided actor is not concentrating on anything.",
 	"CN.WARN.MISSING_CONC_ON_ITEM": "The provided actor is not concentrating on that item.",

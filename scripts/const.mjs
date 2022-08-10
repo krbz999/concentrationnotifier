@@ -1,4 +1,4 @@
-export const CONSTS = {
+export const CONSTANTS = {
 	MODULE: {
 		NAME: "concentrationnotifier",
 		TITLE: "Concentration Notifier",
@@ -18,7 +18,8 @@ export const CONSTS = {
 	SETTINGS: {
 		CONCENTRATION_ICON: "concentration_icon",
 		CONCENTRATION_ICON_ITEM: "concentration_icon_item",
-		PREPEND_EFFECT_LABELS: "prepend_effect_labels"
+		PREPEND_EFFECT_LABELS: "prepend_effect_labels",
+		VERBOSE_TOOLTIPS: "verbose_tooltips"
 	},
 	BUTTON_ID: {
 		SAVE: "concentration-notifier-saving-throw",
