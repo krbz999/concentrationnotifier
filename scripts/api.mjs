@@ -9,7 +9,7 @@ export class api {
 	
 	static globals(){
 		globalThis.ConcentrationNotifier = {
-			beginConcentration: CN.start_concentration_on_item,
+			beginConcentration: CN.start_concentration_on_item_API,
 			breakConcentration: CN.end_concentration_on_actor,
 			breakConcentrationForItem: CN.end_concentration_on_item,
 			isActorConcentrating: CN.actor_is_concentrating_on_anything,

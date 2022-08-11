@@ -514,7 +514,9 @@ export class CN_HELPERS {
 	
 	// end concentration on single item.
 	static end_concentration_on_item = async (actor, item) => {
-		const caster = actor.actor ? actor.actor : actor;
+		const caster = item.parent;
+		if(!caster) return ui.notifications.warn(game.i18n.localize("CN.WARN.MISSING_CASTER"));
+
 		const effect = CN_HELPERS.actor_is_concentrating_on_item(caster, item);
 		if(!!effect) return effect.delete();
 		else return ui.notifications.warn(game.i18n.localize("CN.WARN.MISSING_CONC_ON_ITEM"));
@@ -534,6 +536,11 @@ export class CN_HELPERS {
 		if(!!conc) return conc;
 		return false;
 	}
+
+	// apply concentration manually (public API method)
+	static start_concentration_on_item_API = async (item, castLevel = null) => {
+		return CN_HELPERS.start_concentration_on_item(item, {castLevel});
+	}
 	
 	// apply concentration when using a specific item.
 	static start_concentration_on_item = async (item, castingData = {}, messageData = {}, actorData = {})  => {
@@ -545,7 +552,7 @@ export class CN_HELPERS {
 		if(!caster) caster = actorData.actorUuid ? fromUuidSync(actorData.actorUuid) : undefined;
 		
 		// bail out if caster is still undefined.
-		if(!caster) return;
+		if(!caster) return ui.notifications.warn(game.i18n.localize("CN.WARN.MISSING_CASTER"));
 		
 		// get whether the caster is already concentrating.
 		const concentrating = CN_HELPERS.actor_is_concentrating_on_anything(caster);

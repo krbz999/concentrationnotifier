@@ -8,6 +8,7 @@
 	"CN.SETTINGS.VERBOSE.NAME": "Verbose Effect Descriptions",
 	"CN.SETTINGS.VERBOSE.HINT": "If using a module like Effects Panel, and if it supports html tags, this will make the description of the effect more verbose.",
 	"CN.WARN.MISSING_ACTOR": "You must provide an actor to perform the saving throw.",
+	"CN.WARN.MISSING_CASTER": "The item is not owned by an actor.",
 	"CN.WARN.MISSING_CONC": "The provided actor is not concentrating on anything.",
 	"CN.WARN.MISSING_CONC_ON_ITEM": "The provided actor is not concentrating on that item.",
 	"CN.NAME.CARD_NAME": "Concentration",
