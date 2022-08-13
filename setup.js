@@ -1,12 +1,22 @@
 import { CONSTANTS } from "./scripts/const.mjs";
 import { registerSettings } from "./scripts/settings.mjs";
-import { api } from "./scripts/api.mjs";
-import { CN_MAIN, CN_SETUP } from "./scripts/main.mjs";
+import { CN_MAIN, CN_SETUP, CN_HELPERS } from "./scripts/main.mjs";
 
 Hooks.once("init", () => {
     console.log(`${CONSTANTS.MODULE.SHORT} | Initializing ${CONSTANTS.MODULE.TITLE}`);
     registerSettings();
-	api.register();
+	
+    Actor.prototype.rollConcentrationSave = CN_MAIN.roll_concentration_save;
+    globalThis.ConcentrationNotifier = {
+        beginConcentration: CN_HELPERS.start_concentration_on_item_API,
+        breakConcentration: CN_HELPERS.end_concentration_on_actor,
+        breakConcentrationForItem: CN_HELPERS.end_concentration_on_item,
+        isActorConcentrating: CN_HELPERS.actor_is_concentrating_on_anything,
+        isActorConcentratingOnItem: CN_HELPERS.actor_is_concentrating_on_item,
+        promptConcentrationSave: CN_HELPERS.request_saving_throw,
+        isEffectConcentration: CN_HELPERS.effect_is_concentration_effect,
+        waitForConcentrationStart: CN_HELPERS.wait_for_concentration_to_begin
+    }
 });
 
 // button-click hooks:
