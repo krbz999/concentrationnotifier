@@ -239,7 +239,7 @@ export class CN_MAIN {
 		delete messageData.timestamp;
 		
 		// bail out if something could not be found.
-		if(!caster || !itemId || isNaN(castLevel)) return;
+		if(!caster || !itemId) return;
 		
 		// get item data; if the item does not exist on the actor, use the embedded flag data.
 		const itemActor = caster.items.get(itemId);
@@ -247,8 +247,9 @@ export class CN_MAIN {
 		const item = itemActor ? itemActor : itemFlags;
 		
 		// make sure it is a concentration spell.
-		const is_concentration = !!foundry.utils.getProperty(item, "system.components.concentration");
-		if(!is_concentration) return;
+		let requiresConc = !!foundry.utils.getProperty(item, "system.components.concentration");
+		if(!requiresConc) requiresConc = !!item.getFlag(CONSTANTS.MODULE.NAME, "data.concentration");
+		if(!requiresConc) return;
 		
 		// create castingData.
 		const castingData = {itemId, castLevel};
@@ -474,6 +475,21 @@ export class CN_SETUP {
 			hint: game.i18n.localize("CN.CHARACTER_FLAGS.CEILING.HINT"),
 			section,
 			type: Number
+		}
+	}
+
+	static _createConcBox = (sheet, html) => {
+		const item = sheet.object;
+		const durationSelect = html[0].querySelector("[name='system.duration.units']");
+		if(durationSelect){
+			const label = document.createElement("SPAN");
+			label.classList.add("sep", "concentrationnotifier");
+			label.innerText = game.i18n.localize("CN.SHEET.LABEL_NAME");
+			const checkbox = document.createElement("INPUT");
+			checkbox.type = "checkbox";
+			checkbox.name = "flags.concentrationnotifier.data.concentration";
+			checkbox.checked = item.getFlag("concentrationnotifier", "data.concentration");
+			durationSelect.after(label, checkbox);
 		}
 	}
 }

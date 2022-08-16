@@ -19,6 +19,7 @@
 		}]
 	},
 	"esmodules": ["./setup.js"],
+	"styles": ["./styles/styles.css"],
 	"languages": [{
 		"lang": "en",
 		"name": "English",

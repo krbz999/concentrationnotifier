@@ -12,6 +12,7 @@
 	"CN.WARN.MISSING_CONC": "The provided actor is not concentrating on anything.",
 	"CN.WARN.MISSING_CONC_ON_ITEM": "The provided actor is not concentrating on that item.",
 	"CN.NAME.CARD_NAME": "Concentration",
+	"CN.SHEET.LABEL_NAME": "Concentration",
 	"CN.LABEL.SAVING_THROW": "Saving Throw DC {dc} {ability}",
 	"CN.LABEL.DELETE_CONC": "Remove Concentration",
 	"CN.CONVENIENT_DESCRIPTION": "You are concentrating on {name}.",

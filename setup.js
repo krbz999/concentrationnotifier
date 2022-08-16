@@ -34,3 +34,6 @@ Hooks.once("ready", CN_SETUP._createActorFlags);
 // gain and loss messages.
 Hooks.on("preDeleteActiveEffect", CN_MAIN._messageConcLoss);
 Hooks.on("preCreateActiveEffect", CN_MAIN._messageConcGain);
+
+// item sheet functionality.
+Hooks.on("renderItemSheet", CN_SETUP._createConcBox);
