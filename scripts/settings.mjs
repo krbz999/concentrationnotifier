@@ -1,12 +1,6 @@
-import { CONSTANTS } from "./const.mjs";
-
 export function registerSettings() {
-	_registerSettings();
-}
-
-function _registerSettings(){
-	
-	game.settings.register(CONSTANTS.MODULE.NAME, CONSTANTS.SETTINGS.CONCENTRATION_ICON, {
+	// custom icon.
+	game.settings.register("concentrationnotifier", "concentration_icon", {
 		name: game.i18n.localize("CN.SETTINGS.DEFAULT_ICON.NAME"),
 		hint: game.i18n.localize("CN.SETTINGS.DEFAULT_ICON.HINT"),
 		scope: "world",
@@ -15,7 +9,8 @@ function _registerSettings(){
 		default: "icons/magic/light/orb-lightbulb-gray.webp"
 	});
 	
-	game.settings.register(CONSTANTS.MODULE.NAME, CONSTANTS.SETTINGS.CONCENTRATION_ICON_ITEM, {
+	// whether to use the item's img.
+	game.settings.register("concentrationnotifier", "concentration_icon_item", {
 		name: game.i18n.localize("CN.SETTINGS.ITEM_ICON.NAME"),
 		hint: game.i18n.localize("CN.SETTINGS.ITEM_ICON.HINT"),
 		scope: "world",
@@ -24,7 +19,8 @@ function _registerSettings(){
 		default: true
 	});
 	
-	game.settings.register(CONSTANTS.MODULE.NAME, CONSTANTS.SETTINGS.PREPEND_EFFECT_LABELS, {
+	// whether to prepend effect labels.
+	game.settings.register("concentrationnotifier", "prepend_effect_labels", {
 		name: game.i18n.localize("CN.SETTINGS.PREPEND.NAME"),
 		hint: game.i18n.localize("CN.SETTINGS.PREPEND.HINT"),
 		scope: "world",
@@ -33,7 +29,8 @@ function _registerSettings(){
 		default: false
 	});
 
-	game.settings.register(CONSTANTS.MODULE.NAME, CONSTANTS.SETTINGS.VERBOSE_TOOLTIPS, {
+	// whether to add fancy stuff to effect descriptions.
+	game.settings.register("concentrationnotifier", "verbose_tooltips", {
 		name: game.i18n.localize("CN.SETTINGS.VERBOSE.NAME"),
 		hint: game.i18n.localize("CN.SETTINGS.VERBOSE.HINT"),
 		scope: "world",
@@ -41,5 +38,4 @@ function _registerSettings(){
 		type: Boolean,
 		default: true
 	});
-	
 }
