@@ -14,6 +14,7 @@ Hooks.once("init", () => {
         isEffectConcentration: API.isEffectConcentration,
         breakConcentration: API.breakConcentration,
         waitForConcentrationStart: API.waitForConcentrationStart,
-        promptConcentrationSave: promptConcentrationSave
+        promptConcentrationSave: promptConcentrationSave,
+        redisplayCard: API.redisplayCard
     }
 });

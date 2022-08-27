@@ -1,7 +1,7 @@
 {
     "id": "concentrationnotifier",
     "title": "Concentration Notifier",
-    "version": "v2.0.0",
+    "version": "v2.0.1",
     "authors": [{
         "name": "Zhell",
         "url": "https://github.com/krbz999",
@@ -36,7 +36,7 @@
     }],
     "url": "https://github.com/krbz999/concentrationnotifier",
     "manifest": "https://raw.githubusercontent.com/krbz999/concentrationnotifier/v10/module.json",
-    "download": "https://github.com/krbz999/concentrationnotifier/releases/download/v2.0.0/module.zip",
+    "download": "https://github.com/krbz999/concentrationnotifier/releases/download/v2.0.1/module.zip",
     "name": "concentrationnotifier",
     "minimumCoreVersion": "10"
 }

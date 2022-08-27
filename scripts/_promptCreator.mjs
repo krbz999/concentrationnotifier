@@ -79,7 +79,7 @@ export async function promptConcentrationSave(caster, {saveDC = 10, message} = {
     // find a concentration effect.
     const effect = API.isActorConcentrating(actor);
     // bail out if actor is not concentrating.
-    if( !effect ) return ui.notifications.warn(game.i18n.format("CN.ACTOR.NOT_CONCENTRATING", {name: actor.name}));
+    if( !effect ) return ui.notifications.warn(game.i18n.format("CN.ACTOR_NOT_CONCENTRATING", {name: actor.name}));
     // get the name of the item being concentrated on.
     const name = effect.getFlag("concentrationnotifier", "data.itemData.name");
     // get the ability being used for concentration saves.

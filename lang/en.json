@@ -32,5 +32,6 @@
 	"CN.CARD.PROMPT.SAVE": "Saving Throw DC {dc} {saveType}",
 	"CN.CARD.PROMPT.END": "End Concentration",
 	
-	"CN.ACTOR.NOT_CONCENTRATING": "{actorName} is not concentrating on anything."
+	"CN.ACTOR_NOT_CONCENTRATING": "{actorName} is not concentrating on anything.",
+	"CN.ITEM_NOT_FOUND": "The item being concentrated on does not exist on the actor."
 }
