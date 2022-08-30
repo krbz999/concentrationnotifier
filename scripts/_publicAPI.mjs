@@ -42,13 +42,18 @@ export class API {
                 setTimeout(resolve, ms);
             });
         }
+        function getConc(){
+            let c;
+            if ( !!item ) return API.isActorConcentratingOnItem(actor, item);
+            return API.isActorConcentrating(actor);
+        }
         
-        let conc = !!item ? API.isActorConcentratingOnItem(actor, item) : API.isActorConcentrating(actor);
+        let conc = getConc();
         let waited = 0;
         while( !conc && waited < max_wait ){
             await wait(100);
             waited = waited + 100;
-            conc = !!item ? API.isActorConcentratingOnItem(actor, item) : API.isActorConcentrating(actor);
+            conc = getConc();
         }
         if( !!conc ) return conc;
         return false;
@@ -68,6 +73,7 @@ export class API {
 		if ( !item ) return ui.notifications.warn(game.i18n.localize("CN.ITEM_NOT_FOUND"));
 
         const clone = item.clone( itemData, { keepId: true });
+        clone.prepareFinalAttributes();
         return clone.use({
             createMeasuredTemplate: false,
             consumeQuantity: false,

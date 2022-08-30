@@ -1,15 +1,16 @@
-// the function executed when clicking the DELETE button for concentration effects.
+export function setHooks_promptListeners(){
 
-Hooks.on("renderChatLog", (_, html) => {
-    html[0].addEventListener("click", (event) => {
-        return clickConcentrationPrompt(event);
+    Hooks.on("renderChatLog", (_, html) => {
+        html[0].addEventListener("click", (event) => {
+            return clickConcentrationPrompt(event);
+        });
     });
-});
-Hooks.on("renderChatPopout", (_, html) => {
-    html[0].addEventListener("click", (event) => {
-        return clickConcentrationPrompt(event);
+    Hooks.on("renderChatPopout", (_, html) => {
+        html[0].addEventListener("click", (event) => {
+            return clickConcentrationPrompt(event);
+        });
     });
-});
+}
 
 async function clickConcentrationPrompt(event){
     // get the target of the mouse click.

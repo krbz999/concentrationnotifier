@@ -1,29 +1,36 @@
 import { API } from "./_publicAPI.mjs";
 
-Hooks.on("dnd5e.useItem", async (item) => {
-    // item must be an owned item.
-    const actor = item.parent;
-    if ( !actor ) return;
+export function setHooks_startConcentration(){
 
-    // item must require concentration.
-    let requiresConc = foundry.utils.getProperty(item, "system.components.concentration");
-    if ( !requiresConc ) requiresConc = item.getFlag("concentrationnotifier", "data.concentration");
-    if ( !requiresConc ) return;
-    
-    // get spell levels.
-    const castLevel = item.system.level;
-    const baseLevel = fromUuidSync(item.uuid)?.system.level;
-    const itemUuid = item.uuid;
-    
-    // create castingData.
-    const data = {
-        itemData: item.toObject(),
-        castData: { baseLevel, castLevel, itemUuid }
-    }
-    
-    // apply concentration.
-    return applyConcentration(actor, item, data);
-});
+    Hooks.on("dnd5e.useItem", async (item) => {
+        // item must be an owned item.
+        const actor = item.parent;
+        if ( !actor ) return;
+
+        // item must require concentration.
+        let requiresConc;
+        if ( item.type === "spell" ){
+            const path = "system.components.concentration";
+            requiresConc = foundry.utils.getProperty(item, path);
+        }
+        else requiresConc = item.getFlag("concentrationnotifier", "data.concentration");
+        if ( !requiresConc ) return;
+        
+        // get spell levels.
+        const castLevel = item.system.level;
+        const baseLevel = fromUuidSync(item.uuid)?.system.level;
+        const itemUuid = item.uuid;
+        
+        // create castingData.
+        const data = {
+            itemData: item.toObject(),
+            castData: { baseLevel, castLevel, itemUuid }
+        }
+        
+        // apply concentration.
+        return applyConcentration(actor, item, data);
+    });
+}
 
 // apply concentration when using a specific item.
 async function applyConcentration(actor, item, data){
@@ -67,7 +74,8 @@ async function createEffectData(actor, item, data){
 
     // create description.
     let description = game.i18n.format("CN.CONCENTRATING_ON_ITEM", {name: item.name});
-    if ( verbose ) description = await renderTemplate("modules/concentrationnotifier/templates/effectDescription.hbs", {
+    const template = "modules/concentrationnotifier/templates/effectDescription.hbs";
+    if ( verbose ) description = await renderTemplate(template, {
         description,
         itemDescription: item.system.description.value
     });
@@ -104,11 +112,11 @@ function getItemDuration(item){
     if( ["inst", "month", "perm", "spec", "year"].includes(units) ) return {};
     
     // cases for the remaining units of time:
-    if( units === "round" ) return {rounds: value};
-    if( units === "turn" ) return {turns: value};
-    if( units === "minute" ) return {seconds: value * 60};
-    if( units === "hour" ) return {seconds: value * 60 * 60};
-    if( units === "day" ) return {seconds: value * 24 * 60 * 60};
+    if( units === "round" ) return { rounds: value };
+    if( units === "turn" ) return { turns: value };
+    if( units === "minute" ) return { seconds: value * 60 };
+    if( units === "hour" ) return { seconds: value * 60 * 60 };
+    if( units === "day" ) return { seconds: value * 24 * 60 * 60 };
 }
 
 // get the image used for the effect.
@@ -135,5 +143,7 @@ async function breakConcentration(caster, message = true){
     const deleteIds = actor.effects.filter(eff => {
         return API.isEffectConcentration(eff);
     }).map(i => i.id);
-    return actor.deleteEmbeddedDocuments("ActiveEffect", deleteIds, {concMessage: message});
+    return actor.deleteEmbeddedDocuments("ActiveEffect", deleteIds, {
+        concMessage: message
+    });
 }
