@@ -17,16 +17,11 @@
         }]
     },
     "esmodules": [
-        "./setup.js",
-        "./scripts/_startConcentration.mjs",
-        "./scripts/_rollConcentrationSave.mjs",
-        "./scripts/_promptListeners.mjs",
-        "./scripts/_promptCreator.mjs",
-        "./scripts/_gainLoseConcentrationTracker.mjs",
-        "./scripts/_createSheetCheckbox.mjs",
-        "./scripts/_characterFlags.mjs"
+        "./setup.js"
     ],
-    "styles": ["./styles/styles.css"],
+    "styles": [
+        "./styles/styles.css"
+    ],
     "languages": [{
         "lang": "en",
         "name": "English",
@@ -36,7 +31,7 @@
     }],
     "url": "https://github.com/krbz999/concentrationnotifier",
     "manifest": "https://raw.githubusercontent.com/krbz999/concentrationnotifier/v10/module.json",
-    "download": "https://github.com/krbz999/concentrationnotifier/releases/download/v2.0.1/module.zip",
+    "download": "https://github.com/krbz999/concentrationnotifier/releases/download/v2.0.2/module.zip",
     "name": "concentrationnotifier",
     "minimumCoreVersion": "10"
 }
