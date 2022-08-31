@@ -1,0 +1,27 @@
+<div class="concentrationnotifier">
+    <div class="card-contents prompt-card">
+
+        <div class="header">
+            {{localize "CN.CONCENTRATION"}}
+        </div>
+
+        <div class="details">
+            {{#if description}}
+                {{{description}}}
+            {{else}}
+                {{{details}}}
+            {{/if}}
+        </div>
+        
+        <div class="buttons">
+            <button name="saving-throw-button" data-dc="{{dc}}" data-save-type="{{ability}}" data-actor-uuid="{{actorUuid}}">
+                <i class="fas fa-dice-d20"></i> {{buttonSaveLabel}}
+            </button>
+            <button name="delete-concentration-button" data-effect-uuid="{{effectUuid}}">
+                <i class="fas fa-circle-dot"></i> {{localize "CN.CARD.PROMPT.END"}}
+            </button>
+        </div>
+
+    </div>
+</div>
+<hr>

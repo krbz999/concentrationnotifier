@@ -1,0 +1,48 @@
+/* for item sheets separator */
+span.sep.concentrationnotifier {
+    margin: 0 4px 0 0 !important;
+}
+
+/* 
+    PROMPT CARDS
+*/
+.concentrationnotifier div.card-contents.prompt-card .header {
+    text-align: center;
+    font-size: 30px;
+    font-family: "Modesto Condensed";
+    border-bottom-style: solid;
+    border-top-style: solid;
+    margin: 5px 0px 5px 0px;
+    border-radius: 5px;
+}
+.concentrationnotifier div.card-contents.prompt-card .details {
+    margin: 5px 5px 5px 5px;
+    padding: 5px 10px 5px 10px;
+}
+.concentrationnotifier button[name="saving-throw-button"] {
+    border-radius: 10px;
+    margin-bottom: 5px;
+    height: 50px;
+    border-right: outset;
+    border-bottom: outset;
+}
+.concentrationnotifier button[name="saving-throw-button"] > i.fas {
+    font-size: 20px;
+    position: relative;
+    top: 2px;
+}
+.concentrationnotifier a[name="render-item-sheet"] {
+    font-weight: bold;
+    text-decoration: underline;
+}
+
+.concentrationnotifier div.item-image {
+    text-align: center;
+}
+.concentrationnotifier .item-image a:hover {
+    filter: drop-shadow(0 0 10px red);
+}
+.concentrationnotifier .item-image img {
+    border: none;
+    width: 20%;
+}
