@@ -26,7 +26,9 @@ export function setHooks_promptCreator(){
         if(userId !== game.user.id) return;
         
         // bail out if there is no save needed, and get the damage taken.
-        const {save, damage} = context["concentrationnotifier"];
+        const cn = context["concentrationnotifier"];
+        if ( !cn ) return;
+        const {save, damage} = cn;
         if ( !save ) return;
         // calculate DC from the damage taken.
         const dc = Math.max(10, Math.floor(Math.abs(damage) / 2));
