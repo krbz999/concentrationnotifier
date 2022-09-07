@@ -51,12 +51,12 @@ export class API {
         
         let conc = getConc();
         let waited = 0;
-        while( !conc && waited < max_wait ){
+        while( !conc && waited < max_wait ) {
             await wait(100);
             waited = waited + 100;
             conc = getConc();
         }
-        if( !!conc ) return conc;
+        if ( !!conc ) return conc;
         return false;
     }
 
@@ -64,23 +64,23 @@ export class API {
     static async redisplayCard(caster){
         const actor = caster.actor ?? caster;
         const isConc = CN.isActorConcentrating(actor);
-        if ( !isConc ){
+        if ( !isConc ) {
             const locale = game.i18n.format("CN.ACTOR_NOT_CONCENTRATING", {
                 name: actor.name
             });
             ui.notifications.warn(locale);
             return null;
         }
-		
-		const {itemData, castData} = isConc.getFlag(MODULE, "data");
-		const item = fromUuidSync(castData.itemUuid);
+        
+        const { itemData, castData } = isConc.getFlag(MODULE, "data");
+        const item = fromUuidSync(castData.itemUuid);
 
-		if ( !item ) {
+        if ( !item ) {
             ui.notifications.warn(game.i18n.localize("CN.ITEM_NOT_FOUND"));
             return;
         }
 
-        const clone = item.clone( itemData, { keepId: true });
+        const clone = item.clone(itemData, { keepId: true });
         clone.prepareFinalAttributes();
         return clone.use({
             createMeasuredTemplate: false,

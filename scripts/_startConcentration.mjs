@@ -10,7 +10,7 @@ export function setHooks_startConcentration(){
 
         // item must require concentration.
         let requiresConc;
-        if ( item.type === "spell" ){
+        if ( item.type === "spell" ) {
             const path = "system.components.concentration";
             requiresConc = foundry.utils.getProperty(item, path);
         }
@@ -47,18 +47,18 @@ async function applyConcentration(actor, item, data){
     const castLevel = data.castData.castLevel;
     
     // case 1: not concentrating.
-    if( !isConc ){
+    if ( !isConc ) {
         return actor.createEmbeddedDocuments("ActiveEffect", [effectData]);
     }
     
     // case 2: concentrating on a different item.
-    if( isConc.getFlag(MODULE, "data.castData.itemUuid") !== newUuid ){
+    if ( isConc.getFlag(MODULE, "data.castData.itemUuid") !== newUuid ) {
         await breakConcentration(actor, false);
         return actor.createEmbeddedDocuments("ActiveEffect", [effectData]);
     }
     
     // case 3: concentrating on the same item but at a different level.
-    if( isConc.getFlag(MODULE, "data.castData.castLevel") !== castLevel ){
+    if ( isConc.getFlag(MODULE, "data.castData.castLevel") !== castLevel ) {
         await breakConcentration(actor, false);
         return actor.createEmbeddedDocuments("ActiveEffect", [effectData]);
     }
@@ -110,18 +110,18 @@ async function createEffectData(actor, item, data){
 function getItemDuration(item){
     const duration = item.system.duration;
 
-    if( !duration?.value ) return {};
+    if ( !duration?.value ) return {};
     const {value, units} = duration;
     
     // do not bother for these duration types:
-    if( ["inst", "month", "perm", "spec", "year"].includes(units) ) return {};
+    if ( ["inst", "month", "perm", "spec", "year"].includes(units) ) return {};
     
     // cases for the remaining units of time:
-    if( units === "round" ) return { rounds: value };
-    if( units === "turn" ) return { turns: value };
-    if( units === "minute" ) return { seconds: value * 60 };
-    if( units === "hour" ) return { seconds: value * 60 * 60 };
-    if( units === "day" ) return { seconds: value * 24 * 60 * 60 };
+    if ( units === "round" ) return { rounds: value };
+    if ( units === "turn" ) return { turns: value };
+    if ( units === "minute" ) return { seconds: value * 60 };
+    if ( units === "hour" ) return { seconds: value * 60 * 60 };
+    if ( units === "day" ) return { seconds: value * 24 * 60 * 60 };
 }
 
 // get the image used for the effect.
@@ -133,10 +133,10 @@ function getModuleImage(item){
     const useItemImage = game.settings.get(MODULE, "concentration_icon_item");
     
     // Case 1: the item has an image, and it is prioritised.
-    if( useItemImage && item.img ) return item.img;
+    if ( useItemImage && item.img ) return item.img;
     
     // Case 2: there is no custom image in the settings, so use the default image.
-    if( !moduleImage ) return "icons/magic/light/orb-lightbulb-gray.webp";
+    if ( !moduleImage ) return "icons/magic/light/orb-lightbulb-gray.webp";
     
     // Case 3: Use the custom image in the settings.
     return moduleImage;

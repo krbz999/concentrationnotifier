@@ -2,7 +2,7 @@ export function setHooks_rollConcentrationSave(){
     
     /* If the saving throw is for concentration, add the bonus on top in the pre-hook. */
     Hooks.on("dnd5e.preRollAbilitySave", (actor, rollConfig, saveType) => {
-        if ( foundry.utils.hasProperty(rollConfig, "isConcSave") ){
+        if ( foundry.utils.hasProperty(rollConfig, "isConcSave") ) {
             if ( !!rollConfig.concentrationBonus ) {
                 rollConfig.parts.push(rollConfig.concentrationBonus);
             }
