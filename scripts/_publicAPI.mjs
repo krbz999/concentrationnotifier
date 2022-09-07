@@ -1,3 +1,5 @@
+import { MODULE } from "./settings.mjs";
+
 export class API {
     
     // determine if you are concentrating at all.
@@ -13,7 +15,7 @@ export class API {
     static isActorConcentratingOnItem(caster, item){
         const actor = caster.actor ?? caster;
         const effect = actor.effects.find(eff => {
-            const itemUuid = eff.getFlag("concentrationnotifier", "data.castData.itemUuid");
+            const itemUuid = eff.getFlag(MODULE, "data.castData.itemUuid");
             return itemUuid === item.uuid;
         });
         return !!effect ? effect : false;
@@ -43,7 +45,6 @@ export class API {
             });
         }
         function getConc(){
-            let c;
             if ( !!item ) return API.isActorConcentratingOnItem(actor, item);
             return API.isActorConcentrating(actor);
         }
@@ -64,13 +65,20 @@ export class API {
         const actor = caster.actor ?? caster;
         const isConc = CN.isActorConcentrating(actor);
         if ( !isConc ){
-            return ui.notifications.warn(game.i18n.format("CN.ACTOR_NOT_CONCENTRATING", {name: actor.name}));
+            const locale = game.i18n.format("CN.ACTOR_NOT_CONCENTRATING", {
+                name: actor.name
+            });
+            ui.notifications.warn(locale);
+            return null;
         }
 		
-		const {itemData, castData} = isConc.getFlag("concentrationnotifier", "data");
+		const {itemData, castData} = isConc.getFlag(MODULE, "data");
 		const item = fromUuidSync(castData.itemUuid);
 
-		if ( !item ) return ui.notifications.warn(game.i18n.localize("CN.ITEM_NOT_FOUND"));
+		if ( !item ) {
+            ui.notifications.warn(game.i18n.localize("CN.ITEM_NOT_FOUND"));
+            return;
+        }
 
         const clone = item.clone( itemData, { keepId: true });
         clone.prepareFinalAttributes();

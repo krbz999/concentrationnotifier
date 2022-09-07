@@ -16,7 +16,7 @@ export function setHooks_characterFlags(){
         /* Change the ability being used for the saving throw. */
         CONFIG.DND5E.characterFlags["concentrationAbility"] = {
             name: game.i18n.localize("CN.CHARACTER_FLAGS.ABILITY.NAME"),
-            hint: game.i18n.format("CN.CHARACTER_FLAGS.ABILITY.HINT", {keys: abilityScoreKeys}),
+            hint: game.i18n.format("CN.CHARACTER_FLAGS.ABILITY.HINT", { keys: abilityScoreKeys }),
             section,
             type: String
         }

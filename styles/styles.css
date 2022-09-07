@@ -15,9 +15,12 @@ span.sep.concentrationnotifier {
     margin: 5px 0px 5px 0px;
     border-radius: 5px;
 }
-.concentrationnotifier div.card-contents.prompt-card .details {
-    margin: 5px 5px 5px 5px;
-    padding: 5px 10px 5px 10px;
+.concentrationnotifier div.card-contents.prompt-card .details { margin: 5px 0 0 5px; }
+.concentrationnotifier .prompt-card .buttons {
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 .concentrationnotifier button[name="saving-throw-button"] {
     border-radius: 10px;
@@ -31,18 +34,19 @@ span.sep.concentrationnotifier {
     position: relative;
     top: 2px;
 }
+.concentrationnotifier button[name="delete-concentration-button"] {
+    padding: 0 10px 0 10px;
+    width: 90%;
+    min-width: fit-content;
+}
 .concentrationnotifier a[name="render-item-sheet"] {
     font-weight: bold;
     text-decoration: underline;
 }
-
-.concentrationnotifier div.item-image {
-    text-align: center;
+.concentrationnotifier .gain-loss-details {
+    display: grid;
+    grid-template-columns: 70% 30%;
 }
-.concentrationnotifier .item-image a:hover {
-    filter: drop-shadow(0 0 10px red);
-}
-.concentrationnotifier .item-image img {
-    border: none;
-    width: 20%;
-}
+.concentrationnotifier div.item-image { margin: 5px 5px 0 0; }
+.concentrationnotifier .item-image a:hover { filter: drop-shadow(0 0 10px red); }
+.concentrationnotifier .item-image img { border: none; }
