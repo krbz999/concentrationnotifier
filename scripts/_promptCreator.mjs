@@ -1,3 +1,4 @@
+import { MODULE } from "./settings.mjs";
 import { API } from "./_publicAPI.mjs";
 
 export function setHooks_promptCreator(){
@@ -17,16 +18,16 @@ export function setHooks_promptCreator(){
         const damage = (old_temp + old_value) - (new_temp + new_value);
         
         // if damageTaken > 0, tag context for a saving throw.
-        context["concentrationnotifier"] = {save: damage > 0, damage};
+        context[MODULE] = {save: damage > 0, damage};
     });
 
     // if the user is concentrating, and has taken damage, build a chat card, and call for a saving throw.
     Hooks.on("updateActor", async (actor, data, context, userId) => {
         // only do this for the one doing the update.
-        if(userId !== game.user.id) return;
+        if ( userId !== game.user.id ) return;
         
         // bail out if there is no save needed, and get the damage taken.
-        const cn = context["concentrationnotifier"];
+        const cn = context[MODULE];
         if ( !cn ) return;
         const {save, damage} = cn;
         if ( !save ) return;
@@ -36,9 +37,9 @@ export function setHooks_promptCreator(){
         // find a concentration effect.
         const effect = API.isActorConcentrating(actor);
         // bail out if actor is not concentrating.
-        if( !effect ) return;
+        if ( !effect ) return;
         // get the name of the item being concentrated on.
-        const name = effect.getFlag("concentrationnotifier", "data.itemData.name");
+        const name = effect.getFlag(MODULE, "data.itemData.name");
         // get the ability being used for concentration saves.
         const abilityKey = actor.getFlag("dnd5e", "concentrationAbility") ?? "con";
         // get whisper targets.
@@ -48,12 +49,13 @@ export function setHooks_promptCreator(){
         }).map(([id]) => id);
         
         // the chat message contents.
-        const content = await renderTemplate("modules/concentrationnotifier/templates/savingThrowPrompt.hbs", {
+        const template = "modules/concentrationnotifier/templates/savingThrowPrompt.hbs";
+        const content = await renderTemplate(template, {
             details: game.i18n.format("CN.CARD.PROMPT.DETAILS", {
                 dc, itemName: name, damage,
                 saveType: CONFIG.DND5E.abilities[abilityKey],
                 actorName: actor.name,
-                itemUuid: effect.getFlag("concentrationnotifier", "data.castData.itemUuid")
+                itemUuid: effect.getFlag(MODULE, "data.castData.itemUuid")
             }),
             buttonSaveLabel: game.i18n.format("CN.CARD.PROMPT.SAVE", {
                 dc, saveType: CONFIG.DND5E.abilities[abilityKey]
@@ -84,9 +86,14 @@ export async function promptConcentrationSave(caster, {saveDC = 10, message} = {
     // find a concentration effect.
     const effect = API.isActorConcentrating(actor);
     // bail out if actor is not concentrating.
-    if( !effect ) return ui.notifications.warn(game.i18n.format("CN.ACTOR_NOT_CONCENTRATING", {name: actor.name}));
+    if ( !effect ) {
+        ui.notifications.warn(game.i18n.format("CN.ACTOR_NOT_CONCENTRATING", {
+            name: actor.name
+        }));
+        return null;
+    }
     // get the name of the item being concentrated on.
-    const name = effect.getFlag("concentrationnotifier", "data.itemData.name");
+    const name = effect.getFlag(MODULE, "data.itemData.name");
     // get the ability being used for concentration saves.
     const abilityKey = actor.getFlag("dnd5e", "concentrationAbility") ?? "con";
     // get whisper targets.
@@ -96,13 +103,14 @@ export async function promptConcentrationSave(caster, {saveDC = 10, message} = {
     }).map(([id]) => id);
 
     // the chat message contents.
-    const content = await renderTemplate("modules/concentrationnotifier/templates/savingThrowPrompt.hbs", {
+    const template = "modules/concentrationnotifier/templates/savingThrowPrompt.hbs";
+    const content = await renderTemplate(template, {
         details: game.i18n.format("CN.CARD.PROMPT.DETAILS_MANUAL", {
             dc: saveDC,
             itemName: name,
             saveType: CONFIG.DND5E.abilities[abilityKey],
             actorName: actor.name,
-            itemUuid: effect.getFlag("concentrationnotifier", "data.castData.itemUuid")
+            itemUuid: effect.getFlag(MODULE, "data.castData.itemUuid")
         }),
         buttonSaveLabel: game.i18n.format("CN.CARD.PROMPT.SAVE", {
             dc: saveDC,

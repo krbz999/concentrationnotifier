@@ -1,37 +1,53 @@
 {
-	"CN.SETTINGS.DEFAULT_ICON.NAME": "Custom Icon",
-	"CN.SETTINGS.DEFAULT_ICON.HINT": "An image path here will replace the default icon used for the concentration effect.",
-	"CN.SETTINGS.ITEM_ICON.NAME": "Use Item Icon",
-	"CN.SETTINGS.ITEM_ICON.HINT": "If checked, the image used for concentration effects will be overridden by the item's image.",
-	"CN.SETTINGS.PREPEND.NAME": "Prepend Effect Labels",
-	"CN.SETTINGS.PREPEND.HINT": "If checked, concentration effects are prepended with 'Concentration' to distinguish them from other effects.",
-	"CN.SETTINGS.VERBOSE.NAME": "Verbose Effect Descriptions",
-	"CN.SETTINGS.VERBOSE.HINT": "If using a module like Effects Panel, and if it supports html tags, this will make the description of the effect more verbose.",
-	
-	"CN.DELETE_DIALOG_TITLE": "End concentration on {name}?",
-	"CN.DELETE_DIALOG_TEXT": "This will end concentration on {name}.",
-	
-	"CN.CHARACTER_FLAGS.BONUS.NAME": "Concentration Bonus",
-	"CN.CHARACTER_FLAGS.BONUS.HINT": "A bonus to saving throws to maintain concentration. This field supports dynamic values such as @classes.sorcerer.levels as well as dice expressions.",
-	"CN.CHARACTER_FLAGS.ABILITY.NAME": "Concentration Ability",
-	"CN.CHARACTER_FLAGS.ABILITY.HINT": "The ability this character uses for saving throws to maintain concentration. The possible values are {keys}.",
-	"CN.CHARACTER_FLAGS.RELIABLE.NAME": "Reliable Concentration",
-	"CN.CHARACTER_FLAGS.RELIABLE.HINT": "This character cannot roll below 10 to maintain concentration.",
-	"CN.CHARACTER_FLAGS.ADVANTAGE.NAME": "Concentration Advantage",
-	"CN.CHARACTER_FLAGS.ADVANTAGE.HINT": "This character rolls with advantage to maintain concentration.",
-	
-	"CN.CONCENTRATION": "Concentration",
-	"CN.SPEAKER": "Concentration Notifier",
-	"CN.DETAILS": "Item Details",
+    "CN": {
+        "SETTINGS": {
+            "DEFAULT_ICON.NAME": "Custom Icon",
+            "DEFAULT_ICON.HINT": "An image path here will replace the default icon used for the concentration effect.",
 
-	"CN.CONCENTRATING_ON_ITEM": "You are concentrating on {name}.",
-	"CN.CARD.GAIN.DETAILS": "{actorName} began concentration on {itemName}.",
-	"CN.CARD.LOSS.DETAILS": "{actorName} ended concentration on {itemName}.",
-	"CN.CARD.PROMPT.DETAILS": "{actorName} has taken <strong>{damage}</strong> damage and must make a <strong>DC {dc}</strong> {saveType} saving throw to maintain concentration on <a name='render-item-sheet' data-item-uuid='{itemUuid}'>{itemName}</a>.",
-	"CN.CARD.PROMPT.DETAILS_MANUAL": "{actorName} must make a <strong>DC {dc}</strong> {saveType} saving throw to maintain concentration on <a name='render-item-sheet' data-item-uuid='{itemUuid}'>{itemName}</a>.",
-	"CN.CARD.PROMPT.SAVE": "Saving Throw DC {dc} {saveType}",
-	"CN.CARD.PROMPT.END": "End Concentration",
-	
-	"CN.ACTOR_NOT_CONCENTRATING": "{actorName} is not concentrating on anything.",
-	"CN.ITEM_NOT_FOUND": "The item being concentrated on does not exist on the actor."
+            "ITEM_ICON.NAME": "Use Item Icon",
+            "ITEM_ICON.HINT": "If checked, the image used for concentration effects will be overridden by the item's image.",
+
+            "PREPEND.NAME": "Prepend Effect Labels",
+            "PREPEND.HINT": "If checked, concentration effects are prepended with 'Concentration' to distinguish them from other effects.",
+
+            "VERBOSE.NAME": "Verbose Effect Descriptions",
+            "VERBOSE.HINT": "If using a module like Effects Panel, and if it supports html tags, this will make the description of the effect more verbose."
+        },
+        
+        "DELETE_DIALOG_TITLE": "End concentration on {name}?",
+        "DELETE_DIALOG_TEXT": "This will end concentration on {name}.",
+
+        "CHARACTER_FLAGS": {
+            "BONUS.NAME": "Concentration Bonus",
+            "BONUS.HINT": "A bonus to saving throws to maintain concentration. This field supports dynamic values such as @classes.sorcerer.levels as well as dice expressions.",
+
+            "ABILITY.NAME": "Concentration Ability",
+            "ABILITY.HINT": "The ability this character uses for saving throws to maintain concentration. The possible values are {keys}.",
+
+            "RELIABLE.NAME": "Reliable Concentration",
+            "RELIABLE.HINT": "This character cannot roll below 10 to maintain concentration.",
+
+            "ADVANTAGE.NAME": "Concentration Advantage",
+            "ADVANTAGE.HINT": "This character rolls with advantage to maintain concentration."
+        },
+        
+        "CONCENTRATION": "Concentration",
+        "SPEAKER": "Concentration Notifier",
+        "DETAILS": "Item Details",
+        "CONCENTRATING_ON_ITEM": "You are concentrating on {name}.",
+
+        "CARD": {
+            "GAIN.DETAILS": "{actorName} began concentration on {itemName}.",
+            "LOSS.DETAILS": "{actorName} ended concentration on {itemName}.",
+
+            "PROMPT.DETAILS": "{actorName} has taken <strong>{damage}</strong> damage and must make a <strong>DC {dc}</strong> {saveType} saving throw to maintain concentration on <a name='render-item-sheet' data-item-uuid='{itemUuid}'>{itemName}</a>.",
+            "PROMPT.DETAILS_MANUAL": "{actorName} must make a <strong>DC {dc}</strong> {saveType} saving throw to maintain concentration on <a name='render-item-sheet' data-item-uuid='{itemUuid}'>{itemName}</a>.",
+            
+            "PROMPT.SAVE": "Saving Throw DC {dc} {saveType}",
+            "PROMPT.END": "End Concentration"
+        },
+        
+        "ACTOR_NOT_CONCENTRATING": "{actorName} is not concentrating on anything.",
+        "ITEM_NOT_FOUND": "The item being concentrated on does not exist on the actor."
+    }
 }

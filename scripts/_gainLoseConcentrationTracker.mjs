@@ -1,3 +1,4 @@
+import { MODULE } from "./settings.mjs";
 import { API } from "./_publicAPI.mjs";
 
 export function setHooks_gainLoseConcentrationTracker(){
@@ -15,11 +16,11 @@ export function setHooks_gainLoseConcentrationTracker(){
 
         const data = {
             details: game.i18n.format("CN.CARD.GAIN.DETAILS", {
-                itemName: effect.getFlag("concentrationnotifier", "data.itemData.name"),
+                itemName: effect.getFlag(MODULE, "data.itemData.name"),
                 actorName: effect.parent.name
             }),
-            itemImg: effect.getFlag("concentrationnotifier", "data.itemData.img"),
-            itemUuid: effect.getFlag("concentrationnotifier", "data.castData.itemUuid")
+            itemImg: effect.getFlag(MODULE, "data.itemData.img"),
+            itemUuid: effect.getFlag(MODULE, "data.castData.itemUuid")
         }
         const content = await renderTemplate("modules/concentrationnotifier/templates/concentrationGain.hbs", data);
         const publicMode = game.settings.get("core", "rollMode") === CONST.DICE_ROLL_MODES.PUBLIC;
@@ -53,11 +54,11 @@ export function setHooks_gainLoseConcentrationTracker(){
 
         const data = {
             details: game.i18n.format("CN.CARD.LOSS.DETAILS", {
-                itemName: effect.getFlag("concentrationnotifier", "data.itemData.name"),
+                itemName: effect.getFlag(MODULE, "data.itemData.name"),
                 actorName: effect.parent.name
             }),
-            itemImg: effect.getFlag("concentrationnotifier", "data.itemData.img"),
-            itemUuid: effect.getFlag("concentrationnotifier", "data.castData.itemUuid")
+            itemImg: effect.getFlag(MODULE, "data.itemData.img"),
+            itemUuid: effect.getFlag(MODULE, "data.castData.itemUuid")
         }
         const content = await renderTemplate("modules/concentrationnotifier/templates/concentrationLoss.hbs", data);
         const publicMode = game.settings.get("core", "rollMode") === CONST.DICE_ROLL_MODES.PUBLIC;

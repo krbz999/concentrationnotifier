@@ -1,3 +1,4 @@
+import { MODULE } from "./settings.mjs";
 import { API } from "./_publicAPI.mjs";
 
 export function setHooks_startConcentration(){
@@ -9,11 +10,11 @@ export function setHooks_startConcentration(){
 
         // item must require concentration.
         let requiresConc;
-        if ( item.type === "spell" ){
+        if ( item.type === "spell" ) {
             const path = "system.components.concentration";
             requiresConc = foundry.utils.getProperty(item, path);
         }
-        else requiresConc = item.getFlag("concentrationnotifier", "data.concentration");
+        else requiresConc = item.getFlag(MODULE, "data.requiresConcentration");
         if ( !requiresConc ) return;
         
         // get spell levels.
@@ -46,18 +47,18 @@ async function applyConcentration(actor, item, data){
     const castLevel = data.castData.castLevel;
     
     // case 1: not concentrating.
-    if( !isConc ){
+    if ( !isConc ) {
         return actor.createEmbeddedDocuments("ActiveEffect", [effectData]);
     }
     
     // case 2: concentrating on a different item.
-    if( isConc.getFlag("concentrationnotifier", "data.castData.itemUuid") !== newUuid ){
+    if ( isConc.getFlag(MODULE, "data.castData.itemUuid") !== newUuid ) {
         await breakConcentration(actor, false);
         return actor.createEmbeddedDocuments("ActiveEffect", [effectData]);
     }
     
     // case 3: concentrating on the same item but at a different level.
-    if( isConc.getFlag("concentrationnotifier", "data.castData.castLevel") !== castLevel ){
+    if ( isConc.getFlag(MODULE, "data.castData.castLevel") !== castLevel ) {
         await breakConcentration(actor, false);
         return actor.createEmbeddedDocuments("ActiveEffect", [effectData]);
     }
@@ -69,11 +70,13 @@ async function applyConcentration(actor, item, data){
 // create the data for the new concentration effect.
 async function createEffectData(actor, item, data){
     
-    const verbose = game.settings.get("concentrationnotifier", "verbose_tooltips");
-    const prepend = game.settings.get("concentrationnotifier", "prepend_effect_labels");
+    const verbose = game.settings.get(MODULE, "verbose_tooltips");
+    const prepend = game.settings.get(MODULE, "prepend_effect_labels");
 
     // create description.
-    let description = game.i18n.format("CN.CONCENTRATING_ON_ITEM", {name: item.name});
+    let description = game.i18n.format("CN.CONCENTRATING_ON_ITEM", {
+        name: item.name
+    });
     const template = "modules/concentrationnotifier/templates/effectDescription.hbs";
     if ( verbose ) description = await renderTemplate(template, {
         description,
@@ -89,7 +92,9 @@ async function createEffectData(actor, item, data){
     
     // get effect label, depending on settings.
     let label = item.name;
-    if ( prepend ) label = `${game.i18n.localize("CN.CONCENTRATION")} - ${label}`;
+    if ( prepend ) {
+        label = `${game.i18n.localize("CN.CONCENTRATION")} - ${label}`;
+    }
     
     // return constructed effect data.
     return {
@@ -105,33 +110,33 @@ async function createEffectData(actor, item, data){
 function getItemDuration(item){
     const duration = item.system.duration;
 
-    if( !duration?.value ) return {};
+    if ( !duration?.value ) return {};
     const {value, units} = duration;
     
     // do not bother for these duration types:
-    if( ["inst", "month", "perm", "spec", "year"].includes(units) ) return {};
+    if ( ["inst", "month", "perm", "spec", "year"].includes(units) ) return {};
     
     // cases for the remaining units of time:
-    if( units === "round" ) return { rounds: value };
-    if( units === "turn" ) return { turns: value };
-    if( units === "minute" ) return { seconds: value * 60 };
-    if( units === "hour" ) return { seconds: value * 60 * 60 };
-    if( units === "day" ) return { seconds: value * 24 * 60 * 60 };
+    if ( units === "round" ) return { rounds: value };
+    if ( units === "turn" ) return { turns: value };
+    if ( units === "minute" ) return { seconds: value * 60 };
+    if ( units === "hour" ) return { seconds: value * 60 * 60 };
+    if ( units === "day" ) return { seconds: value * 24 * 60 * 60 };
 }
 
 // get the image used for the effect.
 function getModuleImage(item){
     // the custom icon in the settings.
-    const moduleImage = game.settings.get("concentrationnotifier", "concentration_icon");
+    const moduleImage = game.settings.get(MODULE, "concentration_icon");
     
     // whether or not to use the item img instead.
-    const useItemImage = game.settings.get("concentrationnotifier", "concentration_icon_item");
+    const useItemImage = game.settings.get(MODULE, "concentration_icon_item");
     
     // Case 1: the item has an image, and it is prioritised.
-    if( useItemImage && item.img ) return item.img;
+    if ( useItemImage && item.img ) return item.img;
     
     // Case 2: there is no custom image in the settings, so use the default image.
-    if( !moduleImage ) return "icons/magic/light/orb-lightbulb-gray.webp";
+    if ( !moduleImage ) return "icons/magic/light/orb-lightbulb-gray.webp";
     
     // Case 3: Use the custom image in the settings.
     return moduleImage;
