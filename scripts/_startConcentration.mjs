@@ -14,7 +14,7 @@ export function setHooks_startConcentration(){
             const path = "system.components.concentration";
             requiresConc = foundry.utils.getProperty(item, path);
         }
-        else requiresConc = item.getFlag(MODULE, "data.concentration");
+        else requiresConc = item.getFlag(MODULE, "data.requiresConcentration");
         if ( !requiresConc ) return;
         
         // get spell levels.
