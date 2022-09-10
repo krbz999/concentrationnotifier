@@ -40,4 +40,14 @@ export function registerSettings() {
 		type: Boolean,
 		default: true
 	});
+
+    // whether to always whisper messages
+    game.settings.register(MODULE, "always_whisper_messages", {
+        name: game.i18n.localize("CN.SETTINGS.WHISPER.NAME"),
+        hint: game.i18n.localize("CN.SETTINGS.WHISPER.HINT"),
+        scope: "world",
+        config: true,
+        type: Boolean,
+        default: false
+    });
 }

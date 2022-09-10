@@ -11,7 +11,12 @@
             "PREPEND.HINT": "If checked, concentration effects are prepended with 'Concentration' to distinguish them from other effects.",
 
             "VERBOSE.NAME": "Verbose Effect Descriptions",
-            "VERBOSE.HINT": "If using a module like Effects Panel, and if it supports html tags, this will make the description of the effect more verbose."
+            "VERBOSE.HINT": "If using a module like Effects Panel, and if it supports html tags, this will make the description of the effect more verbose.",
+
+            "WHISPER": {
+                "NAME": "Whisper Messages",
+                "HINT": "If enabled, all messages about beginning or ending concentration will be whispered to owners and all GMs instead of respecting roll modes. This does not affect the save prompts, which are always whispered no matter what."
+            }
         },
         
         "DELETE_DIALOG_TITLE": "End concentration on {name}?",

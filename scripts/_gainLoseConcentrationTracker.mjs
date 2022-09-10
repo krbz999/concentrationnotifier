@@ -24,8 +24,9 @@ export function setHooks_gainLoseConcentrationTracker(){
         }
         const content = await renderTemplate("modules/concentrationnotifier/templates/concentrationGain.hbs", data);
         const publicMode = game.settings.get("core", "rollMode") === CONST.DICE_ROLL_MODES.PUBLIC;
+        const alwaysWhisper = game.settings.get(MODULE, "always_whisper_messages");
 
-        const whisper = publicMode ? [] : Object.entries(effect.parent.ownership).filter(([id, level]) => {
+        const whisper = (publicMode && !alwaysWhisper) ? [] : Object.entries(effect.parent.ownership).filter(([id, level]) => {
             if ( !game.users.get(id) ) return false;
             return level === CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER;
         }).map(([id]) => id);
@@ -62,8 +63,9 @@ export function setHooks_gainLoseConcentrationTracker(){
         }
         const content = await renderTemplate("modules/concentrationnotifier/templates/concentrationLoss.hbs", data);
         const publicMode = game.settings.get("core", "rollMode") === CONST.DICE_ROLL_MODES.PUBLIC;
+        const alwaysWhisper = game.settings.get(MODULE, "always_whisper_messages");
 
-        const whisper = publicMode ? [] : Object.entries(effect.parent.ownership).filter(([id, level]) => {
+        const whisper = (publicMode && !alwaysWhisper) ? [] : Object.entries(effect.parent.ownership).filter(([id, level]) => {
             if ( !game.users.get(id) ) return false;
             return level === CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER;
         }).map(([id]) => id);
