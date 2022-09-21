@@ -22,10 +22,11 @@ export function setHooks_gainLoseConcentrationTracker(){
             itemImg: effect.getFlag(MODULE, "data.itemData.img"),
             itemUuid: effect.getFlag(MODULE, "data.castData.itemUuid")
         }
-        const content = await renderTemplate("modules/concentrationnotifier/templates/concentrationGain.hbs", data);
+        const template = "modules/concentrationnotifier/templates/concentrationGain.hbs";
+        const content = await renderTemplate(template, data);
         const publicMode = game.settings.get("core", "rollMode") === CONST.DICE_ROLL_MODES.PUBLIC;
         const alwaysWhisper = game.settings.get(MODULE, "always_whisper_messages");
-
+        
         const whisper = (publicMode && !alwaysWhisper) ? [] : Object.entries(effect.parent.ownership).filter(([id, level]) => {
             if ( !game.users.get(id) ) return false;
             return level === CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER;
@@ -61,7 +62,8 @@ export function setHooks_gainLoseConcentrationTracker(){
             itemImg: effect.getFlag(MODULE, "data.itemData.img"),
             itemUuid: effect.getFlag(MODULE, "data.castData.itemUuid")
         }
-        const content = await renderTemplate("modules/concentrationnotifier/templates/concentrationLoss.hbs", data);
+        const template = "modules/concentrationnotifier/templates/concentrationLoss.hbs";
+        const content = await renderTemplate(template, data);
         const publicMode = game.settings.get("core", "rollMode") === CONST.DICE_ROLL_MODES.PUBLIC;
         const alwaysWhisper = game.settings.get(MODULE, "always_whisper_messages");
 

@@ -11,7 +11,7 @@ import { setHooks_startConcentration } from "./scripts/_startConcentration.mjs";
 Hooks.once("init", () => {
     console.log("ZHELL | Initializing Concentration Notifier");
     registerSettings();
-	
+    
     Actor.prototype.rollConcentrationSave = rollConcentrationSave;
     globalThis.CN = {
         isActorConcentrating: API.isActorConcentrating,
