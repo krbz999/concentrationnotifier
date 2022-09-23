@@ -14,7 +14,10 @@ export function setHooks_startConcentration(){
             const path = "system.components.concentration";
             requiresConc = foundry.utils.getProperty(item, path);
         }
-        else requiresConc = item.getFlag(MODULE, "data.requiresConcentration");
+        else {
+            const path = "data.requiresConcentration";
+            requiresConc = item.getFlag(MODULE, path);
+        }
         if ( !requiresConc ) return;
         
         // get spell levels.
@@ -79,7 +82,7 @@ async function createEffectData(actor, item, data){
     });
     const intro = description;
     const content = item.system.description.value;
-    const template = "modules/concentrationnotifier/templates/effectDescription.hbs";
+    const template = `modules/${MODULE}/templates/effectDescription.hbs`;
     if ( verbose ) description = await renderTemplate(template, {
         description,
         itemDescription: item.system.description.value
@@ -114,7 +117,7 @@ function getItemDuration(item){
     const duration = item.system.duration;
 
     if ( !duration?.value ) return {};
-    const { value, units } = duration;
+    let { value, units } = duration;
     
     // do not bother for these duration types:
     if ( ["inst", "perm", "spec"].includes(units) ) return {};
@@ -122,11 +125,18 @@ function getItemDuration(item){
     // cases for the remaining units of time:
     if ( units === "round" ) return { rounds: value };
     if ( units === "turn" ) return { turns: value };
-    if ( units === "minute" ) return { seconds: value * 60 };
-    if ( units === "hour" ) return { seconds: value * 60 * 60 };
-    if ( units === "day" ) return { seconds: value * 24 * 60 * 60 };
-    if ( units === "month" ) return { seconds: value * 30 * 24 * 60 * 60 };
-    if ( units === "year" ) return { seconds: value * 12 * 30 * 24 * 60 * 60 };
+    value *= 60;
+    if ( units === "minute" ) return { seconds: value };
+    value *= 60;
+    if ( units === "hour" ) return { seconds: value };
+    value *= 24;
+    if ( units === "day" ) return { seconds: value };
+    value *= 30;
+    if ( units === "month" ) return { seconds: value };
+    value *= 12;
+    if ( units === "year" ) return { seconds: value };
+
+    return {};
 }
 
 // get the image used for the effect.

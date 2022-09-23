@@ -50,14 +50,14 @@ async function deleteDialog(effect, event) {
     new Dialog({
         title, content, buttons: {
             yes: {
-                icon: `<i class="fas fa-check"></i>`,
+                icon: "<i class='fa-solid fa-check'></i>",
                 label: labelYes,
                 callback: async () => {
                     return effect.delete();
                 }
             },
             no: {
-                icon: `<i class="fas fa-times"></i>`,
+                icon: "<i class='fa-solid fa-xmark'></i>",
                 label: labelNo
             }
         }

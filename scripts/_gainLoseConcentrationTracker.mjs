@@ -12,7 +12,7 @@ export function setHooks_gainLoseConcentrationTracker(){
         if ( !isConcentration ) return;
 
         // effect might be on an unowned item.
-        if ( !effect.modifiesActor ) return;
+        if ( effect.parent instanceof Item ) return;
 
         const data = {
             details: game.i18n.format("CN.CARD.GAIN.DETAILS", {
@@ -22,12 +22,14 @@ export function setHooks_gainLoseConcentrationTracker(){
             itemImg: effect.getFlag(MODULE, "data.itemData.img"),
             itemUuid: effect.getFlag(MODULE, "data.castData.itemUuid")
         }
-        const template = "modules/concentrationnotifier/templates/concentrationGain.hbs";
+        const template = `modules/${MODULE}/templates/concentrationGain.hbs`;
         const content = await renderTemplate(template, data);
         const publicMode = game.settings.get("core", "rollMode") === CONST.DICE_ROLL_MODES.PUBLIC;
         const alwaysWhisper = game.settings.get(MODULE, "always_whisper_messages");
-        
-        const whisper = (publicMode && !alwaysWhisper) ? [] : Object.entries(effect.parent.ownership).filter(([id, level]) => {
+
+        let whisper;
+        if ( publicMode && !alwaysWhisper ) whisper = [];
+        else whisper = Object.entries(effect.parent.ownership).filter(([id, level]) => {
             if ( !game.users.get(id) ) return false;
             return level === CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER;
         }).map(([id]) => id);
@@ -36,7 +38,9 @@ export function setHooks_gainLoseConcentrationTracker(){
             content,
             flags: { core: { canPopout: true } },
             whisper,
-            speaker: ChatMessage.getSpeaker({ alias: game.i18n.localize("CN.SPEAKER") }),
+            speaker: ChatMessage.getSpeaker({
+                alias: game.i18n.localize("CN.SPEAKER")
+            }),
         }
         return ChatMessage.create(messageData);
     });
@@ -62,12 +66,14 @@ export function setHooks_gainLoseConcentrationTracker(){
             itemImg: effect.getFlag(MODULE, "data.itemData.img"),
             itemUuid: effect.getFlag(MODULE, "data.castData.itemUuid")
         }
-        const template = "modules/concentrationnotifier/templates/concentrationLoss.hbs";
+        const template = `modules/${MODULE}/templates/concentrationLoss.hbs`;
         const content = await renderTemplate(template, data);
         const publicMode = game.settings.get("core", "rollMode") === CONST.DICE_ROLL_MODES.PUBLIC;
         const alwaysWhisper = game.settings.get(MODULE, "always_whisper_messages");
 
-        const whisper = (publicMode && !alwaysWhisper) ? [] : Object.entries(effect.parent.ownership).filter(([id, level]) => {
+        let whisper;
+        if (publicMode && !alwaysWhisper ) whisper = [];
+        else whisper = Object.entries(effect.parent.ownership).filter(([id, level]) => {
             if ( !game.users.get(id) ) return false;
             return level === CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER;
         }).map(([id]) => id);
@@ -76,7 +82,9 @@ export function setHooks_gainLoseConcentrationTracker(){
             content,
             flags: { core: { canPopout: true } },
             whisper,
-            speaker: ChatMessage.getSpeaker({ alias: game.i18n.localize("CN.SPEAKER") }),
+            speaker: ChatMessage.getSpeaker({
+                alias: game.i18n.localize("CN.SPEAKER")
+            }),
         }
         return ChatMessage.create(messageData);
     });

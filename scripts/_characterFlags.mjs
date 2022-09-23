@@ -3,7 +3,8 @@ export function setHooks_characterFlags(){
     // create the concentration flags on actor Special Traits.
     Hooks.once("setup", () => {
         const section = game.i18n.localize("CN.CONCENTRATION");
-        const abilityScoreKeys = Object.keys(CONFIG.DND5E.abilities).map(i => `'${i}'`).join(", ");
+        const abilityScoreKeys = Object.keys(CONFIG.DND5E.abilities);
+        const keys = abilityScoreKeys.map(i => `'${i}'`).join(", ");
         
         /* Add bonus on top of the saving throw. */
         CONFIG.DND5E.characterFlags["concentrationBonus"] = {
@@ -16,7 +17,7 @@ export function setHooks_characterFlags(){
         /* Change the ability being used for the saving throw. */
         CONFIG.DND5E.characterFlags["concentrationAbility"] = {
             name: game.i18n.localize("CN.CHARACTER_FLAGS.ABILITY.NAME"),
-            hint: game.i18n.format("CN.CHARACTER_FLAGS.ABILITY.HINT", { keys: abilityScoreKeys }),
+            hint: game.i18n.format("CN.CHARACTER_FLAGS.ABILITY.HINT", { keys }),
             section,
             type: String
         }
