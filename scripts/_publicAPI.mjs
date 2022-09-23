@@ -65,7 +65,8 @@ export class API {
         const actor = caster.actor ?? caster;
         const isConc = CN.isActorConcentrating(actor);
         if ( !isConc ) {
-            const locale = game.i18n.format("CN.ACTOR_NOT_CONCENTRATING", {
+            const string = "CN.ACTOR_NOT_CONCENTRATING";
+            const locale = game.i18n.format(string, {
                 name: actor.name
             });
             ui.notifications.warn(locale);
@@ -76,8 +77,10 @@ export class API {
         const item = fromUuidSync(castData.itemUuid);
 
         if ( !item ) {
-            ui.notifications.warn(game.i18n.localize("CN.ITEM_NOT_FOUND"));
-            return;
+            const string = "CN.ITEM_NOT_FOUND";
+            const locale = game.i18n.localize(string);
+            ui.notifications.warn(locale);
+            return null;
         }
 
         const clone = item.clone(itemData, { keepId: true });

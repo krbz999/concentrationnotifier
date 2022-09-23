@@ -3,9 +3,7 @@ span.sep.concentrationnotifier {
     margin: 0 4px 0 0 !important;
 }
 
-/* 
-    PROMPT CARDS
-*/
+/* PROMPT CARDS */
 .concentrationnotifier div.card-contents.prompt-card .header {
     text-align: center;
     font-size: 30px;
@@ -15,13 +13,18 @@ span.sep.concentrationnotifier {
     margin: 5px 0px 5px 0px;
     border-radius: 5px;
 }
-.concentrationnotifier div.card-contents.prompt-card .details { margin: 5px 0 0 5px; }
+
+.concentrationnotifier div.card-contents.prompt-card .details {
+    margin: 5px 0 0 5px;
+}
+
 .concentrationnotifier .prompt-card .buttons {
     margin-top: 10px;
     display: flex;
     flex-direction: column;
     align-items: center;
 }
+
 .concentrationnotifier button[name="saving-throw-button"] {
     border-radius: 10px;
     margin-bottom: 5px;
@@ -29,24 +32,37 @@ span.sep.concentrationnotifier {
     border-right: outset;
     border-bottom: outset;
 }
-.concentrationnotifier button[name="saving-throw-button"] > i.fas {
+
+.concentrationnotifier button[name="saving-throw-button"]>i.fas {
     font-size: 20px;
     position: relative;
     top: 2px;
 }
+
 .concentrationnotifier button[name="delete-concentration-button"] {
     padding: 0 10px 0 10px;
     width: 90%;
     min-width: fit-content;
 }
+
 .concentrationnotifier a[name="render-item-sheet"] {
     font-weight: bold;
     text-decoration: underline;
 }
+
 .concentrationnotifier .gain-loss-details {
     display: grid;
     grid-template-columns: 70% 30%;
 }
-.concentrationnotifier div.item-image { margin: 5px 5px 0 0; }
-.concentrationnotifier .item-image a:hover { filter: drop-shadow(0 0 10px red); }
-.concentrationnotifier .item-image img { border: none; }
+
+.concentrationnotifier div.item-image {
+    margin: 5px 5px 0 0;
+}
+
+.concentrationnotifier .item-image a:hover {
+    filter: drop-shadow(0 0 10px red);
+}
+
+.concentrationnotifier .item-image img {
+    border: none;
+}

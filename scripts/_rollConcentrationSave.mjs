@@ -1,3 +1,5 @@
+import { MODULE } from "./settings.mjs";
+
 export function setHooks_rollConcentrationSave(){
     
     /* If the saving throw is for concentration, add the bonus on top in the pre-hook. */
@@ -30,7 +32,7 @@ export const rollConcentrationSave = async function(ability, options = {}){
     // options should always have 'targetValue'.
     // ability is always passed in the event listeners.
 
-    if ( Hooks.call("concentrationnotifier.preRollConcentrationSave", this, rollConfig, abl) === false ) return;
+    if ( Hooks.call(`${MODULE}.preRollConcentrationSave`, this, rollConfig, abl) === false ) return;
     
     return this.rollAbilitySave(abl, rollConfig);
 }
