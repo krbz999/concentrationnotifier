@@ -56,7 +56,7 @@ export function setHooks_gainLoseConcentrationTracker(){
         if ( !isConcentration ) return;
 
         // effect might be on an unowned item.
-        if ( !effect.modifiesActor ) return;
+        if ( effect.parent instanceof Item ) return;
 
         const data = {
             details: game.i18n.format("CN.CARD.LOSS.DETAILS", {
