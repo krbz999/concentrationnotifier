@@ -7,7 +7,7 @@
             "ITEM_ICON.NAME": "Usar Ícone do Item",
             "ITEM_ICON.HINT": "Se ativado, a imagem usada para efeitos de concentração será substituída pela imagem do item.",
 
-            "PREPEND.NAME": "Prepend Effect Labels/Acrescentar Rótulo ao Efeitos",
+            "PREPEND.NAME": "Acrescentar Rótulo ao Efeitos",
             "PREPEND.HINT": "Se ativado, os efeitos de concentração serão precedidos com 'Concentração' no nome para distingui-los de outros efeitos.",
 
             "VERBOSE.NAME": "Descrições de Efeitos Detalhados",
