@@ -1,0 +1,58 @@
+{
+    "CN": {
+        "SETTINGS": {
+            "DEFAULT_ICON.NAME": "Ícone Personalizado",
+            "DEFAULT_ICON.HINT": "Caminho para uma imagem aqui substituirá o ícone padrão usado para o efeito de concentração.",
+
+            "ITEM_ICON.NAME": "Usar Ícone do Item",
+            "ITEM_ICON.HINT": "Se ativado, a imagem usada para efeitos de concentração será substituída pela imagem do item.",
+
+            "PREPEND.NAME": "Prepend Effect Labels",
+            "PREPEND.HINT": "If checked, concentration effects are prepended with 'Concentration' to distinguish them from other effects.",
+
+            "VERBOSE.NAME": "Descrições de Efeitos Detalhados",
+            "VERBOSE.HINT": "Se estiver usando um módulo como o \"Effects Panel\", e se ele suportar tags html, isso tornará a descrição do efeito mais detalhada.",
+
+            "WHISPER": {
+                "NAME": "Mensagens Sussurradas",
+                "HINT": "Se ativado, todas as mensagens sobre o início ou fim da concentração serão sussurradas para os donos e todos os MJs em vez de respeitar os modos de rolagem. Isso não afeta os prompts de salvaguarda, que sempre são sussurrados, não importa o quê."
+            }
+        },
+        
+        "DELETE_DIALOG_TITLE": "Encerrar concentração de {name}?",
+        "DELETE_DIALOG_TEXT": "Isso encerrará a concentração de {name}.",
+
+        "CHARACTER_FLAGS": {
+            "BONUS.NAME": "Bônus de Concentração",
+            "BONUS.HINT": "Um bônus nas salvaguardas para manter concentração. Este campo suporta valores dinâmicos como @classes.sorcerer.levels, bem como expressões de dados.",
+
+            "ABILITY.NAME": "Atributo de Concentração",
+            "ABILITY.HINT": "O atributo que este personagem usa para salvaguardas para manter concentração. Os valores possíveis são {keys}.",
+
+            "RELIABLE.NAME": "Concentração Confiável",
+            "RELIABLE.HINT": "Este personagem não pode rolar abaixo de 10 para manter concentração.",
+
+            "ADVANTAGE.NAME": "Vantagem de Concentração",
+            "ADVANTAGE.HINT": "Este personagem rola com vantagem para manter concentração."
+        },
+        
+        "CONCENTRATION": "Concentração",
+        "SPEAKER": "Notificação de Concentração",
+        "DETAILS": "Detalhes do Item",
+        "CONCENTRATING_ON_ITEM": "Você está concentrando em {name}.",
+
+        "CARD": {
+            "GAIN.DETAILS": "{actorName} começou a se concentrar em {itemName}.",
+            "LOSS.DETAILS": "{actorName} quebrou a concentração em {itemName}.",
+
+            "PROMPT.DETAILS": "{actorName} sofreu <strong>{damage}</strong> de dano e deve fazer uma salvaguarda de {saveType} <strong>CD {dc}</strong> para manter concentração em <a name='render-item-sheet ' data-item-uuid='{itemUuid}'>{itemName}</a>.",
+            "PROMPT.DETAILS_MANUAL": "{actorName} deve fazer uma salvaguarda de {saveType} <strong>CD {dc}</strong> para manter concentração em <a name='render-item-sheet' data-item-uuid='{itemUuid}'>{ itemName}</a>.",
+            
+            "PROMPT.SAVE": "Salvaguarda de {saveType} CD {dc}",
+            "PROMPT.END": "Quebrar Concentração"
+        },
+        
+        "ACTOR_NOT_CONCENTRATING": "{actorName} não está concentrando em nada.",
+        "ITEM_NOT_FOUND": "O item que está sendo concentrado não existe no ator."
+    }
+}
