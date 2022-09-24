@@ -7,8 +7,8 @@
             "ITEM_ICON.NAME": "Usar Ícone do Item",
             "ITEM_ICON.HINT": "Se ativado, a imagem usada para efeitos de concentração será substituída pela imagem do item.",
 
-            "PREPEND.NAME": "Prepend Effect Labels",
-            "PREPEND.HINT": "If checked, concentration effects are prepended with 'Concentration' to distinguish them from other effects.",
+            "PREPEND.NAME": "Prepend Effect Labels/Acrescentar Rótulo ao Efeitos",
+            "PREPEND.HINT": "Se ativado, os efeitos de concentração serão precedidos com 'Concentração' no nome para distingui-los de outros efeitos.",
 
             "VERBOSE.NAME": "Descrições de Efeitos Detalhados",
             "VERBOSE.HINT": "Se estiver usando um módulo como o \"Effects Panel\", e se ele suportar tags html, isso tornará a descrição do efeito mais detalhada.",
@@ -45,7 +45,7 @@
             "GAIN.DETAILS": "{actorName} começou a se concentrar em {itemName}.",
             "LOSS.DETAILS": "{actorName} quebrou a concentração em {itemName}.",
 
-            "PROMPT.DETAILS": "{actorName} sofreu <strong>{damage}</strong> de dano e deve fazer uma salvaguarda de {saveType} <strong>CD {dc}</strong> para manter concentração em <a name='render-item-sheet ' data-item-uuid='{itemUuid}'>{itemName}</a>.",
+            "PROMPT.DETAILS": "{actorName} sofreu <strong>{damage}</strong> de dano e deve fazer uma salvaguarda de {saveType} <strong>CD {dc}</strong> para manter concentração em <a name='render-item-sheet' data-item-uuid='{itemUuid}'>{itemName}</a>.",
             "PROMPT.DETAILS_MANUAL": "{actorName} deve fazer uma salvaguarda de {saveType} <strong>CD {dc}</strong> para manter concentração em <a name='render-item-sheet' data-item-uuid='{itemUuid}'>{ itemName}</a>.",
             
             "PROMPT.SAVE": "Salvaguarda de {saveType} CD {dc}",
