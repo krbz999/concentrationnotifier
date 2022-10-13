@@ -9,26 +9,26 @@ import { rollConcentrationSave, setHooks_rollConcentrationSave } from "./scripts
 import { setHooks_startConcentration } from "./scripts/_startConcentration.mjs";
 
 Hooks.once("init", () => {
-    console.log("ZHELL | Initializing Concentration Notifier");
-    registerSettings();
-    
-    Actor.prototype.rollConcentrationSave = rollConcentrationSave;
-    globalThis.CN = {
-        isActorConcentrating: API.isActorConcentrating,
-        isActorConcentratingOnItem: API.isActorConcentratingOnItem,
-        isEffectConcentration: API.isEffectConcentration,
-        breakConcentration: API.breakConcentration,
-        waitForConcentrationStart: API.waitForConcentrationStart,
-        promptConcentrationSave: promptConcentrationSave,
-        redisplayCard: API.redisplayCard
-    }
+  console.log("ZHELL | Initializing Concentration Notifier");
+  registerSettings();
 
-    setHooks_characterFlags();
-    setHooks_createSheetCheckBox();
-    setHooks_gainLoseConcentrationTracker();
-    setHooks_promptCreator();
-    setHooks_promptListeners();
-    setHooks_rollConcentrationSave();
-    setHooks_startConcentration();
-    
+  Actor.prototype.rollConcentrationSave = rollConcentrationSave;
+  globalThis.CN = {
+    isActorConcentrating: API.isActorConcentrating,
+    isActorConcentratingOnItem: API.isActorConcentratingOnItem,
+    isEffectConcentration: API.isEffectConcentration,
+    breakConcentration: API.breakConcentration,
+    waitForConcentrationStart: API.waitForConcentrationStart,
+    promptConcentrationSave: promptConcentrationSave,
+    redisplayCard: API.redisplayCard
+  }
+
+  setHooks_characterFlags();
+  setHooks_createSheetCheckBox();
+  setHooks_gainLoseConcentrationTracker();
+  setHooks_promptCreator();
+  setHooks_promptListeners();
+  setHooks_rollConcentrationSave();
+  setHooks_startConcentration();
+
 });
