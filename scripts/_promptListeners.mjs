@@ -22,7 +22,8 @@ async function clickConcentrationPrompt(event) {
 
   if (button.name === "saving-throw-button") {
     const { dc, saveType, actorUuid } = button.dataset;
-    const actor = fromUuidSync(actorUuid);
+    let actor = fromUuidSync(actorUuid);
+    actor = actor?.actor ?? actor;
     return actor.rollConcentrationSave(saveType, { targetValue: dc });
   }
   else if (button.name === "delete-concentration-button") {
