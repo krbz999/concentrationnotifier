@@ -38,36 +38,46 @@ export function setHooks_startConcentration() {
 
 // apply concentration when using a specific item.
 async function applyConcentration(actor, item, data) {
+  // get whether and why to start or swap concentration.
+  const reason = _isDifferentItem(actor, item, data);
+  if (!reason) return [];
 
-  // get whether the caster is already concentrating.
-  const isConc = API.isActorConcentrating(actor);
+  // break concentration if different item or different level.
+  if (["DIFFERENT", "LEVEL"].includes(reason)) await breakConcentration(actor, false);
 
-  // create effect data.
+  // create effect data and start concentrating.
   const effectData = await createEffectData(actor, item, data);
+  return actor.createEmbeddedDocuments("ActiveEffect", [effectData]);
+}
 
-  // get some needed properties for the following cases.
-  const newUuid = item.uuid;
-  const castLevel = data.castData.castLevel;
+/**
+ * Returns whether and why an item being used should affect concentration.
+ * Used to determine if concentration should be changed, or for the
+ * ability use dialog to determine if it should display a warning.
+ * The returned value is either false or truthy.
+ * @param {Actor5e} actor     The actor using the item.
+ * @param {Item5e} item       The item being used right now.
+ * @param {Object} data       Small object with cast data.
+ * @param {Boolean} isDialog  Whether the function is being used for the AbilityUseDialog.
+ * @returns {String|Boolean}  Truthy string, or false if the items are the same.
+ */
+export function _isDifferentItem(actor, item, data, isDialog = false) {
+  // if you are not concentrating:
+  const isConc = API.isActorConcentrating(actor);
+  if (!isConc) return "FREE";
 
-  // case 1: not concentrating.
-  if (!isConc) {
-    return actor.createEmbeddedDocuments("ActiveEffect", [effectData]);
-  }
+  // if you are concentrating on an entirely different item:
+  const concDiff = isConc.getFlag(MODULE, "data.castData.itemUuid") !== item.uuid;
+  if (concDiff) return "DIFFERENT";
 
-  // case 2: concentrating on a different item.
-  if (isConc.getFlag(MODULE, "data.castData.itemUuid") !== newUuid) {
-    await breakConcentration(actor, false);
-    return actor.createEmbeddedDocuments("ActiveEffect", [effectData]);
-  }
+  // if you are concentrating on the same item but at a different level:
+  const concNotSame = isConc.getFlag(MODULE, "data.castData.castLevel") !== data.castData.castLevel;
+  if (concNotSame) return "LEVEL";
 
-  // case 3: concentrating on the same item but at a different level.
-  if (isConc.getFlag(MODULE, "data.castData.castLevel") !== castLevel) {
-    await breakConcentration(actor, false);
-    return actor.createEmbeddedDocuments("ActiveEffect", [effectData]);
-  }
+  // For AbilityUseDialog warning, only show it for spells of 1st level or higher.
+  if (isDialog && item.type === "spell" && item.system.level > 0) return "LEVEL";
 
-  // case 4: concentrating on the same item at the same level.
-  return [];
+  return false;
 }
 
 // create the data for the new concentration effect.

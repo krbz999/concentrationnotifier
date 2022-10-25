@@ -5,6 +5,7 @@ import { setHooks_gainLoseConcentrationTracker } from "./scripts/_gainLoseConcen
 import { promptConcentrationSave, setHooks_promptCreator } from "./scripts/_promptCreator.mjs";
 import { setHooks_promptListeners } from "./scripts/_promptListeners.mjs";
 import { API } from "./scripts/_publicAPI.mjs";
+import { setHooks_abilityUseDialog } from "./scripts/_renderAbilityUseDialog.mjs";
 import { rollConcentrationSave, setHooks_rollConcentrationSave } from "./scripts/_rollConcentrationSave.mjs";
 import { setHooks_startConcentration } from "./scripts/_startConcentration.mjs";
 
@@ -30,5 +31,5 @@ Hooks.once("init", () => {
   setHooks_promptListeners();
   setHooks_rollConcentrationSave();
   setHooks_startConcentration();
-
+  setHooks_abilityUseDialog();
 });

@@ -8,14 +8,23 @@
       "PREPEND.NAME": "Prepend Effect Labels",
       "PREPEND.HINT": "If checked, concentration effects are prepended with 'Concentration' to distinguish them from other effects.",
       "VERBOSE.NAME": "Verbose Effect Descriptions",
-      "VERBOSE.HINT": "If using a module like Effects Panel, and if it supports html tags, this will make the description of the effect more verbose.",
+      "VERBOSE.HINT": "If using a module like Effects Panel or Visual Active Effects, and if it supports html tags, this will make the description of the effect more verbose.",
       "WHISPER": {
         "NAME": "Whisper Messages",
         "HINT": "If enabled, all messages about beginning or ending concentration will be whispered to owners and all GMs instead of respecting roll modes. This does not affect the save prompts, which are always whispered no matter what."
+      },
+      "USE_WARNING": {
+        "NAME": "Ability Use Warnings",
+        "HINT": "If enabled, show a warning if the usage of an item or spell would end concentration on a different item."
       }
     },
     "DELETE_DIALOG_TITLE": "End concentration on {name}?",
     "DELETE_DIALOG_TEXT": "This will end concentration on {name}.",
+    "ABILITY_DIALOG_WARNING": {
+      "SPELL_SAME": "If you cast this spell at a level other than {level}, it will end concentration on {item}.",
+      "SPELL_DIFF": "If you cast this spell, it will end concentration on {item}.",
+      "ITEM": "If you use this item or feature, it will end concentration on {item}."
+    },
     "CHARACTER_FLAGS": {
       "BONUS.NAME": "Concentration Bonus",
       "BONUS.HINT": "A bonus to saving throws to maintain concentration. This field supports dynamic values such as @classes.sorcerer.levels as well as dice expressions.",

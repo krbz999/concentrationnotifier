@@ -21,18 +21,14 @@ export const rollConcentrationSave = async function (ability, options = {}) {
   const reliableTalent = this.getFlag("dnd5e", "concentrationReliable");
   if (reliableTalent) rollConfig.reliableTalent = reliableTalent;
   const advantage = this.getFlag("dnd5e", "concentrationAdvantage") && !event?.ctrlKey;
-  if (advantage) rollConfig.advantage = advantage;
+  if (advantage) rollConfig.advantage = true;
   const concentrationBonus = this.getFlag("dnd5e", "concentrationBonus");
   if (concentrationBonus && Roll.validate(concentrationBonus)) {
     rollConfig.concentrationBonus = [concentrationBonus];
   } else rollConfig.concentrationBonus = [];
-
-  const parts = foundry.utils.duplicate(options.parts ?? []);
-  foundry.utils.mergeObject(rollConfig, options);
+  if (options.parts?.length) rollConfig.concentrationBonus.push(...options.parts);
   delete options.parts;
-
-  // battle the clobbering.
-  if (parts?.length > 0) rollConfig.concentrationBonus.concat(...parts);
+  foundry.utils.mergeObject(rollConfig, options);
 
   // options should always have 'targetValue'.
   // ability is always passed in the event listeners.
