@@ -28,11 +28,12 @@ export const rollConcentrationSave = async function (ability, options = {}) {
   } else rollConfig.concentrationBonus = [];
 
   const parts = foundry.utils.duplicate(options.parts ?? []);
+
   foundry.utils.mergeObject(rollConfig, options);
   delete options.parts;
 
   // battle the clobbering.
-  if (parts?.length > 0) rollConfig.concentrationBonus.concat(...parts);
+  if (parts?.length > 0) rollConfig.concentrationBonus.push(...parts);
 
   // options should always have 'targetValue'.
   // ability is always passed in the event listeners.

@@ -50,4 +50,14 @@ export function registerSettings() {
     type: Boolean,
     default: false
   });
+
+  // whether to show a warning that you are about to swap conc.
+  game.settings.register(MODULE, "show_ability_use_warning", {
+    name: game.i18n.localize("CN.SETTINGS.USE_WARNING.NAME"),
+    hint: game.i18n.localize("CN.SETTINGS.USE_WARNING.HINT"),
+    scope: "world",
+    config: true,
+    type: Boolean,
+    default: false
+  });
 }
