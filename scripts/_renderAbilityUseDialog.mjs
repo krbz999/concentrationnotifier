@@ -15,7 +15,7 @@ export function setHooks_abilityUseDialog() {
 
     const data = { castData: { castLevel: item.system.level } };
     const mustConc = _isDifferentItem(item.parent, item, data);
-    if (mustConc) config.needsConfiguration = true;
+    if (mustConc && !mustConc !== "FREE") config.needsConfiguration = true;
   });
 
   /**
