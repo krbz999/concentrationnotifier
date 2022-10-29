@@ -39,7 +39,7 @@ export function setHooks_startConcentration() {
 // apply concentration when using a specific item.
 async function applyConcentration(actor, item, data) {
   // get whether and why to start or swap concentration.
-  const reason = _isDifferentItem(actor, item, data);
+  const reason = _itemUseAffectsConcentration(actor, item, data);
   if (!reason) return [];
 
   // break concentration if different item or different level.
@@ -61,7 +61,18 @@ async function applyConcentration(actor, item, data) {
  * @param {Boolean} isDialog  Whether the function is being used for the AbilityUseDialog.
  * @returns {String|Boolean}  Truthy string, or false if the items are the same.
  */
-export function _isDifferentItem(actor, item, data, isDialog = false) {
+export function _itemUseAffectsConcentration(actor, item, data, isDialog = false) {
+  // new item requires concentration:
+  let requiresConc;
+  if (item.type === "spell") {
+    const path = "system.components.concentration";
+    requiresConc = foundry.utils.getProperty(item, path);
+  } else {
+    const path = "data.requiresConcentration";
+    requiresConc = item.getFlag(MODULE, path);
+  }
+  if (!requiresConc) return false;
+
   // if you are not concentrating:
   const isConc = API.isActorConcentrating(actor);
   if (!isConc) return "FREE";

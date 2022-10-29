@@ -1,6 +1,6 @@
 import { MODULE } from "./settings.mjs";
 import { API } from "./_publicAPI.mjs";
-import { _isDifferentItem } from "./_startConcentration.mjs";
+import { _itemUseAffectsConcentration } from "./_startConcentration.mjs";
 
 export function setHooks_abilityUseDialog() {
   /**
@@ -14,7 +14,7 @@ export function setHooks_abilityUseDialog() {
     if (!isConc) return;
 
     const data = { castData: { castLevel: item.system.level } };
-    const mustConc = _isDifferentItem(item.parent, item, data);
+    const mustConc = _itemUseAffectsConcentration(item.parent, item, data);
     if (mustConc && mustConc !== "FREE") config.needsConfiguration = true;
   });
 
@@ -27,8 +27,8 @@ export function setHooks_abilityUseDialog() {
     const isConc = API.isActorConcentrating(item.parent);
     if (!isConc) return;
     const data = { castData: { castLevel: item.system.level } };
-    const reason = _isDifferentItem(item.parent, item, data, true);
-    if (!reason) return;
+    const reason = _itemUseAffectsConcentration(item.parent, item, data, true);
+    if (!reason || reason === "FREE") return;
     const notes = html[0].querySelector(".notes"); // insert below this.
     const locale = _getWarning(reason, item, isConc);
     const DIV = document.createElement("DIV");
