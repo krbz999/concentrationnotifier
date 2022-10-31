@@ -1,4 +1,4 @@
-import { registerSettings } from "./scripts/settings.mjs";
+import { MODULE, registerSettings } from "./scripts/settings.mjs";
 import { setHooks_characterFlags } from "./scripts/_characterFlags.mjs";
 import { setHooks_createSheetCheckBox } from "./scripts/_createSheetCheckbox.mjs";
 import { setHooks_gainLoseConcentrationTracker } from "./scripts/_gainLoseConcentrationTracker.mjs";
@@ -31,5 +31,7 @@ Hooks.once("init", () => {
   setHooks_promptListeners();
   setHooks_rollConcentrationSave();
   setHooks_startConcentration();
-  setHooks_abilityUseDialog();
+  if (game.settings.get(MODULE, "show_ability_use_warning")) {
+    setHooks_abilityUseDialog();
+  }
 });

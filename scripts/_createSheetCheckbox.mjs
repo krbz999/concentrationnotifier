@@ -9,9 +9,9 @@ export function setHooks_createSheetCheckBox() {
     const durationSelect = html[0].querySelector(selector);
     if (!durationSelect) return;
     const template = `modules/${MODULE}/templates/concentrationCheckbox.hbs`;
-    const { requiresConcentration } = item.getFlag(MODULE, "data") ?? {};
+    const reqConc = !!item.getFlag(MODULE, "data.requiresConcentration");
     const innerHTML = await renderTemplate(template, {
-      requiresConcentration
+      requiresConcentration: reqConc
     });
     const div = document.createElement("DIV");
     div.innerHTML = innerHTML;
