@@ -1,36 +1,41 @@
 import { MODULE } from "./settings.mjs";
+import {
+  _itemUseAffectsConcentration,
+  _requiresConcentration
+} from "./_helpers.mjs";
 import { API } from "./_publicAPI.mjs";
-import { _itemUseAffectsConcentration } from "./_startConcentration.mjs";
 
 export function setHooks_abilityUseDialog() {
   /**
-   * When using an item that requires concentration,
-   * if the setting is enabled, force the abilityUseDialog
-   * to display a warning about loss of concentration.
+   * When using an item that requires concentration, force the
+   * AbilityUseDialog to display a warning about loss of concentration.
    */
   Hooks.on("dnd5e.preUseItem", (item, config) => {
-    if (!game.settings.get(MODULE, "show_ability_use_warning")) return;
-    const isConc = item.type === "spell" ? item.system.components.concentration : item.getFlag(MODULE, "data.requiresConcentration");
-    if (!isConc) return;
-
-    const data = { castData: { castLevel: item.system.level } };
-    const mustConc = _itemUseAffectsConcentration(item.parent, item, data);
-    if (mustConc && mustConc !== "FREE") config.needsConfiguration = true;
+    if (!_requiresConcentration(item)) return;
+    const reason = _itemUseAffectsConcentration(item);
+    if (reason && reason !== "FREE") {
+      config.needsConfiguration = true;
+    }
   });
 
   /**
    * Inject the warning into the DOM.
    */
-  Hooks.on("renderAbilityUseDialog", (dialog, html, dialogData) => {
-    if (!game.settings.get(MODULE, "show_ability_use_warning")) return;
+  Hooks.on("renderAbilityUseDialog", (dialog, html) => {
+    // does the item being used require concentration?
     const item = dialog.item;
-    const isConc = API.isActorConcentrating(item.parent);
-    if (!isConc) return;
-    const data = { castData: { castLevel: item.system.level } };
-    const reason = _itemUseAffectsConcentration(item.parent, item, data, true);
+    if (!_requiresConcentration(item)) return;
+
+    // get the reason this could affect concentration.
+    const reason = _itemUseAffectsConcentration(item, true);
+
+    // if it won't affect it:
     if (!reason || reason === "FREE") return;
+
+    // construct warning.
     const notes = html[0].querySelector(".notes"); // insert below this.
-    const locale = _getWarning(reason, item, isConc);
+    const effect = API.isActorConcentrating(item.parent);
+    const locale = _getWarning(reason, item, effect);
     const DIV = document.createElement("DIV");
     DIV.innerHTML = `<p class="notification info">${locale}</p>`;
     notes.after(...DIV.children);
@@ -47,8 +52,7 @@ function _getWarning(reason, item, effect) {
   if (reason === "DIFFERENT") {
     if (item.type === "spell") {
       string = "CN.ABILITY_DIALOG_WARNING.SPELL_DIFF";
-    }
-    else string = "CN.ABILITY_DIALOG_WARNING.ITEM";
+    } else string = "CN.ABILITY_DIALOG_WARNING.ITEM";
   } else if (reason === "LEVEL") {
     string = "CN.ABILITY_DIALOG_WARNING.SPELL_SAME";
   }

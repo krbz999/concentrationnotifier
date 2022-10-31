@@ -1,8 +1,2 @@
-<span class="sep concentrationnotifier">
-  {{localize "CN.CONCENTRATION"}}
-</span>
-{{#if requiresConcentration}}
-<input type="checkbox" name="flags.concentrationnotifier.data.requiresConcentration" checked>
-{{else}}
-<input type="checkbox" name="flags.concentrationnotifier.data.requiresConcentration">
-{{/if}}
+<span class="sep concentrationnotifier">{{localize "CN.CONCENTRATION"}}</span>
+<input type="checkbox" name="flags.concentrationnotifier.data.requiresConcentration" {{checked requiresConcentration}}>
