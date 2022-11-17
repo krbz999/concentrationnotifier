@@ -57,3 +57,28 @@ span.sep.concentrationnotifier {
   border: none;
   border-radius: 3px;
 }
+
+.cn-vae-buttons {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.cn-vae-buttons a {
+  font-size: 14px;
+  height: 30px;
+  line-height: 26px;
+  margin: 2px 0;
+  background: #6f2f31ad;
+  border: 2px groove #9e6161;
+  width: 100%;
+  border-radius: 6px;
+  text-align: center;
+  padding: 1px 6px;
+}
+
+.cn-vae-buttons a:hover {
+  text-shadow: 0 0 8px white;
+  background: brown;
+  color: black;
+}

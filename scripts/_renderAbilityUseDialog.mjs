@@ -5,42 +5,38 @@ import {
 } from "./_helpers.mjs";
 import { API } from "./_publicAPI.mjs";
 
-export function setHooks_abilityUseDialog() {
-  /**
-   * When using an item that requires concentration, force the
-   * AbilityUseDialog to display a warning about loss of concentration.
-   */
-  Hooks.on("dnd5e.preUseItem", (item, config) => {
-    if (!_requiresConcentration(item)) return;
-    const reason = _itemUseAffectsConcentration(item);
-    if (reason && reason !== "FREE") {
-      config.needsConfiguration = true;
-    }
-  });
+/**
+ * When using an item that requires concentration, force the
+ * AbilityUseDialog to display a warning about loss of concentration.
+ */
+export function _preAbilityUseDialog(item, config) {
+  if (!_requiresConcentration(item)) return;
+  const reason = _itemUseAffectsConcentration(item);
+  if (reason && reason !== "FREE") {
+    config.needsConfiguration = true;
+  }
+}
 
-  /**
-   * Inject the warning into the DOM.
-   */
-  Hooks.on("renderAbilityUseDialog", (dialog, html) => {
-    // does the item being used require concentration?
-    const item = dialog.item;
-    if (!_requiresConcentration(item)) return;
+// Inject the warning into the DOM.
+export function _abilityUseDialog(dialog, html) {
+  // does the item being used require concentration?
+  const item = dialog.item;
+  if (!_requiresConcentration(item)) return;
 
-    // get the reason this could affect concentration.
-    const reason = _itemUseAffectsConcentration(item, true);
+  // get the reason this could affect concentration.
+  const reason = _itemUseAffectsConcentration(item, true);
 
-    // if it won't affect it:
-    if (!reason || reason === "FREE") return;
+  // if it won't affect it:
+  if (!reason || reason === "FREE") return;
 
-    // construct warning.
-    const notes = html[0].querySelector(".notes"); // insert below this.
-    const effect = API.isActorConcentrating(item.parent);
-    const locale = _getWarning(reason, item, effect);
-    const DIV = document.createElement("DIV");
-    DIV.innerHTML = `<p class="notification info">${locale}</p>`;
-    notes.after(...DIV.children);
-    dialog.setPosition({ height: "auto" });
-  });
+  // construct warning.
+  const notes = html[0].querySelector(".notes"); // insert below this.
+  const effect = API.isActorConcentrating(item.parent);
+  const locale = _getWarning(reason, item, effect);
+  const DIV = document.createElement("DIV");
+  DIV.innerHTML = `<p class="notification info">${locale}</p>`;
+  notes.after(...DIV.children);
+  dialog.setPosition({ height: "auto" });
 }
 
 /**

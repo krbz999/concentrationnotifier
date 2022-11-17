@@ -5,18 +5,15 @@ import {
 } from "./_helpers.mjs";
 import { API } from "./_publicAPI.mjs";
 
-export function setHooks_startConcentration() {
+export async function _startConcentration(item) {
+  // item must be an owned item.
+  if (!item.parent) return;
 
-  Hooks.on("dnd5e.useItem", async (item) => {
-    // item must be an owned item.
-    if (!item.parent) return;
+  // item must require concentration.
+  if (!_requiresConcentration(item)) return;
 
-    // item must require concentration.
-    if (!_requiresConcentration(item)) return;
-
-    // apply concentration.
-    return applyConcentration(item);
-  });
+  // apply concentration.
+  return applyConcentration(item);
 }
 
 // apply concentration when using a specific item.
@@ -43,7 +40,7 @@ async function createEffectData(item) {
   let description = game.i18n.format("CN.CONCENTRATING_ON_ITEM", {
     name: item.name
   });
-  const intro = description;
+  const intro = await TextEditor.enrichHTML(_createIntro(item), { async: true });
   const content = item.system.description.value;
   const template = `modules/${MODULE}/templates/effectDescription.hbs`;
   if (verbose) description = await renderTemplate(template, {
@@ -137,5 +134,45 @@ async function breakConcentration(caster, message = true) {
   }).map(i => i.id);
   return actor.deleteEmbeddedDocuments("ActiveEffect", deleteIds, {
     concMessage: message
+  });
+}
+
+function _createIntro(item) {
+  let description = "<p>" + game.i18n.format("CN.CONCENTRATING_ON_ITEM", { name: item.name }) + "</p>";
+
+  if (game.settings.get(MODULE, "create_vae_quickButtons")) {
+    description += "<div class='cn-vae-buttons'>";
+
+    if (item.hasAttack) description += `<a data-cn="attack" data-uuid="${item.parent.uuid}">${game.i18n.localize("DND5E.Attack")}</a>`;
+    if (item.isHealing) description += `<a data-cn="damage" data-uuid="${item.parent.uuid}">${game.i18n.localize("DND5E.Healing")}</a>`;
+    else if (item.hasDamage) description += `<a data-cn="damage" data-uuid="${item.parent.uuid}">${game.i18n.localize("DND5E.Damage")}</a>`;
+    if (item.hasAreaTarget) description += `<a data-cn="template" data-uuid="${item.parent.uuid}">${game.i18n.localize("DND5E.PlaceTemplate")}</a>`;
+    description += `<a data-cn="redisplay" data-uuid="${item.parent.uuid}">${game.i18n.localize("CN.REDISPLAY")}</a>`;
+    description += `<a data-cn="concsave" data-uuid="${item.parent.uuid}">${game.i18n.localize("CN.CONCENTRATION")}</a>`;
+    return description + "</div>";
+  }
+  return description;
+}
+
+export function _applyButtonListeners() {
+  document.addEventListener("click", async (event) => {
+    const a = event.target.closest(".cn-vae-buttons a");
+    if (!a) return;
+    const e = event;
+    const { cn, uuid } = a.dataset;
+
+    const caster = await fromUuid(uuid);
+    const actor = caster.actor ?? caster;
+
+    const isConc = CN.isActorConcentrating(actor);
+    const { itemData, castData } = isConc.getFlag(MODULE, "data");
+    const item = fromUuidSync(castData.itemUuid);
+    const clone = item.clone(itemData, { keepId: true });
+
+    if (cn === "attack") return clone.rollAttack({ event: e });
+    else if (cn === "damage") return item.rollDamage({ event: e, spellLevel: castData.castLevel });
+    else if (cn === "template") return dnd5e.canvas.AbilityTemplate.fromItem(item)?.drawPreview();
+    else if (cn === "redisplay") return CN.redisplayCard(actor);
+    else if (cn === "concsave") return actor.rollConcentrationSave();
   });
 }

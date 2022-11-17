@@ -1,16 +1,8 @@
 import { MODULE } from "./settings.mjs";
 
-export function setHooks_promptListeners() {
-
-  Hooks.on("renderChatLog", (_, html) => {
-    html[0].addEventListener("click", (event) => {
-      return clickConcentrationPrompt(event);
-    });
-  });
-  Hooks.on("renderChatPopout", (_, html) => {
-    html[0].addEventListener("click", (event) => {
-      return clickConcentrationPrompt(event);
-    });
+export function _clickPrompt(_, html) {
+  html[0].addEventListener("click", (event) => {
+    return clickConcentrationPrompt(event);
   });
 }
 
@@ -44,22 +36,20 @@ async function deleteDialog(effect, event) {
     return effect.delete();
   }
   const name = effect.getFlag(MODULE, "data.itemData.name");
-  const title = game.i18n.format("CN.DELETE_DIALOG_TITLE", { name });
-  const content = game.i18n.format("CN.DELETE_DIALOG_TEXT", { name });
-  const labelYes = game.i18n.localize("Yes");
-  const labelNo = game.i18n.localize("No");
   new Dialog({
-    title, content, buttons: {
+    title: game.i18n.format("CN.DELETE_DIALOG_TITLE", { name }),
+    content: game.i18n.format("CN.DELETE_DIALOG_TEXT", { name }),
+    buttons: {
       yes: {
         icon: "<i class='fa-solid fa-check'></i>",
-        label: labelYes,
+        label: game.i18n.localize("Yes"),
         callback: async () => {
           return effect.delete();
         }
       },
       no: {
         icon: "<i class='fa-solid fa-xmark'></i>",
-        label: labelNo
+        label: game.i18n.localize("No")
       }
     }
   }).render(true);
