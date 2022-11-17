@@ -16,6 +16,10 @@
       "USE_WARNING": {
         "NAME": "Ability Use Warnings",
         "HINT": "If enabled, show a warning if the usage of an item or spell would end concentration on a different item."
+      },
+      "VAE_BUTTONS": {
+        "NAME": "Visual Active Effects Buttons",
+        "HINT": "If enabled, and using 'Visual Active Effects', concentration effects will be supplied with quick access buttons for rolling different properties of the item."
       }
     },
     "DELETE_DIALOG_TITLE": "End concentration on {name}?",
@@ -39,6 +43,7 @@
     "SPEAKER": "Concentration Notifier",
     "DETAILS": "Item Details",
     "CONCENTRATING_ON_ITEM": "You are concentrating on {name}.",
+    "REDISPLAY": "Display Item",
     "CARD": {
       "GAIN.DETAILS": "{actorName} began concentration on {itemName}.",
       "LOSS.DETAILS": "{actorName} ended concentration on {itemName}.",

@@ -1,98 +1,37 @@
 import { MODULE } from "./settings.mjs";
+import {
+  _itemUseAffectsConcentration,
+  _requiresConcentration
+} from "./_helpers.mjs";
 import { API } from "./_publicAPI.mjs";
 
-export function setHooks_startConcentration() {
+export async function _startConcentration(item) {
+  // item must be an owned item.
+  if (!item.parent) return;
 
-  Hooks.on("dnd5e.useItem", async (item) => {
-    // item must be an owned item.
-    const actor = item.parent;
-    if (!actor) return;
+  // item must require concentration.
+  if (!_requiresConcentration(item)) return;
 
-    // item must require concentration.
-    let requiresConc;
-    if (item.type === "spell") {
-      const path = "system.components.concentration";
-      requiresConc = foundry.utils.getProperty(item, path);
-    }
-    else {
-      const path = "data.requiresConcentration";
-      requiresConc = item.getFlag(MODULE, path);
-    }
-    if (!requiresConc) return;
-
-    // get spell levels.
-    const castLevel = item.system.level;
-    const baseLevel = fromUuidSync(item.uuid)?.system.level;
-    const itemUuid = item.uuid;
-
-    // create castingData.
-    const data = {
-      itemData: item.toObject(),
-      castData: { baseLevel, castLevel, itemUuid }
-    }
-
-    // apply concentration.
-    return applyConcentration(actor, item, data);
-  });
+  // apply concentration.
+  return applyConcentration(item);
 }
 
 // apply concentration when using a specific item.
-async function applyConcentration(actor, item, data) {
+async function applyConcentration(item) {
   // get whether and why to start or swap concentration.
-  const reason = _itemUseAffectsConcentration(actor, item, data);
+  const reason = _itemUseAffectsConcentration(item);
   if (!reason) return [];
 
   // break concentration if different item or different level.
-  if (["DIFFERENT", "LEVEL"].includes(reason)) await breakConcentration(actor, false);
+  await breakConcentration(item.parent, false);
 
   // create effect data and start concentrating.
-  const effectData = await createEffectData(actor, item, data);
-  return actor.createEmbeddedDocuments("ActiveEffect", [effectData]);
-}
-
-/**
- * Returns whether and why an item being used should affect concentration.
- * Used to determine if concentration should be changed, or for the
- * ability use dialog to determine if it should display a warning.
- * The returned value is either false or truthy.
- * @param {Actor5e} actor     The actor using the item.
- * @param {Item5e} item       The item being used right now.
- * @param {Object} data       Small object with cast data.
- * @param {Boolean} isDialog  Whether the function is being used for the AbilityUseDialog.
- * @returns {String|Boolean}  Truthy string, or false if the items are the same.
- */
-export function _itemUseAffectsConcentration(actor, item, data, isDialog = false) {
-  // new item requires concentration:
-  let requiresConc;
-  if (item.type === "spell") {
-    const path = "system.components.concentration";
-    requiresConc = foundry.utils.getProperty(item, path);
-  } else {
-    const path = "data.requiresConcentration";
-    requiresConc = item.getFlag(MODULE, path);
-  }
-  if (!requiresConc) return false;
-
-  // if you are not concentrating:
-  const isConc = API.isActorConcentrating(actor);
-  if (!isConc) return "FREE";
-
-  // if you are concentrating on an entirely different item:
-  const concDiff = isConc.getFlag(MODULE, "data.castData.itemUuid") !== item.uuid;
-  if (concDiff) return "DIFFERENT";
-
-  // if you are concentrating on the same item but at a different level:
-  const concNotSame = isConc.getFlag(MODULE, "data.castData.castLevel") !== data.castData.castLevel;
-  if (concNotSame) return "LEVEL";
-
-  // For AbilityUseDialog warning, only show it for spells of 1st level or higher.
-  if (isDialog && item.type === "spell" && item.system.level > 0) return "LEVEL";
-
-  return false;
+  const effectData = await createEffectData(item);
+  return item.parent.createEmbeddedDocuments("ActiveEffect", [effectData]);
 }
 
 // create the data for the new concentration effect.
-async function createEffectData(actor, item, data) {
+async function createEffectData(item) {
 
   const verbose = game.settings.get(MODULE, "verbose_tooltips");
   const prepend = game.settings.get(MODULE, "prepend_effect_labels");
@@ -101,7 +40,7 @@ async function createEffectData(actor, item, data) {
   let description = game.i18n.format("CN.CONCENTRATING_ON_ITEM", {
     name: item.name
   });
-  const intro = description;
+  const intro = await TextEditor.enrichHTML(_createIntro(item), { async: true });
   const content = item.system.description.value;
   const template = `modules/${MODULE}/templates/effectDescription.hbs`;
   if (verbose) description = await renderTemplate(template, {
@@ -113,7 +52,16 @@ async function createEffectData(actor, item, data) {
   const flags = {
     core: { statusId: "concentration" },
     convenientDescription: description,
-    concentrationnotifier: { data },
+    concentrationnotifier: {
+      data: {
+        itemData: item.toObject(),
+        castData: {
+          baseLevel: fromUuidSync(item.uuid)?.system.level,
+          castLevel: item.system.level,
+          itemUuid: item.uuid
+        }
+      }
+    },
     "visual-active-effects": { data: { intro, content } }
   }
 
@@ -127,7 +75,7 @@ async function createEffectData(actor, item, data) {
   return {
     icon: getModuleImage(item),
     label,
-    origin: item.uuid ?? actor.uuid,
+    origin: item.uuid ?? item.parent.uuid,
     duration: getItemDuration(item),
     flags
   }
@@ -186,5 +134,45 @@ async function breakConcentration(caster, message = true) {
   }).map(i => i.id);
   return actor.deleteEmbeddedDocuments("ActiveEffect", deleteIds, {
     concMessage: message
+  });
+}
+
+function _createIntro(item) {
+  let description = "<p>" + game.i18n.format("CN.CONCENTRATING_ON_ITEM", { name: item.name }) + "</p>";
+
+  if (game.settings.get(MODULE, "create_vae_quickButtons")) {
+    description += "<div class='cn-vae-buttons'>";
+
+    if (item.hasAttack) description += `<a data-cn="attack" data-uuid="${item.parent.uuid}">${game.i18n.localize("DND5E.Attack")}</a>`;
+    if (item.isHealing) description += `<a data-cn="damage" data-uuid="${item.parent.uuid}">${game.i18n.localize("DND5E.Healing")}</a>`;
+    else if (item.hasDamage) description += `<a data-cn="damage" data-uuid="${item.parent.uuid}">${game.i18n.localize("DND5E.Damage")}</a>`;
+    if (item.hasAreaTarget) description += `<a data-cn="template" data-uuid="${item.parent.uuid}">${game.i18n.localize("DND5E.PlaceTemplate")}</a>`;
+    description += `<a data-cn="redisplay" data-uuid="${item.parent.uuid}">${game.i18n.localize("CN.REDISPLAY")}</a>`;
+    description += `<a data-cn="concsave" data-uuid="${item.parent.uuid}">${game.i18n.localize("CN.CONCENTRATION")}</a>`;
+    return description + "</div>";
+  }
+  return description;
+}
+
+export function _applyButtonListeners() {
+  document.addEventListener("click", async (event) => {
+    const a = event.target.closest(".cn-vae-buttons a");
+    if (!a) return;
+    const e = event;
+    const { cn, uuid } = a.dataset;
+
+    const caster = await fromUuid(uuid);
+    const actor = caster.actor ?? caster;
+
+    const isConc = CN.isActorConcentrating(actor);
+    const { itemData, castData } = isConc.getFlag(MODULE, "data");
+    const item = fromUuidSync(castData.itemUuid);
+    const clone = item.clone(itemData, { keepId: true });
+
+    if (cn === "attack") return clone.rollAttack({ event: e });
+    else if (cn === "damage") return item.rollDamage({ event: e, spellLevel: castData.castLevel });
+    else if (cn === "template") return dnd5e.canvas.AbilityTemplate.fromItem(item)?.drawPreview();
+    else if (cn === "redisplay") return CN.redisplayCard(actor);
+    else if (cn === "concsave") return actor.rollConcentrationSave();
   });
 }

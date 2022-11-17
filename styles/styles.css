@@ -6,16 +6,17 @@ span.sep.concentrationnotifier {
 /* PROMPT CARDS */
 .concentrationnotifier div.card-contents.prompt-card .header {
   text-align: center;
-  font-size: 30px;
+  font-size: 25px;
   font-family: "Modesto Condensed";
-  border-bottom-style: solid;
-  border-top-style: solid;
-  margin: 5px 0px 5px 0px;
-  border-radius: 5px;
+  margin: 0.25em;
+  border-radius: 3px;
+  border-top: 2px solid black;
+  border-bottom: 2px solid black;
 }
 
-.concentrationnotifier div.card-contents.prompt-card .details {
-  margin: 5px 0 0 5px;
+.concentrationnotifier div.card-contents.prompt-card .details,
+.concentrationnotifier div.item-image {
+  margin: 0.5em 0.5em 0 0.5em;
 }
 
 .concentrationnotifier .prompt-card .buttons {
@@ -26,17 +27,10 @@ span.sep.concentrationnotifier {
 }
 
 .concentrationnotifier button[name="saving-throw-button"] {
-  border-radius: 10px;
-  margin-bottom: 5px;
-  height: 50px;
+  border-radius: 8px;
+  margin-bottom: 0.5em;
   border-right: outset;
   border-bottom: outset;
-}
-
-.concentrationnotifier button[name="saving-throw-button"]>i.fas {
-  font-size: 20px;
-  position: relative;
-  top: 2px;
 }
 
 .concentrationnotifier button[name="delete-concentration-button"] {
@@ -52,17 +46,39 @@ span.sep.concentrationnotifier {
 
 .concentrationnotifier .gain-loss-details {
   display: grid;
-  grid-template-columns: 70% 30%;
-}
-
-.concentrationnotifier div.item-image {
-  margin: 5px 5px 0 0;
+  grid-template-columns: 3fr 1fr;
 }
 
 .concentrationnotifier .item-image a:hover {
-  filter: drop-shadow(0 0 10px red);
+  filter: drop-shadow(0 0 3px red);
 }
 
 .concentrationnotifier .item-image img {
   border: none;
+  border-radius: 3px;
+}
+
+.cn-vae-buttons {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.cn-vae-buttons a {
+  font-size: 14px;
+  height: 30px;
+  line-height: 26px;
+  margin: 2px 0;
+  background: #6f2f31ad;
+  border: 2px groove #9e6161;
+  width: 100%;
+  border-radius: 6px;
+  text-align: center;
+  padding: 1px 6px;
+}
+
+.cn-vae-buttons a:hover {
+  text-shadow: 0 0 8px white;
+  background: brown;
+  color: black;
 }
