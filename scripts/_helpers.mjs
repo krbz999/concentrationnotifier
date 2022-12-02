@@ -37,3 +37,45 @@ export function _itemUseAffectsConcentration(item, isDialog = false) {
 
   return false;
 }
+
+// Compatibility with Roll Groups + Visual Active Effects.
+export function _rollGroupDamageButtons(item) {
+  const groups = item.getFlag("rollgroups", "config.groups");
+  const validParts = item.system.damage?.parts.filter(([f]) => !!f) ?? [];
+  if (!groups?.length || validParts.length < 2) return false;
+
+  return groups.reduce((acc, { label, parts }, i) => {
+    const r = "rollgroups-damage";
+    const u = item.parent.uuid;
+    const types = parts.map(t => validParts[t][1]);
+    const isDamage = types.every(t => t in CONFIG.DND5E.damageTypes);
+    const isHealing = types.every(t => t in CONFIG.DND5E.healingTypes);
+    const lab = isDamage ? "DAMAGE" : isHealing ? "HEALING" : "MIXED";
+    const l = `${game.i18n.localize(`ROLLGROUPS.LABELS.${lab}`)} (${label})`;
+    return acc + `<a data-cn="${r}" data-uuid="${u}" data-rollgroup="${i}">${l}</a>`;
+  }, "");
+}
+
+// Compatibility with Effective Transferal + Visual Active Effects.
+export function _effectiveTransferralTransferButton(item) {
+  const ET_ID = "effective-transferral";
+  const newer = foundry.utils.isNewerVersion("1.3.0", game.modules.get(ET_ID).version);
+  if (newer) return false;
+  const setting = game.settings.get(ET_ID, "includeEquipTransfer");
+
+  const effects = item.effects.filter(effect => {
+    const et = effect.transfer === false;
+    const eb = effect.getFlag(ET_ID, "transferBlock.button");
+    const nbt = game.settings.get(ET_ID, "neverButtonTransfer");
+    return (et || setting) && (!eb && !nbt);
+  });
+
+  if (!effects.length) return false;
+
+  const A = "effective-transferral-transfer";
+  const B = item.parent.uuid;
+  const C = item.uuid;
+  const D = game.i18n.localize("ET.Button.Label");
+
+  return `<a data-cn="${A}" data-uuid="${B}" data-item="${C}">${D}</a>`;
+}
