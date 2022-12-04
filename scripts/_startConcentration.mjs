@@ -178,8 +178,8 @@ export function _applyButtonListeners() {
 
     const isConc = CN.isActorConcentrating(actor);
     const { itemData, castData } = isConc.getFlag(MODULE, "data");
-    const item = fromUuidSync(castData.itemUuid);
-    const clone = item.clone(itemData, { keepId: true });
+    const item = fromUuidSync(castData.itemUuid) ?? new Item.implementation(itemData, { parent: caster });
+    const clone = item?.clone(itemData, { keepId: true }) ?? new Item.implementation(itemData, { parent: caster });
 
     if (cn === "attack") return clone.rollAttack({ event: e });
     else if (cn === "rollgroups-damage") return item.rollDamageGroup({ event: e, rollgroup: a.dataset.rollgroup, spellLevel: castData.castLevel });

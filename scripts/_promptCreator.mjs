@@ -36,7 +36,7 @@ export async function _promptCreator(actor, data, context, userId) {
   // find a concentration effect.
   const effect = API.isActorConcentrating(actor);
   // bail out if actor is not concentrating.
-  if (!effect) return;
+  if (!effect || effect.getFlag(MODULE, "data.castData.unbreakable")) return;
   // get the name of the item being concentrated on.
   const name = effect.getFlag(MODULE, "data.itemData.name");
   // get the ability being used for concentration saves.
@@ -87,8 +87,7 @@ export async function promptConcentrationSave(caster, { saveDC = 10, message } =
   const effect = API.isActorConcentrating(actor);
   // bail out if actor is not concentrating.
   if (!effect) {
-    const string = "CN.ACTOR_NOT_CONCENTRATING";
-    const locale = game.i18n.format(string, { name: actor.name });
+    const locale = game.i18n.format("CN.ACTOR_NOT_CONCENTRATING", { name: actor.name });
     ui.notifications.warn(locale);
     return null;
   }

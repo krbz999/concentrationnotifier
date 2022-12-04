@@ -65,25 +65,20 @@ export class API {
     const actor = caster.actor ?? caster;
     const isConc = CN.isActorConcentrating(actor);
     if (!isConc) {
-      const string = "CN.ACTOR_NOT_CONCENTRATING";
-      const locale = game.i18n.format(string, {
-        name: actor.name
-      });
+      const locale = game.i18n.format("CN.ACTOR_NOT_CONCENTRATING", { name: actor.name });
       ui.notifications.warn(locale);
       return null;
     }
 
     const { itemData, castData } = isConc.getFlag(MODULE, "data");
     const item = fromUuidSync(castData.itemUuid);
+    const clone = item?.clone(itemData, { keepId: true }) ?? new Item.implementation(itemData, { parent: actor });
 
-    if (!item) {
-      const string = "CN.ITEM_NOT_FOUND";
-      const locale = game.i18n.localize(string);
-      ui.notifications.warn(locale);
+    if (!clone) {
+      ui.notifications.warn("CN.ITEM_NOT_FOUND", { localize: true });
       return null;
     }
 
-    const clone = item.clone(itemData, { keepId: true });
     clone.prepareFinalAttributes();
     return clone.use({
       createMeasuredTemplate: false,
