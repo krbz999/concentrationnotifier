@@ -37,10 +37,11 @@ export async function _promptCreator(actor, data, context, userId) {
   const effect = API.isActorConcentrating(actor);
   // bail out if actor is not concentrating.
   if (!effect || effect.getFlag(MODULE, "data.castData.unbreakable")) return;
-  // get the name of the item being concentrated on.
+  // get the name and uuid of the item being concentrated on.
   const name = effect.getFlag(MODULE, "data.itemData.name");
+  const uuid = effect.getFlag(MODULE, "data.castData.itemUuid");
   // get the ability being used for concentration saves.
-  const abilityKey = actor.getFlag("dnd5e", "concentrationAbility") ?? "con";
+  const abilityKey = actor.getFlag("dnd5e", "concentrationAbility") ?? game.settings.get(MODULE, "defaultConcentrationAbility");
   // get whisper targets.
   const whisper = Object.entries(actor.ownership).filter(([id, level]) => {
     if (!game.users.get(id)) return false;
@@ -50,15 +51,17 @@ export async function _promptCreator(actor, data, context, userId) {
   // the chat message contents.
   const template = `modules/${MODULE}/templates/savingThrowPrompt.hbs`;
   const content = await renderTemplate(template, {
-    details: game.i18n.format("CN.CARD.PROMPT.DETAILS", {
+    details: game.i18n.format("CN.NotifyConcentrationChallengeDamaged", {
       dc, itemName: name, damage,
       saveType: CONFIG.DND5E.abilities[abilityKey],
       actorName: actor.name,
       itemUuid: effect.getFlag(MODULE, "data.castData.itemUuid")
     }),
-    buttonSaveLabel: game.i18n.format("CN.CARD.PROMPT.SAVE", {
+    buttonSaveLabel: game.i18n.format("CN.ButtonSavingThrow", {
       dc, saveType: CONFIG.DND5E.abilities[abilityKey]
     }),
+    hasTemplates: !!canvas?.scene.templates.find(t => t.flags?.dnd5e?.origin === uuid),
+    origin: uuid,
     ability: abilityKey,
     actorUuid: actor.uuid,
     effectUuid: effect.uuid,
@@ -69,7 +72,7 @@ export async function _promptCreator(actor, data, context, userId) {
     content,
     whisper,
     speaker: ChatMessage.getSpeaker({
-      alias: game.i18n.localize("CN.SPEAKER")
+      alias: game.i18n.localize("CN.ModuleTitle")
     }),
     flags: {
       core: { canPopout: true },
@@ -87,14 +90,15 @@ export async function promptConcentrationSave(caster, { saveDC = 10, message } =
   const effect = API.isActorConcentrating(actor);
   // bail out if actor is not concentrating.
   if (!effect) {
-    const locale = game.i18n.format("CN.ACTOR_NOT_CONCENTRATING", { name: actor.name });
+    const locale = game.i18n.format("CN.WarningActorNotConcentrating", { name: actor.name });
     ui.notifications.warn(locale);
     return null;
   }
-  // get the name of the item being concentrated on.
+  // get the name and uuid of the item being concentrated on.
   const name = effect.getFlag(MODULE, "data.itemData.name");
+  const uuid = effect.getFlag(MODULE, "data.castData.itemUuid");
   // get the ability being used for concentration saves.
-  const abilityKey = actor.getFlag("dnd5e", "concentrationAbility") ?? "con";
+  const abilityKey = actor.getFlag("dnd5e", "concentrationAbility") ?? game.settings.get(MODULE, "defaultConcentrationAbility");
   // get whisper targets.
   const whisper = Object.entries(actor.ownership).filter(([id, level]) => {
     if (!game.users.get(id)) return false;
@@ -104,17 +108,19 @@ export async function promptConcentrationSave(caster, { saveDC = 10, message } =
   // the chat message contents.
   const template = `modules/${MODULE}/templates/savingThrowPrompt.hbs`;
   const content = await renderTemplate(template, {
-    details: game.i18n.format("CN.CARD.PROMPT.DETAILS_MANUAL", {
+    details: game.i18n.format("CN.NotifyConcentrationChallengeManual", {
       dc: saveDC,
       itemName: name,
       saveType: CONFIG.DND5E.abilities[abilityKey],
       actorName: actor.name,
       itemUuid: effect.getFlag(MODULE, "data.castData.itemUuid")
     }),
-    buttonSaveLabel: game.i18n.format("CN.CARD.PROMPT.SAVE", {
+    buttonSaveLabel: game.i18n.format("CN.ButtonSavingThrow", {
       dc: saveDC,
       saveType: CONFIG.DND5E.abilities[abilityKey]
     }),
+    hasTemplates: !!canvas?.scene.templates.find(t => t.flags?.dnd5e?.origin === uuid),
+    origin: uuid,
     dc: saveDC,
     ability: abilityKey,
     actorUuid: actor.uuid,
@@ -126,7 +132,7 @@ export async function promptConcentrationSave(caster, { saveDC = 10, message } =
     content,
     whisper,
     speaker: ChatMessage.getSpeaker({
-      alias: game.i18n.localize("CN.SPEAKER")
+      alias: game.i18n.localize("CN.ModuleTitle")
     }),
     flags: {
       core: { canPopout: true },

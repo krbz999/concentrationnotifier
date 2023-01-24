@@ -11,7 +11,7 @@ export function _preRollConcentrationSave(actor, rollConfig, saveType) {
 export const rollConcentrationSave = async function(ability, options = {}) {
   if (!this.isOwner) return;
 
-  const abl = ability ?? this.getFlag("dnd5e", "concentrationAbility") ?? "con";
+  const abl = ability ?? this.getFlag("dnd5e", "concentrationAbility") ?? game.settings.get(MODULE, "defaultConcentrationAbility");
 
   const rollConfig = { fumble: null, critical: null, event, isConcSave: true };
   const reliableTalent = this.getFlag("dnd5e", "concentrationReliable");

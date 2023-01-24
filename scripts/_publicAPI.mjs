@@ -65,7 +65,7 @@ export class API {
     const actor = caster.actor ?? caster;
     const isConc = CN.isActorConcentrating(actor);
     if (!isConc) {
-      const locale = game.i18n.format("CN.ACTOR_NOT_CONCENTRATING", { name: actor.name });
+      const locale = game.i18n.format("CN.WarningActorNotConcentrating", { name: actor.name });
       ui.notifications.warn(locale);
       return null;
     }
@@ -75,7 +75,7 @@ export class API {
     const clone = item?.clone(itemData, { keepId: true }) ?? new Item.implementation(itemData, { parent: actor });
 
     if (!clone) {
-      ui.notifications.warn("CN.ITEM_NOT_FOUND", { localize: true });
+      ui.notifications.warn("CN.ItemNotFound", { localize: true });
       return null;
     }
 

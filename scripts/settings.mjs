@@ -3,8 +3,8 @@ export const MODULE = "concentrationnotifier";
 export function registerSettings() {
   // custom icon.
   game.settings.register(MODULE, "concentration_icon", {
-    name: "CN.SETTINGS.DEFAULT_ICON.NAME",
-    hint: "CN.SETTINGS.DEFAULT_ICON.HINT",
+    name: "CN.SettingDefaultIconName",
+    hint: "CN.SettingDefaultIconHint",
     scope: "world",
     config: true,
     type: String,
@@ -13,18 +13,29 @@ export function registerSettings() {
 
   // whether to use the item's img.
   game.settings.register(MODULE, "concentration_icon_item", {
-    name: "CN.SETTINGS.ITEM_ICON.NAME",
-    hint: "CN.SETTINGS.ITEM_ICON.HINT",
+    name: "CN.SettingUseItemIconName",
+    hint: "CN.SettingUseItemIconHint",
     scope: "world",
     config: true,
     type: Boolean,
     default: true
   });
 
+  // the default ability used for concentration.
+  game.settings.register(MODULE, "defaultConcentrationAbility", {
+    name: "CN.SettingDefaultConcentrationAbilityName",
+    hint: "CN.SettingDefaultConcentrationAbilityHint",
+    scope: "world",
+    config: true,
+    type: String,
+    default: CONFIG.DND5E.abilities["con"] ? "con" : Object.keys(CONFIG.DND5E.abilities)[0],
+    choices: CONFIG.DND5E.abilities
+  });
+
   // whether to prepend effect labels.
   game.settings.register(MODULE, "prepend_effect_labels", {
-    name: "CN.SETTINGS.PREPEND.NAME",
-    hint: "CN.SETTINGS.PREPEND.HINT",
+    name: "CN.SettingPrependLabelName",
+    hint: "CN.SettingPrependLabelHint",
     scope: "world",
     config: true,
     type: Boolean,
@@ -33,8 +44,8 @@ export function registerSettings() {
 
   // whether to add fancy stuff to effect descriptions.
   game.settings.register(MODULE, "verbose_tooltips", {
-    name: "CN.SETTINGS.VERBOSE.NAME",
-    hint: "CN.SETTINGS.VERBOSE.HINT",
+    name: "CN.SettingVerboseDescriptionsName",
+    hint: "CN.SettingVerboseDescriptionsHint",
     scope: "world",
     config: true,
     type: Boolean,
@@ -43,8 +54,8 @@ export function registerSettings() {
 
   // whether to always whisper messages
   game.settings.register(MODULE, "always_whisper_messages", {
-    name: "CN.SETTINGS.WHISPER.NAME",
-    hint: "CN.SETTINGS.WHISPER.HINT",
+    name: "CN.SettingWhisperMessagesName",
+    hint: "CN.SettingWhisperMessagesHint",
     scope: "world",
     config: true,
     type: Boolean,
@@ -53,8 +64,8 @@ export function registerSettings() {
 
   // whether to show a warning that you are about to swap conc.
   game.settings.register(MODULE, "show_ability_use_warning", {
-    name: "CN.SETTINGS.USE_WARNING.NAME",
-    hint: "CN.SETTINGS.USE_WARNING.HINT",
+    name: "CN.SettingAbilityUseWarningName",
+    hint: "CN.SettingAbilityUseWarningHint",
     scope: "world",
     config: true,
     type: Boolean,
@@ -64,8 +75,8 @@ export function registerSettings() {
 
   // create quick buttons for Visual Active Effects.
   game.settings.register(MODULE, "create_vae_quickButtons", {
-    name: "CN.SETTINGS.VAE_BUTTONS.NAME",
-    hint: "CN.SETTINGS.VAE_BUTTONS.HINT",
+    name: "CN.SettingVisualActiveEffectsButtonsName",
+    hint: "CN.SettingVisualActiveEffectsButtonsHint",
     scope: "world",
     config: true,
     type: Boolean,
