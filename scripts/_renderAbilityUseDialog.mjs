@@ -47,10 +47,10 @@ function _getWarning(reason, item, effect) {
   let string = "";
   if (reason === "DIFFERENT") {
     if (item.type === "spell") {
-      string = "CN.ABILITY_DIALOG_WARNING.SPELL_DIFF";
-    } else string = "CN.ABILITY_DIALOG_WARNING.ITEM";
+      string = "CN.AbilityDialogWarningSpell";
+    } else string = "CN.AbilityDialogWarningItem";
   } else if (reason === "LEVEL") {
-    string = "CN.ABILITY_DIALOG_WARNING.SPELL_SAME";
+    string = "CN.AbilityDialogWarningSpellLevel";
   }
   const oldItemName = effect.getFlag(MODULE, "data.itemData.name");
   const oldLevel = effect.getFlag(MODULE, "data.castData.castLevel");

@@ -39,7 +39,7 @@ async function createEffectData(item) {
   const prepend = game.settings.get(MODULE, "prepend_effect_labels");
 
   // create description.
-  let description = game.i18n.format("CN.CONCENTRATING_ON_ITEM", {
+  let description = game.i18n.format("CN.YouAreConcentratingOnItem", {
     name: item.name
   });
   const intro = await TextEditor.enrichHTML(_createIntro(item), { async: true });
@@ -70,7 +70,7 @@ async function createEffectData(item) {
   // get effect label, depending on settings.
   let label = item.name;
   if (prepend) {
-    label = `${game.i18n.localize("CN.CONCENTRATION")} - ${label}`;
+    label = `${game.i18n.localize("DND5E.Concentration")} - ${label}`;
   }
 
   // return constructed effect data.
@@ -112,14 +112,14 @@ function getItemDuration(item) {
 
 // get the image used for the effect.
 function getModuleImage(item) {
-  // the custom icon in the settings.
-  const moduleImage = game.settings.get(MODULE, "concentration_icon");
-
   // whether or not to use the item img instead.
   const useItemImage = game.settings.get(MODULE, "concentration_icon_item");
 
   // Case 1: the item has an image, and it is prioritised.
   if (useItemImage && item.img) return item.img;
+
+  // the custom icon in the settings.
+  const moduleImage = game.settings.get(MODULE, "concentration_icon")?.trim();
 
   // Case 2: there is no custom image in the settings, so use the default image.
   if (!moduleImage) return "icons/magic/light/orb-lightbulb-gray.webp";
@@ -140,7 +140,7 @@ async function breakConcentration(caster, message = true) {
 }
 
 function _createIntro(item) {
-  let description = "<p>" + game.i18n.format("CN.CONCENTRATING_ON_ITEM", { name: item.name }) + "</p>";
+  let description = "<p>" + game.i18n.format("CN.YouAreConcentratingOnItem", { name: item.name }) + "</p>";
 
   if (game.settings.get(MODULE, "create_vae_quickButtons")) {
     description += "<div class='cn-vae-buttons'>";
@@ -155,12 +155,12 @@ function _createIntro(item) {
     }
 
     if (item.hasAreaTarget) description += `<a data-cn="template" data-uuid="${item.parent.uuid}">${game.i18n.localize("DND5E.PlaceTemplate")}</a>`;
-    description += `<a data-cn="redisplay" data-uuid="${item.parent.uuid}">${game.i18n.localize("CN.REDISPLAY")}</a>`;
+    description += `<a data-cn="redisplay" data-uuid="${item.parent.uuid}">${game.i18n.localize("CN.DisplayItem")}</a>`;
 
     const effTran = game.modules.get("effective-transferral")?.active && _effectiveTransferralTransferButton(item);
     if (effTran) description += effTran;
 
-    description += `<a data-cn="concsave" data-uuid="${item.parent.uuid}">${game.i18n.localize("CN.CONCENTRATION")}</a>`;
+    description += `<a data-cn="concsave" data-uuid="${item.parent.uuid}">${game.i18n.localize("DND5E.Concentration")}</a>`;
     return description + "</div>";
   }
   return description;

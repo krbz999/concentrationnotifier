@@ -13,7 +13,7 @@ export async function _gainConcentration(effect, context, userId) {
   if (effect.parent instanceof Item) return;
 
   const data = {
-    details: game.i18n.format("CN.CARD.GAIN.DETAILS", {
+    details: game.i18n.format("CN.NotifyConcentrationHasBegun", {
       itemName: effect.getFlag(MODULE, "data.itemData.name"),
       actorName: effect.parent.name
     }),
@@ -37,7 +37,7 @@ export async function _gainConcentration(effect, context, userId) {
     flags: { core: { canPopout: true } },
     whisper,
     speaker: ChatMessage.getSpeaker({
-      alias: game.i18n.localize("CN.SPEAKER")
+      alias: game.i18n.localize("CN.ModuleTitle")
     }),
   }
   return ChatMessage.create(messageData);
@@ -58,7 +58,7 @@ export async function _loseConcentration(effect, context, userId) {
   if (effect.parent instanceof Item) return;
 
   const data = {
-    details: game.i18n.format("CN.CARD.LOSS.DETAILS", {
+    details: game.i18n.format("CN.NotifyConcentrationHasEnded", {
       itemName: effect.getFlag(MODULE, "data.itemData.name"),
       actorName: effect.parent.name
     }),
@@ -82,7 +82,7 @@ export async function _loseConcentration(effect, context, userId) {
     flags: { core: { canPopout: true } },
     whisper,
     speaker: ChatMessage.getSpeaker({
-      alias: game.i18n.localize("CN.SPEAKER")
+      alias: game.i18n.localize("CN.ModuleTitle")
     }),
   }
   return ChatMessage.create(messageData);

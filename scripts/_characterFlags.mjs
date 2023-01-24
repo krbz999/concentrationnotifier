@@ -1,37 +1,36 @@
 // create the concentration flags on actor Special Traits.
 export function _characterFlags() {
-  const section = game.i18n.localize("CN.CONCENTRATION");
-  const abilityScoreKeys = Object.keys(CONFIG.DND5E.abilities);
-  const keys = abilityScoreKeys.map(i => `'${i}'`).join(", ");
+  const section = game.i18n.localize("DND5E.Concentration");
 
   /* Add bonus on top of the saving throw. */
   CONFIG.DND5E.characterFlags["concentrationBonus"] = {
-    name: game.i18n.localize("CN.CHARACTER_FLAGS.BONUS.NAME"),
-    hint: game.i18n.localize("CN.CHARACTER_FLAGS.BONUS.HINT"),
+    name: game.i18n.localize("CN.FlagConcentrationBonusName"),
+    hint: game.i18n.localize("CN.FlagConcentrationBonusHint"),
     section,
     type: String
   }
 
   /* Change the ability being used for the saving throw. */
   CONFIG.DND5E.characterFlags["concentrationAbility"] = {
-    name: game.i18n.localize("CN.CHARACTER_FLAGS.ABILITY.NAME"),
-    hint: game.i18n.format("CN.CHARACTER_FLAGS.ABILITY.HINT", { keys }),
+    name: game.i18n.localize("CN.FlagConcentrationAbilityName"),
+    hint: game.i18n.localize("CN.FlagConcentrationAbilityHint"),
     section,
-    type: String
+    type: String,
+    choices: {'': null, ...CONFIG.DND5E.abilities}
   }
 
   /* Set a flag for having advantage on Concentration saves. */
   CONFIG.DND5E.characterFlags["concentrationAdvantage"] = {
-    name: game.i18n.localize("CN.CHARACTER_FLAGS.ADVANTAGE.NAME"),
-    hint: game.i18n.localize("CN.CHARACTER_FLAGS.ADVANTAGE.HINT"),
+    name: game.i18n.localize("CN.FlagConcentrationAdvantageName"),
+    hint: game.i18n.localize("CN.FlagConcentrationAdvantageHint"),
     section,
     type: Boolean
   }
 
   /* Set a flag for not being able to roll below 10. */
   CONFIG.DND5E.characterFlags["concentrationReliable"] = {
-    name: game.i18n.localize("CN.CHARACTER_FLAGS.RELIABLE.NAME"),
-    hint: game.i18n.localize("CN.CHARACTER_FLAGS.RELIABLE.HINT"),
+    name: game.i18n.localize("CN.FlagConcentrationReliableName"),
+    hint: game.i18n.localize("CN.FlagConcentrationReliableHint"),
     section,
     type: Boolean
   }

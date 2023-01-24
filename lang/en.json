@@ -1,58 +1,43 @@
 {
-  "CN": {
-    "SETTINGS": {
-      "DEFAULT_ICON.NAME": "Custom Icon",
-      "DEFAULT_ICON.HINT": "An image path here will replace the default icon used for the concentration effect.",
-      "ITEM_ICON.NAME": "Use Item Icon",
-      "ITEM_ICON.HINT": "If checked, the image used for concentration effects will be overridden by the item's image.",
-      "PREPEND.NAME": "Prepend Effect Labels",
-      "PREPEND.HINT": "If checked, concentration effects are prepended with 'Concentration' to distinguish them from other effects.",
-      "VERBOSE.NAME": "Verbose Effect Descriptions",
-      "VERBOSE.HINT": "If using a module like Effects Panel or Visual Active Effects, and if it supports html tags, this will make the description of the effect more verbose.",
-      "WHISPER": {
-        "NAME": "Whisper Messages",
-        "HINT": "If enabled, all messages about beginning or ending concentration will be whispered to owners and all GMs instead of respecting roll modes. This does not affect the save prompts, which are always whispered no matter what."
-      },
-      "USE_WARNING": {
-        "NAME": "Ability Use Warnings",
-        "HINT": "If enabled, show a warning if the usage of an item or spell would end concentration on a different item."
-      },
-      "VAE_BUTTONS": {
-        "NAME": "Visual Active Effects Buttons",
-        "HINT": "If enabled, and using 'Visual Active Effects', concentration effects will be supplied with quick access buttons for rolling different properties of the item."
-      }
-    },
-    "DELETE_DIALOG_TITLE": "End concentration on {name}?",
-    "DELETE_DIALOG_TEXT": "This will end concentration on {name}.",
-    "ABILITY_DIALOG_WARNING": {
-      "SPELL_SAME": "If you cast this spell at a level other than {level}, it will end concentration on {item}.",
-      "SPELL_DIFF": "If you cast this spell, it will end concentration on {item}.",
-      "ITEM": "If you use this item or feature, it will end concentration on {item}."
-    },
-    "CHARACTER_FLAGS": {
-      "BONUS.NAME": "Concentration Bonus",
-      "BONUS.HINT": "A bonus to saving throws to maintain concentration. This field supports dynamic values such as @classes.sorcerer.levels as well as dice expressions.",
-      "ABILITY.NAME": "Concentration Ability",
-      "ABILITY.HINT": "The ability this character uses for saving throws to maintain concentration. The possible values are {keys}.",
-      "RELIABLE.NAME": "Reliable Concentration",
-      "RELIABLE.HINT": "This character cannot roll below 10 to maintain concentration.",
-      "ADVANTAGE.NAME": "Concentration Advantage",
-      "ADVANTAGE.HINT": "This character rolls with advantage to maintain concentration."
-    },
-    "CONCENTRATION": "Concentration",
-    "SPEAKER": "Concentration Notifier",
-    "DETAILS": "Item Details",
-    "CONCENTRATING_ON_ITEM": "You are concentrating on {name}.",
-    "REDISPLAY": "Display Item",
-    "CARD": {
-      "GAIN.DETAILS": "{actorName} began concentration on {itemName}.",
-      "LOSS.DETAILS": "{actorName} ended concentration on {itemName}.",
-      "PROMPT.DETAILS": "{actorName} has taken <strong>{damage}</strong> damage and must make a <strong>DC {dc}</strong> {saveType} saving throw to maintain concentration on <a name='render-item-sheet' data-item-uuid='{itemUuid}'>{itemName}</a>.",
-      "PROMPT.DETAILS_MANUAL": "{actorName} must make a <strong>DC {dc}</strong> {saveType} saving throw to maintain concentration on <a name='render-item-sheet' data-item-uuid='{itemUuid}'>{itemName}</a>.",
-      "PROMPT.SAVE": "Saving Throw DC {dc} {saveType}",
-      "PROMPT.END": "End Concentration"
-    },
-    "ACTOR_NOT_CONCENTRATING": "{actorName} is not concentrating on anything.",
-    "ITEM_NOT_FOUND": "The item being concentrated on does not exist on the actor."
-  }
+  "CN.AbilityDialogWarningItem": "If you use this item or feature, it will end concentration on {item}.",
+  "CN.AbilityDialogWarningSpell": "If you cast this spell, it will end concentration on {item}.",
+  "CN.AbilityDialogWarningSpellLevel": "If you cast this spell at a level other than {level}, it will end concentration on {item}.",
+  "CN.ButtonEndConcentration": "End Concentration",
+  "CN.ButtonRemoveTemplates": "Remove Templates",
+  "CN.ButtonSavingThrow": "Saving Throw DC {dc} {saveType}",
+  "CN.ConfirmEndConcentrationText": "This will end concentration on {name}.",
+  "CN.ConfirmEndConcentrationTitle": "End concentration on {name}?",
+  "CN.DisplayItem": "Display Item",
+  "CN.FlagConcentrationAbilityHint": "The ability this character uses for saving throws to maintain concentration.",
+  "CN.FlagConcentrationAbilityName": "Concentration Ability",
+  "CN.FlagConcentrationAdvantageHint": "This character rolls with advantage to maintain concentration.",
+  "CN.FlagConcentrationAdvantageName": "Concentration Advantage",
+  "CN.FlagConcentrationBonusHint": "A bonus to saving throws to maintain concentration. This field supports dynamic values such as @classes.sorcerer.levels as well as dice expressions.",
+  "CN.FlagConcentrationBonusName": "Concentration Bonus",
+  "CN.FlagConcentrationReliableHint": "This character cannot roll below 10 to maintain concentration.",
+  "CN.FlagConcentrationReliableName": "Reliable Concentration",
+  "CN.ItemNotFound": "The item being concentrated on does not exist on the actor.",
+  "CN.ModuleTitle": "Concentration Notifier",
+  "CN.NotifyConcentrationChallengeDamaged": "{actorName} has taken <strong>{damage}</strong> damage and must make a <strong>DC {dc}</strong> {saveType} saving throw to maintain concentration on <a name='render-item-sheet' data-item-uuid='{itemUuid}'>{itemName}</a>.",
+  "CN.NotifyConcentrationChallengeManual": "{actorName} must make a <strong>DC {dc}</strong> {saveType} saving throw to maintain concentration on <a name='render-item-sheet' data-item-uuid='{itemUuid}'>{itemName}</a>.",
+  "CN.NotifyConcentrationHasBegun": "{actorName} began concentration on {itemName}.",
+  "CN.NotifyConcentrationHasEnded": "{actorName} ended concentration on {itemName}.",
+  "CN.SettingAbilityUseWarningHint": "If enabled, show a warning if the usage of an item or spell would end concentration on a different item.",
+  "CN.SettingAbilityUseWarningName": "Ability Use Warnings",
+  "CN.SettingDefaultConcentrationAbilityHint": "The ability that is used for concentration checks by default, for all actors in the world.",
+  "CN.SettingDefaultConcentrationAbilityName": "Default Concentration Ability",
+  "CN.SettingDefaultIconHint": "An image path here will replace the default icon used for the concentration effect.",
+  "CN.SettingDefaultIconName": "Custom Icon",
+  "CN.SettingPrependLabelHint": "If checked, concentration effects are prepended with 'Concentration' to distinguish them from other effects.",
+  "CN.SettingPrependLabelName": "Prepend Effect Labels",
+  "CN.SettingUseItemIconHint": "If checked, the image used for concentration effects will be overridden by the item's image.",
+  "CN.SettingUseItemIconName": "Use Item Icon",
+  "CN.SettingVerboseDescriptionsHint": "If using a module like Effects Panel or Visual Active Effects, and if it supports html tags, this will make the description of the effect more verbose.",
+  "CN.SettingVerboseDescriptionsName": "Verbose Effect Descriptions",
+  "CN.SettingVisualActiveEffectsButtonsHint": "If enabled, and using 'Visual Active Effects', concentration effects will be supplied with quick access buttons for rolling different properties of the item.",
+  "CN.SettingVisualActiveEffectsButtonsName": "Visual Active Effects Buttons",
+  "CN.SettingWhisperMessagesHint": "If enabled, all messages about beginning or ending concentration will be whispered to owners and all GMs instead of respecting roll modes. This does not affect the save prompts, which are always whispered no matter what.",
+  "CN.SettingWhisperMessagesName": "Whisper Messages",
+  "CN.WarningActorNotConcentrating": "{actorName} is not concentrating on anything.",
+  "CN.YouAreConcentratingOnItem": "You are concentrating on {name}."
 }
