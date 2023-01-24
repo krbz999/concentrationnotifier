@@ -35,3 +35,5 @@ Additionally, these functions are found in the global namespace `CN` (here `cast
 The effect placed on an actor to denote concentration contains some useful data, intended to make script writing easier for persistently active spells such as <em>call lightning</em> or <em>moonbeam</em>:
 * `flags.concentrationnotifier.data.itemData`, with all the details of the item being concentrated on.
 * `flags.concentrationnotifier.data.castData`, with the item's base level, the level at which it was cast, and its uuid.
+
+Using a macro to set the flag `unbreakable` within `castData` to `true` will prevent automatically prompting the caster for saving throws to maintain concentration when they take damage. Useful in rare instances where a feature lets you have unbreakable concentration on a particular spell.
