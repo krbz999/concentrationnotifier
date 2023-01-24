@@ -1,6 +1,6 @@
 <div class="concentrationnotifier">
   <div class="card-contents prompt-card">
-    <div class="header">{{localize "CN.CONCENTRATION"}}</div>
+    <div class="header">{{localize "DND5E.Concentration"}}</div>
     <div class="details">
       {{#if description}}
       {{{description}}}
@@ -9,12 +9,17 @@
       {{/if}}
     </div>
     <div class="buttons">
-      <button name="saving-throw-button" data-dc="{{dc}}" data-save-type="{{ability}}" data-actor-uuid="{{actorUuid}}">
+      <button name="saving-throw" data-dc="{{dc}}" data-save-type="{{ability}}" data-actor-uuid="{{actorUuid}}">
         <i class="fa-solid fa-dice-d20"></i> {{buttonSaveLabel}}
       </button>
-      <button name="delete-concentration-button" data-effect-uuid="{{effectUuid}}">
-        <i class="fa-solid fa-circle-dot"></i> {{localize "CN.CARD.PROMPT.END"}}
+      <button name="delete-concentration" data-effect-uuid="{{effectUuid}}">
+        <i class="fa-solid fa-circle-dot"></i> {{localize "CN.ButtonEndConcentration"}}
       </button>
+      {{#if hasTemplates}}
+      <button name="remove-templates" data-origin="{{origin}}">
+        <i class="fa-solid fa-ruler-combined"></i> {{localize "CN.ButtonRemoveTemplates"}}
+      </button>
+      {{/if}}
     </div>
   </div>
 </div>

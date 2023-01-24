@@ -8,20 +8,27 @@ export function _clickPrompt(_, html) {
 
 async function clickConcentrationPrompt(event) {
   // get the target of the mouse click.
-  let button = event.target?.closest("button");
+  let button = event.target?.closest(".concentrationnotifier .buttons > button");
   if (!button) button = event.target?.closest("[name='render-item-sheet']");
   if (!button) return;
 
-  if (button.name === "saving-throw-button") {
+  if (button.name === "saving-throw") {
     const { dc, saveType, actorUuid } = button.dataset;
     let actor = fromUuidSync(actorUuid);
     actor = actor?.actor ?? actor;
     return actor.rollConcentrationSave(saveType, { targetValue: dc });
   }
-  else if (button.name === "delete-concentration-button") {
+  else if (button.name === "delete-concentration") {
     const { effectUuid } = button.dataset;
     const effect = fromUuidSync(effectUuid);
     return deleteDialog(effect, event);
+  }
+  else if (button.name === "remove-templates") {
+    const { origin } = button.dataset;
+    const templateIds = canvas?.scene.templates.filter(t => {
+      return t.isOwner && t.flags.dnd5e?.origin === origin;
+    }).map(t => t.id);
+    return canvas?.scene.deleteEmbeddedDocuments("MeasuredTemplate", templateIds);
   }
   else if (button.name === "render-item-sheet") {
     const { itemUuid } = button.dataset;
@@ -37,8 +44,8 @@ async function deleteDialog(effect, event) {
   }
   const name = effect.getFlag(MODULE, "data.itemData.name");
   new Dialog({
-    title: game.i18n.format("CN.DELETE_DIALOG_TITLE", { name }),
-    content: game.i18n.format("CN.DELETE_DIALOG_TEXT", { name }),
+    title: game.i18n.format("CN.ConfirmEndConcentrationTitle", { name }),
+    content: game.i18n.format("CN.ConfirmEndConcentrationText", { name }),
     buttons: {
       yes: {
         icon: "<i class='fa-solid fa-check'></i>",
