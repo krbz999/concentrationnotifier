@@ -27,7 +27,9 @@
         "id": "dnd5e",
         "type": "system",
         "manifest": "https://raw.githubusercontent.com/foundryvtt/dnd5e/master/system.json",
-        "compatibility": {}
+        "compatibility": {
+          "minimum": "2.1.0"
+        }
       }
     ]
   },
