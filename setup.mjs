@@ -6,7 +6,7 @@ import { promptConcentrationSave, _prePromptCreator, _promptCreator } from "./sc
 import { _clickPrompt } from "./scripts/_promptListeners.mjs";
 import { API } from "./scripts/_publicAPI.mjs";
 import { _abilityUseDialog, _preAbilityUseDialog } from "./scripts/_renderAbilityUseDialog.mjs";
-import { rollConcentrationSave, _preRollConcentrationSave } from "./scripts/_rollConcentrationSave.mjs";
+import { rollConcentrationSave } from "./scripts/_rollConcentrationSave.mjs";
 import { _applyButtonListeners, _startConcentration } from "./scripts/_startConcentration.mjs";
 
 Hooks.once("init", () => {
@@ -41,5 +41,4 @@ Hooks.on("preUpdateActor", _prePromptCreator);
 Hooks.on("updateActor", _promptCreator);
 Hooks.on("renderChatLog", _clickPrompt);
 Hooks.on("renderChatPopout", _clickPrompt);
-Hooks.on("dnd5e.preRollAbilitySave", _preRollConcentrationSave);
 Hooks.on("dnd5e.useItem", _startConcentration);
