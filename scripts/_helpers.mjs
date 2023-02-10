@@ -40,7 +40,7 @@ export function _itemUseAffectsConcentration(item, isDialog = false) {
 
 // Compatibility with Roll Groups + Visual Active Effects.
 export function _rollGroupDamageButtons(item) {
-  const groups = item.getFlag("rollgroups", "config.groups");
+  const groups = item.getFlag("rollgroups", "config.groups") ?? [];
   const validParts = item.system.damage?.parts.filter(([f]) => !!f) ?? [];
   if (!groups?.length || validParts.length < 2) return false;
 

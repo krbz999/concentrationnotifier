@@ -8,31 +8,33 @@ export class API {
     const effect = actor.effects.find(eff => {
       return API.isEffectConcentration(eff);
     });
-    return !!effect ? effect : false;
+    return effect || false;
   }
 
   // determine if you are concentrating on a specific item.
   static isActorConcentratingOnItem(caster, item) {
     const actor = caster.actor ?? caster;
     const effect = actor.effects.find(eff => {
-      const itemUuid = eff.getFlag(MODULE, "data.castData.itemUuid");
-      return itemUuid === item.uuid;
+      const uuid = eff.getFlag(MODULE, "data.castData.itemUuid");
+      return uuid === item.uuid;
     });
-    return !!effect ? effect : false;
+    return effect || false;
   }
 
   // determine if effect is concentration effect.
   static isEffectConcentration(effect) {
-    return effect.getFlag("core", "statusId") === "concentration";
+    return effect.flags.core?.statusId === "concentration";
   }
 
   // end all concentration effects on an actor.
-  static async breakConcentration(caster) {
+  static async breakConcentration(caster, { message = true } = {}) {
     const actor = caster.actor ?? caster;
     const deleteIds = actor.effects.filter(eff => {
       return API.isEffectConcentration(eff);
     }).map(i => i.id);
-    return actor.deleteEmbeddedDocuments("ActiveEffect", deleteIds);
+    return actor.deleteEmbeddedDocuments("ActiveEffect", deleteIds, {
+      concMessage: message
+    });
   }
 
   // wait for concentration on item to be applied on actor.
@@ -44,6 +46,7 @@ export class API {
         setTimeout(resolve, ms);
       });
     }
+
     function getConc() {
       if (!!item) return API.isActorConcentratingOnItem(actor, item);
       return API.isActorConcentrating(actor);
@@ -56,8 +59,7 @@ export class API {
       waited = waited + 100;
       conc = getConc();
     }
-    if (!!conc) return conc;
-    return false;
+    return conc || false;
   }
 
   // display the card of the item being concentrated on, at the appropriate level.
@@ -70,9 +72,9 @@ export class API {
       return null;
     }
 
-    const { itemData, castData } = isConc.getFlag(MODULE, "data");
-    const item = fromUuidSync(castData.itemUuid);
-    const clone = item?.clone(itemData, { keepId: true }) ?? new Item.implementation(itemData, { parent: actor });
+    const data = isConc.getFlag(MODULE, "data");
+    const item = fromUuidSync(data.castData.itemUuid);
+    const clone = item?.clone(data.itemData, { keepId: true });
 
     if (!clone) {
       ui.notifications.warn("CN.ItemNotFound", { localize: true });
@@ -80,14 +82,6 @@ export class API {
     }
 
     clone.prepareFinalAttributes();
-    return clone.use({
-      createMeasuredTemplate: false,
-      consumeQuantity: false,
-      consumeRecharge: false,
-      consumeResource: false,
-      consumeSpellLevel: false,
-      consumeSpellSlot: false,
-      consumeUsage: false
-    }, { configureDialog: false });
+    return clone.displayCard({});
   }
 }

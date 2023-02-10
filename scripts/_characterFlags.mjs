@@ -16,7 +16,7 @@ export function _characterFlags() {
     hint: game.i18n.localize("CN.FlagConcentrationAbilityHint"),
     section,
     type: String,
-    choices: {'': null, ...CONFIG.DND5E.abilities}
+    choices: {'': null, ...CONFIG.DND5E.abilities} // TODO: change in 2.2.x
   }
 
   /* Set a flag for having advantage on Concentration saves. */

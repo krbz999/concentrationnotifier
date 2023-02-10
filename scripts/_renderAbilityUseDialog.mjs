@@ -40,7 +40,7 @@ export function _abilityUseDialog(dialog, html) {
 }
 
 /**
- * Helper method for localization string in the abilityUseDialog warning,
+ * Helper method for localization string in the AbilityUseDialog warning,
  * depending on the reason that the new item may end concentration.
  */
 function _getWarning(reason, item, effect) {
@@ -52,7 +52,10 @@ function _getWarning(reason, item, effect) {
   } else if (reason === "LEVEL") {
     string = "CN.AbilityDialogWarningSpellLevel";
   }
-  const oldItemName = effect.getFlag(MODULE, "data.itemData.name");
-  const oldLevel = effect.getFlag(MODULE, "data.castData.castLevel");
-  return game.i18n.format(string, { item: oldItemName, level: oldLevel });
+
+  const data = effect.flags[MODULE].data;
+  return game.i18n.format(string, {
+    item: data.itemData.name,
+    level: data.castData.castLevel
+  });
 }

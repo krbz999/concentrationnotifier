@@ -12,25 +12,24 @@ export async function _gainConcentration(effect, context, userId) {
   // effect might be on an unowned item.
   if (effect.parent instanceof Item) return;
 
-  const data = {
+  const data = effect.flags[MODULE].data;
+
+  const templateData = {
     details: game.i18n.format("CN.NotifyConcentrationHasBegun", {
-      itemName: effect.getFlag(MODULE, "data.itemData.name"),
+      itemName: data.itemData.name,
       actorName: effect.parent.name
     }),
-    itemImg: effect.getFlag(MODULE, "data.itemData.img"),
-    itemUuid: effect.getFlag(MODULE, "data.castData.itemUuid")
+    itemImg: data.itemData.img,
+    itemUuid: data.castData.itemUuid
   }
   const template = `modules/${MODULE}/templates/concentrationGain.hbs`;
-  const content = await renderTemplate(template, data);
+  const content = await renderTemplate(template, templateData);
   const publicMode = game.settings.get("core", "rollMode") === CONST.DICE_ROLL_MODES.PUBLIC;
   const alwaysWhisper = game.settings.get(MODULE, "always_whisper_messages");
 
   let whisper;
   if (publicMode && !alwaysWhisper) whisper = [];
-  else whisper = Object.entries(effect.parent.ownership).filter(([id, level]) => {
-    if (!game.users.get(id)) return false;
-    return level === CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER;
-  }).map(([id]) => id);
+  else whisper = game.users.filter(user => effect.parent.testUserPermission(user, "OWNER")).map(u => u.id);
 
   const messageData = {
     content,
@@ -57,25 +56,24 @@ export async function _loseConcentration(effect, context, userId) {
   // effect might be on an unowned item.
   if (effect.parent instanceof Item) return;
 
-  const data = {
+  const data = effect.flags[MODULE].data;
+
+  const templateData = {
     details: game.i18n.format("CN.NotifyConcentrationHasEnded", {
-      itemName: effect.getFlag(MODULE, "data.itemData.name"),
+      itemName: data.itemData.name,
       actorName: effect.parent.name
     }),
-    itemImg: effect.getFlag(MODULE, "data.itemData.img"),
-    itemUuid: effect.getFlag(MODULE, "data.castData.itemUuid")
+    itemImg: data.itemData.img,
+    itemUuid: data.castData.itemUuid
   }
   const template = `modules/${MODULE}/templates/concentrationLoss.hbs`;
-  const content = await renderTemplate(template, data);
+  const content = await renderTemplate(template, templateData);
   const publicMode = game.settings.get("core", "rollMode") === CONST.DICE_ROLL_MODES.PUBLIC;
   const alwaysWhisper = game.settings.get(MODULE, "always_whisper_messages");
 
   let whisper;
   if (publicMode && !alwaysWhisper) whisper = [];
-  else whisper = Object.entries(effect.parent.ownership).filter(([id, level]) => {
-    if (!game.users.get(id)) return false;
-    return level === CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER;
-  }).map(([id]) => id);
+  else whisper = game.users.filter(user => effect.parent.testUserPermission(user, "OWNER")).map(u => u.id);
 
   const messageData = {
     content,

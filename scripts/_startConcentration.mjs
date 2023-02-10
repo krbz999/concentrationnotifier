@@ -142,25 +142,39 @@ async function breakConcentration(caster, message = true) {
 function _createIntro(item) {
   let description = "<p>" + game.i18n.format("CN.YouAreConcentratingOnItem", { name: item.name }) + "</p>";
 
-  if (game.settings.get(MODULE, "create_vae_quickButtons")) {
+  const vae = game.settings.get(MODULE, "create_vae_quickButtons");
+  const rg = game.modules.get("rollgroups");
+  const et = game.modules.get("effective-transferral");
+
+  if (vae) {
+    const uuid = item.parent.uuid;
+
     description += "<div class='cn-vae-buttons'>";
 
-    if (item.hasAttack) description += `<a data-cn="attack" data-uuid="${item.parent.uuid}">${game.i18n.localize("DND5E.Attack")}</a>`;
+    // Add attack button.
+    if (item.hasAttack) description += `<a data-cn="attack" data-uuid="${uuid}">${game.i18n.localize("DND5E.Attack")}</a>`;
 
-    const rollGroups = game.modules.get("rollgroups")?.active && _rollGroupDamageButtons(item);
+    // Add normal or rollgroups damage buttons.
+    const rollGroups = rg?.active && _rollGroupDamageButtons(item);
     if (rollGroups) description += rollGroups;
     else {
-      if (item.isHealing) description += `<a data-cn="damage" data-uuid="${item.parent.uuid}">${game.i18n.localize("DND5E.Healing")}</a>`;
-      else if (item.hasDamage) description += `<a data-cn="damage" data-uuid="${item.parent.uuid}">${game.i18n.localize("DND5E.Damage")}</a>`;
+      if (item.isHealing) description += `<a data-cn="damage" data-uuid="${uuid}">${game.i18n.localize("DND5E.Healing")}</a>`;
+      else if (item.hasDamage) description += `<a data-cn="damage" data-uuid="${uuid}">${game.i18n.localize("DND5E.Damage")}</a>`;
     }
 
-    if (item.hasAreaTarget) description += `<a data-cn="template" data-uuid="${item.parent.uuid}">${game.i18n.localize("DND5E.PlaceTemplate")}</a>`;
-    description += `<a data-cn="redisplay" data-uuid="${item.parent.uuid}">${game.i18n.localize("CN.DisplayItem")}</a>`;
+    // Add template buttons.
+    if (item.hasAreaTarget) description += `<a data-cn="template" data-uuid="${uuid}">${game.i18n.localize("DND5E.PlaceTemplate")}</a>`;
 
-    const effTran = game.modules.get("effective-transferral")?.active && _effectiveTransferralTransferButton(item);
+    // Add redisplay button.
+    description += `<a data-cn="redisplay" data-uuid="${uuid}">${game.i18n.localize("CN.DisplayItem")}</a>`;
+
+    // Add effect transfer button.
+    const effTran = et?.active && _effectiveTransferralTransferButton(item);
     if (effTran) description += effTran;
 
-    description += `<a data-cn="concsave" data-uuid="${item.parent.uuid}">${game.i18n.localize("DND5E.Concentration")}</a>`;
+    // Add concentration save button.
+    description += `<a data-cn="concsave" data-uuid="${uuid}">${game.i18n.localize("DND5E.Concentration")}</a>`;
+
     return description + "</div>";
   }
   return description;
@@ -170,23 +184,26 @@ export function _applyButtonListeners() {
   document.addEventListener("click", async (event) => {
     const a = event.target.closest(".cn-vae-buttons a");
     if (!a) return;
-    const e = event;
-    const { cn, uuid } = a.dataset;
+    const data = a.dataset;
 
-    const caster = await fromUuid(uuid);
+    const caster = await fromUuid(data.uuid);
     const actor = caster.actor ?? caster;
 
     const isConc = CN.isActorConcentrating(actor);
     const { itemData, castData } = isConc.getFlag(MODULE, "data");
-    const item = fromUuidSync(castData.itemUuid) ?? new Item.implementation(itemData, { parent: caster });
-    const clone = item?.clone(itemData, { keepId: true }) ?? new Item.implementation(itemData, { parent: caster });
+    const item = fromUuidSync(castData.itemUuid) ?? new Item.implementation(itemData, { parent: actor });
+    const clone = item?.clone(itemData, { keepId: true }) ?? new Item.implementation(itemData, { parent: actor });
 
-    if (cn === "attack") return clone.rollAttack({ event: e });
-    else if (cn === "rollgroups-damage") return item.rollDamageGroup({ event: e, rollgroup: a.dataset.rollgroup, spellLevel: castData.castLevel });
-    else if (cn === "damage") return item.rollDamage({ event: e, spellLevel: castData.castLevel });
-    else if (cn === "template") return dnd5e.canvas.AbilityTemplate.fromItem(item)?.drawPreview();
-    else if (cn === "redisplay") return CN.redisplayCard(actor);
-    else if (cn === "effective-transferral-transfer") return ET.effectTransferTrigger(item, "button", castData.castLevel);
-    else if (cn === "concsave") return actor.rollConcentrationSave();
+    const config = { event, rollgroup: data.rollgroup, spellLevel: castData.castLevel };
+
+    if (data.cn === "attack") return clone.rollAttack(config);
+    else if (data.cn === "rollgroups-damage") return item.rollDamageGroup(config);
+    else if (data.cn === "damage") return item.rollDamage(config);
+    else if (data.cn === "template") {
+      return dnd5e.canvas.AbilityTemplate.fromItem(item)?.drawPreview();
+    } else if (data.cn === "redisplay") return CN.redisplayCard(actor);
+    else if (data.cn === "effective-transferral-transfer") {
+      return ET.effectTransferTrigger(item, "button", castData.castLevel);
+    } else if (data.cn === "concsave") return actor.rollConcentrationSave();
   });
 }

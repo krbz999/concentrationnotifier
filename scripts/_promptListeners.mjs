@@ -13,26 +13,24 @@ async function clickConcentrationPrompt(event) {
   if (!button) return;
 
   if (button.name === "saving-throw") {
-    const { dc, saveType, actorUuid } = button.dataset;
-    let actor = fromUuidSync(actorUuid);
-    actor = actor?.actor ?? actor;
-    return actor.rollConcentrationSave(saveType, { targetValue: dc });
+    const caster = fromUuidSync(button.dataset.actorUuid);
+    const actor = caster.actor ?? caster;
+    return actor.rollConcentrationSave(button.dataset.saveType, {
+      targetValue: button.dataset.dc
+    });
   }
   else if (button.name === "delete-concentration") {
-    const { effectUuid } = button.dataset;
-    const effect = fromUuidSync(effectUuid);
+    const effect = fromUuidSync(button.dataset.effectUuid);
     return deleteDialog(effect, event);
   }
   else if (button.name === "remove-templates") {
-    const { origin } = button.dataset;
     const templateIds = canvas?.scene.templates.filter(t => {
-      return t.isOwner && t.flags.dnd5e?.origin === origin;
+      return t.isOwner && t.flags.dnd5e?.origin === button.dataset.origin;
     }).map(t => t.id);
     return canvas?.scene.deleteEmbeddedDocuments("MeasuredTemplate", templateIds);
   }
   else if (button.name === "render-item-sheet") {
-    const { itemUuid } = button.dataset;
-    const item = fromUuidSync(itemUuid);
+    const item = fromUuidSync(button.dataset.itemUuid);
     return item.sheet.render(true);
   }
 }
@@ -42,7 +40,7 @@ async function deleteDialog(effect, event) {
   if (event.shiftKey) {
     return effect.delete();
   }
-  const name = effect.getFlag(MODULE, "data.itemData.name");
+  const name = effect.flags[MODULE].data.itemData.name;
   new Dialog({
     title: game.i18n.format("CN.ConfirmEndConcentrationTitle", { name }),
     content: game.i18n.format("CN.ConfirmEndConcentrationText", { name }),

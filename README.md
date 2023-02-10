@@ -25,7 +25,7 @@ Additionally, these functions are found in the global namespace `CN` (here `cast
 * `CN.isActorConcentrating(caster)`: returns the effect if the actor is concentrating on any item, otherwise `false`.
 * `CN.isActorConcentratingOnItem(caster, item)`: returns the effect if the actor is concentrating on the given item, otherwise `false`.
 * `CN.isEffectConcentration(effect)`: returns `true` or `false` if the effect is a concentration effect.
-* `CN.breakConcentration(caster)`: ends all concentration effects on the actor. Returns the array of deleted effects.
+* `CN.breakConcentration(caster, {message=true}={})`: ends all concentration effects on the actor. Returns the array of deleted effects. Set `message` to false to suppress notifications.
 * `CN.waitForConcentrationStart(caster, {item, max_wait=10000}={})`: will wait for the actor to receive any concentration effect (or specific to the item, if provided). Useful for halting scripts in edge cases. The optional integer denotes the maximum number of ms to wait for. Returns the effect if one exists, otherwise `false`.
 * `CN.promptConcentrationSave(caster, {saveDC=10, message}={})`: displays a message for the actor like when they would have taken damage, using the DC provided (default 10). The message can be overridden. Returns the chat message created.
 * `CN.redisplayCard(caster)`: displays the chat card of the item being concentrated on, at the level it was cast.

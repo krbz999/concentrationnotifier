@@ -3,27 +3,23 @@ import { API } from "./_publicAPI.mjs";
 
 // store values for use in "updateActor" hook if HP has changed.
 export function _prePromptCreator(actor, data, context) {
-  const temp = "system.attributes.hp.temp";
-  const value = "system.attributes.hp.value";
+  // Get old values. These always exist, but temp is null when 0.
+  const hpOld = actor.system.attributes?.hp ?? {};
 
-  // get old values. These always exist, but temp is null when 0.
-  const old_temp = foundry.utils.getProperty(actor, temp) ?? 0;
-  const old_value = foundry.utils.getProperty(actor, value);
+  // Get new values. If they are undefined, there was no change to them, so we use old values.
+  const hpNew = data.system?.attributes?.hp ?? {};
 
-  // get new values. If they are undefined, there was no change to them, so we use old values.
-  const dataTemp = foundry.utils.getProperty(data, temp);
-  const new_temp = (dataTemp === undefined) ? old_temp : (dataTemp ?? 0);
-  const new_value = foundry.utils.getProperty(data, value) ?? old_value;
-
-  // calculate health difference.
-  const damage = (old_temp + old_value) - (new_temp + new_value);
+  // Calculate health difference.
+  const oldTotal = (hpOld.temp ?? 0) + (hpOld.value ?? 0);
+  const newTotal = (hpNew.temp ?? hpOld.temp ?? 0) + (hpNew.value ?? hpOld.value ?? 0);
+  const damage = oldTotal - newTotal;
 
   // if damageTaken > 0, tag context for a saving throw.
   context[MODULE] = { save: damage > 0, damage };
 }
 
 // if the user is concentrating, and has taken damage, build a chat card, and call for a saving throw.
-export async function _promptCreator(actor, data, context, userId) {
+export async function _promptCreator(actor, _, context, userId) {
   // only do this for the one doing the update.
   if (userId !== game.user.id) return;
 
@@ -35,33 +31,36 @@ export async function _promptCreator(actor, data, context, userId) {
 
   // find a concentration effect.
   const effect = API.isActorConcentrating(actor);
-  // bail out if actor is not concentrating.
-  if (!effect || effect.getFlag(MODULE, "data.castData.unbreakable")) return;
-  // get the name and uuid of the item being concentrated on.
-  const name = effect.getFlag(MODULE, "data.itemData.name");
-  const uuid = effect.getFlag(MODULE, "data.castData.itemUuid");
+  if (!effect) return;
+
+  const data = effect.flags[MODULE].data;
+
+  // Bail out if this concentration cannot be broken by damage.
+  if (data.castData.unbreakable) return;
+
   // get the ability being used for concentration saves.
-  const abilityKey = actor.getFlag("dnd5e", "concentrationAbility") ?? game.settings.get(MODULE, "defaultConcentrationAbility");
+  const abilityKey = actor.flags.dnd5e?.concentrationAbility ?? game.settings.get(MODULE, "defaultConcentrationAbility");
+
   // get whisper targets.
-  const whisper = Object.entries(actor.ownership).filter(([id, level]) => {
-    if (!game.users.get(id)) return false;
-    return level === CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER;
-  }).map(([id]) => id);
+  const whisper = game.users.filter(u => actor.testUserPermission(u, "OWNER")).map(u => u.id);
 
   // the chat message contents.
   const template = `modules/${MODULE}/templates/savingThrowPrompt.hbs`;
   const content = await renderTemplate(template, {
     details: game.i18n.format("CN.NotifyConcentrationChallengeDamaged", {
-      dc, itemName: name, damage,
+      dc,
+      itemName: data.itemData.name,
+      damage,
       saveType: CONFIG.DND5E.abilities[abilityKey],
       actorName: actor.name,
-      itemUuid: effect.getFlag(MODULE, "data.castData.itemUuid")
+      itemUuid: data.castData.itemUuid
     }),
     buttonSaveLabel: game.i18n.format("CN.ButtonSavingThrow", {
-      dc, saveType: CONFIG.DND5E.abilities[abilityKey]
+      dc,
+      saveType: CONFIG.DND5E.abilities[abilityKey]
     }),
-    hasTemplates: !!canvas?.scene.templates.find(t => t.flags?.dnd5e?.origin === uuid),
-    origin: uuid,
+    hasTemplates: !!canvas?.scene.templates.find(t => t.flags?.dnd5e?.origin === data.castData.itemUuid),
+    origin: data.castData.itemUuid,
     ability: abilityKey,
     actorUuid: actor.uuid,
     effectUuid: effect.uuid,
@@ -76,11 +75,11 @@ export async function _promptCreator(actor, data, context, userId) {
     }),
     flags: {
       core: { canPopout: true },
-      [MODULE]: { prompt: true }
+      [MODULE]: { prompt: true, damage }
     }
-  }
+  };
 
-  // create chat card.
+  // Create chat card.
   return ChatMessage.create(messageData);
 }
 
@@ -94,33 +93,32 @@ export async function promptConcentrationSave(caster, { saveDC = 10, message } =
     ui.notifications.warn(locale);
     return null;
   }
-  // get the name and uuid of the item being concentrated on.
-  const name = effect.getFlag(MODULE, "data.itemData.name");
-  const uuid = effect.getFlag(MODULE, "data.castData.itemUuid");
-  // get the ability being used for concentration saves.
-  const abilityKey = actor.getFlag("dnd5e", "concentrationAbility") ?? game.settings.get(MODULE, "defaultConcentrationAbility");
-  // get whisper targets.
-  const whisper = Object.entries(actor.ownership).filter(([id, level]) => {
-    if (!game.users.get(id)) return false;
-    return level === CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER;
-  }).map(([id]) => id);
 
-  // the chat message contents.
+  // Get saved effect data.
+  const data = effect.flags[MODULE]?.data;
+
+  // Get the ability being used for concentration saves.
+  const abilityKey = actor.flags.dnd5e?.concentrationAbility ?? game.settings.get(MODULE, "defaultConcentrationAbility");
+
+  // Get whisper targets.
+  const whisper = game.users.filter(u => actor.testUserPermission(u, "OWNER")).map(u => u.id);
+
+  // The chat message contents.
   const template = `modules/${MODULE}/templates/savingThrowPrompt.hbs`;
   const content = await renderTemplate(template, {
     details: game.i18n.format("CN.NotifyConcentrationChallengeManual", {
       dc: saveDC,
-      itemName: name,
+      itemName: data.itemData.name,
       saveType: CONFIG.DND5E.abilities[abilityKey],
       actorName: actor.name,
-      itemUuid: effect.getFlag(MODULE, "data.castData.itemUuid")
+      itemUuid: data.castData.itemUuid
     }),
     buttonSaveLabel: game.i18n.format("CN.ButtonSavingThrow", {
       dc: saveDC,
       saveType: CONFIG.DND5E.abilities[abilityKey]
     }),
-    hasTemplates: !!canvas?.scene.templates.find(t => t.flags?.dnd5e?.origin === uuid),
-    origin: uuid,
+    hasTemplates: !!canvas?.scene.templates.find(t => t.flags?.dnd5e?.origin === data.castData.itemUuid),
+    origin: data.castData.itemUuid,
     dc: saveDC,
     ability: abilityKey,
     actorUuid: actor.uuid,
@@ -138,8 +136,8 @@ export async function promptConcentrationSave(caster, { saveDC = 10, message } =
       core: { canPopout: true },
       [MODULE]: { prompt: true }
     }
-  }
+  };
 
-  // create chat card.
+  // Create chat card.
   return ChatMessage.create(messageData);
 }
