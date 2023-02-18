@@ -42,7 +42,6 @@ export async function _gainConcentration(effect, context, userId) {
   return ChatMessage.create(messageData);
 }
 
-
 // send a message when an actor LOSES concentration.
 export async function _loseConcentration(effect, context, userId) {
   if (userId !== game.user.id) return;

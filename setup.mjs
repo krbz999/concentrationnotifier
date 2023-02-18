@@ -31,12 +31,15 @@ Hooks.once("init", () => {
   if (game.settings.get(MODULE, "create_vae_quickButtons")) {
     Hooks.once("ready", _applyButtonListeners);
   }
+
+  if (game.settings.get(MODULE, "showGainLoseMessages")) {
+    Hooks.on("createActiveEffect", _gainConcentration);
+    Hooks.on("deleteActiveEffect", _loseConcentration);
+  }
 });
 
 Hooks.once("setup", _characterFlags);
 Hooks.on("renderItemSheet", _createSheetCheckBox);
-Hooks.on("createActiveEffect", _gainConcentration);
-Hooks.on("deleteActiveEffect", _loseConcentration);
 Hooks.on("preUpdateActor", _prePromptCreator);
 Hooks.on("updateActor", _promptCreator);
 Hooks.on("renderChatLog", _clickPrompt);

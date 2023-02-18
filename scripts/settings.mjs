@@ -52,6 +52,17 @@ export function registerSettings() {
     default: true
   });
 
+  // whether to show the started/ended concentration messages.
+  game.settings.register(MODULE, "showGainLoseMessages", {
+    name: "CN.SettingShowGainLoseConcentrationMessagesName",
+    hint: "CN.SettingShowGainLoseConcentrationMessagesHint",
+    scope: "world",
+    config: true,
+    type: Boolean,
+    default: true,
+    requiresReload: true
+  });
+
   // whether to always whisper messages
   game.settings.register(MODULE, "always_whisper_messages", {
     name: "CN.SettingWhisperMessagesName",
