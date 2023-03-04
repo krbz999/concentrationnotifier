@@ -1,5 +1,5 @@
-import { MODULE } from "./settings.mjs";
-import { API } from "./_publicAPI.mjs";
+import {MODULE} from "./settings.mjs";
+import {API} from "./_publicAPI.mjs";
 
 // store values for use in "updateActor" hook if HP has changed.
 export function _prePromptCreator(actor, data, context) {
@@ -15,7 +15,7 @@ export function _prePromptCreator(actor, data, context) {
   const damage = oldTotal - newTotal;
 
   // if damageTaken > 0, tag context for a saving throw.
-  context[MODULE] = { save: damage > 0, damage };
+  context[MODULE] = {save: damage > 0, damage};
 }
 
 // if the user is concentrating, and has taken damage, build a chat card, and call for a saving throw.
@@ -24,7 +24,7 @@ export async function _promptCreator(actor, _, context, userId) {
   if (userId !== game.user.id) return;
 
   // bail out if there is no save needed, and get the damage taken.
-  const { save, damage } = context[MODULE] ?? {};
+  const {save, damage} = context[MODULE] ?? {};
   if (!save) return;
   // calculate DC from the damage taken.
   const dc = Math.max(10, Math.floor(Math.abs(damage) / 2));
@@ -74,8 +74,8 @@ export async function _promptCreator(actor, _, context, userId) {
       alias: game.i18n.localize("CN.ModuleTitle")
     }),
     flags: {
-      core: { canPopout: true },
-      [MODULE]: { prompt: true, damage }
+      core: {canPopout: true},
+      [MODULE]: {prompt: true, damage}
     }
   };
 
@@ -83,13 +83,13 @@ export async function _promptCreator(actor, _, context, userId) {
   return ChatMessage.create(messageData);
 }
 
-export async function promptConcentrationSave(caster, { saveDC = 10, message } = {}) {
+export async function promptConcentrationSave(caster, {saveDC = 10, message} = {}) {
   const actor = caster.actor ?? caster;
   // find a concentration effect.
   const effect = API.isActorConcentrating(actor);
   // bail out if actor is not concentrating.
   if (!effect) {
-    const locale = game.i18n.format("CN.WarningActorNotConcentrating", { name: actor.name });
+    const locale = game.i18n.format("CN.WarningActorNotConcentrating", {name: actor.name});
     ui.notifications.warn(locale);
     return null;
   }
@@ -133,8 +133,8 @@ export async function promptConcentrationSave(caster, { saveDC = 10, message } =
       alias: game.i18n.localize("CN.ModuleTitle")
     }),
     flags: {
-      core: { canPopout: true },
-      [MODULE]: { prompt: true }
+      core: {canPopout: true},
+      [MODULE]: {prompt: true}
     }
   };
 

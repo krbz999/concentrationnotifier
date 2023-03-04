@@ -1,9 +1,9 @@
-import { MODULE } from "./settings.mjs";
+import {MODULE} from "./settings.mjs";
 import {
   _itemUseAffectsConcentration,
   _requiresConcentration
 } from "./_helpers.mjs";
-import { API } from "./_publicAPI.mjs";
+import {API} from "./_publicAPI.mjs";
 
 /**
  * When using an item that requires concentration, force the
@@ -36,7 +36,7 @@ export function _abilityUseDialog(dialog, html) {
   const DIV = document.createElement("DIV");
   DIV.innerHTML = `<p class="notification info">${locale}</p>`;
   notes.after(...DIV.children);
-  dialog.setPosition({ height: "auto" });
+  dialog.setPosition({height: "auto"});
 }
 
 /**

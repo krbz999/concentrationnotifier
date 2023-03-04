@@ -1,4 +1,4 @@
-import { MODULE } from "./settings.mjs";
+import {MODULE} from "./settings.mjs";
 
 export function _clickPrompt(_, html) {
   html[0].addEventListener("click", (event) => {
@@ -42,8 +42,8 @@ async function deleteDialog(effect, event) {
   }
   const name = effect.flags[MODULE].data.itemData.name;
   new Dialog({
-    title: game.i18n.format("CN.ConfirmEndConcentrationTitle", { name }),
-    content: game.i18n.format("CN.ConfirmEndConcentrationText", { name }),
+    title: game.i18n.format("CN.ConfirmEndConcentrationTitle", {name}),
+    content: game.i18n.format("CN.ConfirmEndConcentrationText", {name}),
     buttons: {
       yes: {
         icon: "<i class='fa-solid fa-check'></i>",

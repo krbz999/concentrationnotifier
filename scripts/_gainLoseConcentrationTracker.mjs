@@ -1,5 +1,5 @@
-import { MODULE } from "./settings.mjs";
-import { API } from "./_publicAPI.mjs";
+import {MODULE} from "./settings.mjs";
+import {API} from "./_publicAPI.mjs";
 
 // send a message when an actor GAINS concentration.
 export async function _gainConcentration(effect, context, userId) {
@@ -33,7 +33,7 @@ export async function _gainConcentration(effect, context, userId) {
 
   const messageData = {
     content,
-    flags: { core: { canPopout: true } },
+    flags: {core: {canPopout: true}},
     whisper,
     speaker: ChatMessage.getSpeaker({
       alias: game.i18n.localize("CN.ModuleTitle")
@@ -76,7 +76,7 @@ export async function _loseConcentration(effect, context, userId) {
 
   const messageData = {
     content,
-    flags: { core: { canPopout: true } },
+    flags: {core: {canPopout: true}},
     whisper,
     speaker: ChatMessage.getSpeaker({
       alias: game.i18n.localize("CN.ModuleTitle")

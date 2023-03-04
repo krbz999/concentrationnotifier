@@ -1,4 +1,4 @@
-import { MODULE } from "./settings.mjs";
+import {MODULE} from "./settings.mjs";
 
 export async function _createSheetCheckBox(sheet, html) {
   const item = sheet.document;

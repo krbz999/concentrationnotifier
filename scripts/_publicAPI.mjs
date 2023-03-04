@@ -1,4 +1,4 @@
-import { MODULE } from "./settings.mjs";
+import {MODULE} from "./settings.mjs";
 
 export class API {
 
@@ -27,7 +27,7 @@ export class API {
   }
 
   // end all concentration effects on an actor.
-  static async breakConcentration(caster, { message = true } = {}) {
+  static async breakConcentration(caster, {message = true} = {}) {
     const actor = caster.actor ?? caster;
     const deleteIds = actor.effects.filter(eff => {
       return API.isEffectConcentration(eff);
@@ -38,7 +38,7 @@ export class API {
   }
 
   // wait for concentration on item to be applied on actor.
-  static async waitForConcentrationStart(caster, { item, max_wait = 10000 } = {}) {
+  static async waitForConcentrationStart(caster, {item, max_wait = 10000} = {}) {
     const actor = caster.actor ?? caster;
 
     async function wait(ms) {
@@ -67,17 +67,17 @@ export class API {
     const actor = caster.actor ?? caster;
     const isConc = CN.isActorConcentrating(actor);
     if (!isConc) {
-      const locale = game.i18n.format("CN.WarningActorNotConcentrating", { name: actor.name });
+      const locale = game.i18n.format("CN.WarningActorNotConcentrating", {name: actor.name});
       ui.notifications.warn(locale);
       return null;
     }
 
     const data = isConc.getFlag(MODULE, "data");
     const item = fromUuidSync(data.castData.itemUuid);
-    const clone = item?.clone(data.itemData, { keepId: true });
+    const clone = item?.clone(data.itemData, {keepId: true});
 
     if (!clone) {
-      ui.notifications.warn("CN.ItemNotFound", { localize: true });
+      ui.notifications.warn("CN.ItemNotFound", {localize: true});
       return null;
     }
 

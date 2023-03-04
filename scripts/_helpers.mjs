@@ -1,5 +1,5 @@
-import { MODULE } from "./settings.mjs";
-import { API } from "./_publicAPI.mjs";
+import {MODULE} from "./settings.mjs";
+import {API} from "./_publicAPI.mjs";
 
 // returns whether an item or spell requires concentration.
 export function _requiresConcentration(item) {
@@ -44,7 +44,7 @@ export function _rollGroupDamageButtons(item) {
   const validParts = item.system.damage?.parts.filter(([f]) => !!f) ?? [];
   if (!groups?.length || validParts.length < 2) return false;
 
-  return groups.reduce((acc, { label, parts }, i) => {
+  return groups.reduce((acc, {label, parts}, i) => {
     const r = "rollgroups-damage";
     const u = item.parent.uuid;
     const types = parts.map(t => validParts[t][1]);

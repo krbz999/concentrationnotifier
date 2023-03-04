@@ -1,4 +1,4 @@
-import { MODULE } from "./settings.mjs";
+import {MODULE} from "./settings.mjs";
 
 // Roll for concentration. This will be added to the Actor prototype.
 export const rollConcentrationSave = async function(ability, options = {}) {
