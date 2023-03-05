@@ -1,7 +1,7 @@
 {
-  "CN.AbilityDialogWarningItem": "If you use this item or feature, it will end concentration on {item}.",
-  "CN.AbilityDialogWarningSpell": "If you cast this spell, it will end concentration on {item}.",
-  "CN.AbilityDialogWarningSpellLevel": "If you cast this spell at a level other than {level}, it will end concentration on {item}.",
+  "CN.AbilityDialogWarningItem": "If you use this item or feature, it will end concentration on {item}",
+  "CN.AbilityDialogWarningSpell": "If you cast this spell, it will end concentration on {item}",
+  "CN.AbilityDialogWarningSpellLevel": "If you cast this spell at a level other than {level}, it will end concentration on {item}",
   "CN.ButtonEndConcentration": "End Concentration",
   "CN.ButtonRemoveTemplates": "Remove Templates",
   "CN.ButtonSavingThrow": "Saving Throw DC {dc} {saveType}",

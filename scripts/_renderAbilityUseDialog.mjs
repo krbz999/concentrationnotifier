@@ -34,7 +34,7 @@ export function _abilityUseDialog(dialog, html) {
   const effect = API.isActorConcentrating(item.parent);
   const locale = _getWarning(reason, item, effect);
   const DIV = document.createElement("DIV");
-  DIV.innerHTML = `<p class="notification info">${locale}</p>`;
+  DIV.innerHTML = `<p class="notification concentrationnotifier">${locale}</p>`;
   notes.after(...DIV.children);
   dialog.setPosition({height: "auto"});
 }
@@ -56,6 +56,6 @@ function _getWarning(reason, item, effect) {
   const data = effect.flags[MODULE].data;
   return game.i18n.format(string, {
     item: data.itemData.name,
-    level: data.castData.castLevel
+    level: data.castData.castLevel.ordinalString()
   });
 }

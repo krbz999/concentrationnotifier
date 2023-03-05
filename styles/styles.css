@@ -59,3 +59,12 @@ span.sep.concentrationnotifier {
   border: none;
   border-radius: 3px;
 }
+
+.notification.concentrationnotifier {
+  background: rgb(110 0 159 / 80%);
+  border: 1px solid #503d51;
+}
+
+.notification.concentrationnotifier::before {
+  content: "\f071";
+}
