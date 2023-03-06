@@ -1,9 +1,7 @@
 import {MODULE} from "./settings.mjs";
 import {
-  _effectiveTransferralTransferButton,
   _itemUseAffectsConcentration,
-  _requiresConcentration,
-  _rollGroupDamageButtons
+  _requiresConcentration
 } from "./_helpers.mjs";
 import {API} from "./_publicAPI.mjs";
 
@@ -34,50 +32,31 @@ async function applyConcentration(item) {
 
 // create the data for the new concentration effect.
 async function createEffectData(item) {
-
-  const verbose = game.settings.get(MODULE, "verbose_tooltips");
-  const prepend = game.settings.get(MODULE, "prepend_effect_labels");
-
-  // create description.
-  let description = game.i18n.format("CN.YouAreConcentratingOnItem", {
-    name: item.name
-  });
-  const intro = await TextEditor.enrichHTML("<p>" + game.i18n.format("CN.YouAreConcentratingOnItem", {name: item.name}) + "</p>", {async: true});
-  const content = item.system.description.value;
-  const template = `modules/${MODULE}/templates/effectDescription.hbs`;
-  if (verbose) description = await renderTemplate(template, {
-    description,
-    itemDescription: item.system.description.value
-  });
-
-  // set up flags of the effect.
-  const flags = {
-    core: {statusId: "concentration"},
-    convenientDescription: description,
-    concentrationnotifier: {
-      data: {
-        itemData: item.toObject(),
-        castData: {
-          baseLevel: fromUuidSync(item.uuid)?.system.level,
-          castLevel: item.system.level,
-          itemUuid: item.uuid
-        }
-      }
-    },
-    "visual-active-effects": {data: {intro, content}}
-  }
-
-  // get effect label, depending on settings.
-  const label = !prepend ? item.name : `${game.i18n.localize("DND5E.Concentration")} - ${label}`;
-
-  // return constructed effect data.
   return {
     icon: getModuleImage(item),
-    label,
-    origin: item.uuid ?? item.parent.uuid,
+    label: !game.settings.get(MODULE, "prepend_effect_labels") ? item.name : `${game.i18n.localize("DND5E.Concentration")} - ${item.name}`,
+    origin: item.uuid ?? item.actor.uuid,
     duration: getItemDuration(item),
-    flags
-  }
+    flags: {
+      core: {statusId: "concentration"},
+      concentrationnotifier: {
+        data: {
+          itemData: item.toObject(),
+          castData: {
+            baseLevel: fromUuidSync(item.uuid).system.level,
+            castLevel: item.system.level,
+            itemUuid: item.uuid
+          }
+        }
+      },
+      "visual-active-effects": {
+        data: {
+          intro: await TextEditor.enrichHTML("<p>" + game.i18n.format("CN.YouAreConcentratingOnItem", {name: item.name}) + "</p>", {async: true}),
+          content: item.system.description.value
+        }
+      }
+    }
+  };
 }
 
 // set up the duration of the effect depending on the item.
@@ -213,6 +192,6 @@ export function _vaeButtons(effect, buttons) {
   // Create concentration save button.
   buttons.push({
     label: game.i18n.localize("DND5E.Concentration"),
-    callback: () => item.actor.rollConcentrationSave()
+    callback: () => effect.parent.rollConcentrationSave()
   });
 }

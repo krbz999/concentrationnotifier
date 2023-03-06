@@ -56,6 +56,6 @@ function _getWarning(reason, item, effect) {
   const data = effect.flags[MODULE].data;
   return game.i18n.format(string, {
     item: data.itemData.name,
-    level: data.castData.castLevel.ordinalString()
+    level: data.castData.castLevel?.ordinalString()
   });
 }

@@ -23,8 +23,6 @@
   "CN.SettingPrependLabelName": "Acrescentar Rótulo ao Efeitos",
   "CN.SettingUseItemIconHint": "Se ativado, a imagem usada para efeitos de concentração será substituída pela imagem do item.",
   "CN.SettingUseItemIconName": "Usar Ícone do Item",
-  "CN.SettingVerboseDescriptionsHint": "Se estiver usando um módulo como o \"Effects Panel\", e se ele suportar tags html, isso tornará a descrição do efeito mais detalhada.",
-  "CN.SettingVerboseDescriptionsName": "Descrições de Efeitos Detalhados",
   "CN.SettingWhisperMessagesHint": "Se ativado, todas as mensagens sobre o início ou fim da concentração serão sussurradas para os donos e todos os MJs em vez de respeitar os modos de rolagem. Isso não afeta os prompts de salvaguarda, que sempre são sussurrados, não importa o quê.",
   "CN.SettingWhisperMessagesName": "Mensagens Sussurradas",
   "CN.WarningActorNotConcentrating": "{actorName} não está concentrando em nada.",

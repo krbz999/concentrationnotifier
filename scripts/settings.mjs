@@ -42,16 +42,6 @@ export function registerSettings() {
     default: false
   });
 
-  // whether to add fancy stuff to effect descriptions.
-  game.settings.register(MODULE, "verbose_tooltips", {
-    name: "CN.SettingVerboseDescriptionsName",
-    hint: "CN.SettingVerboseDescriptionsHint",
-    scope: "world",
-    config: true,
-    type: Boolean,
-    default: true
-  });
-
   // whether to show the started/ended concentration messages.
   game.settings.register(MODULE, "showGainLoseMessages", {
     name: "CN.SettingShowGainLoseConcentrationMessagesName",

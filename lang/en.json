@@ -34,8 +34,6 @@
   "CN.SettingShowGainLoseConcentrationMessagesName": "Show Gain/Lose Prompts",
   "CN.SettingUseItemIconHint": "If checked, the image used for concentration effects will be overridden by the item's image.",
   "CN.SettingUseItemIconName": "Use Item Icon",
-  "CN.SettingVerboseDescriptionsHint": "If using a module like Effects Panel or Visual Active Effects, and if it supports html tags, this will make the description of the effect more verbose.",
-  "CN.SettingVerboseDescriptionsName": "Verbose Effect Descriptions",
   "CN.SettingVisualActiveEffectsButtonsHint": "If enabled, and using 'Visual Active Effects', concentration effects will be supplied with quick access buttons for rolling different properties of the item.",
   "CN.SettingVisualActiveEffectsButtonsName": "Visual Active Effects Buttons",
   "CN.SettingWhisperMessagesHint": "If enabled, all messages about beginning or ending concentration will be whispered to owners and all GMs instead of respecting roll modes. This does not affect the save prompts, which are always whispered no matter what.",

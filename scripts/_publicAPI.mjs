@@ -15,8 +15,7 @@ export class API {
   static isActorConcentratingOnItem(caster, item) {
     const actor = caster.actor ?? caster;
     const effect = actor.effects.find(eff => {
-      const uuid = eff.getFlag(MODULE, "data.castData.itemUuid");
-      return uuid === item.uuid;
+      return item.uuid === eff.flags[MODULE]?.data?.castData?.itemUuid;
     });
     return effect || false;
   }
@@ -72,9 +71,9 @@ export class API {
       return null;
     }
 
-    const data = isConc.getFlag(MODULE, "data");
+    const data = isConc.flags[MODULE].data;
     const item = fromUuidSync(data.castData.itemUuid);
-    const clone = item?.clone(data.itemData, {keepId: true});
+    const clone = item ? item.clone(data.itemData, {keepId: true}) : new Item.implementation(data.itemData, {parent: actor});
 
     if (!clone) {
       ui.notifications.warn("CN.ItemNotFound", {localize: true});
