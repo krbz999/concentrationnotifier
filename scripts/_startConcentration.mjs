@@ -135,15 +135,13 @@ export function _vaeButtons(effect, buttons) {
   const groups = clone.flags.rollgroups?.config.groups ?? [];
   const parts = clone.system.damage.parts.filter(([f]) => f);
   if (rollGroups && groups.length && (parts.length > 1)) {
-    let i = 0;
-    for (const group of groups) {
-      const types = group.parts.map(t => parts[t][1]);
+    for (let i = 0; i < groups.length; i++) {
+      const types = groups[i].parts.map(t => parts[t][1]);
       const label = types.every(t => t in CONFIG.DND5E.damageTypes) ? "DAMAGE" : types.every(t => t in CONFIG.DND5E.damageTypes) ? "HEALING" : "MIXED";
       buttons.push({
-        label: `${game.i18n.localize(`ROLLGROUPS.LABELS.${label}`)} (${group.label})`,
+        label: `${game.i18n.localize(`ROLLGROUPS.LABELS.${label}`)} (${groups[i].label})`,
         callback: () => clone.rollDamageGroup({event, rollgroup: i, spellLevel: data.castData.castLevel})
       });
-      i++;
     }
   } else if (clone.isHealing) {
     buttons.push({

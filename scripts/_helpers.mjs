@@ -1,7 +1,11 @@
 import {MODULE} from "./settings.mjs";
 import {API} from "./_publicAPI.mjs";
 
-// returns whether an item or spell requires concentration.
+/**
+ * Returns whether an item or spell requires concentration.
+ * @param {Item5e} item     The item or spell.
+ * @returns {boolean}       Whether it requires concentration.
+ */
 export function _requiresConcentration(item) {
   if (item.type === "spell") return !!item.system.components.concentration;
   return !!item.flags[MODULE]?.data.requiresConcentration;

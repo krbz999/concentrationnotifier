@@ -26,22 +26,22 @@ span.sep.concentrationnotifier {
   align-items: center;
 }
 
-.concentrationnotifier button[name="saving-throw"] {
+.concentrationnotifier button[data-prompt="saving-throw"] {
   border-radius: 8px;
   margin-bottom: 0.5em;
   border-right: outset;
   border-bottom: outset;
 }
 
-.concentrationnotifier button[name="delete-concentration"],
-.concentrationnotifier button[name="remove-templates"] {
+.concentrationnotifier button[data-prompt="end-concentration"],
+.concentrationnotifier button[data-prompt="remove-templates"] {
   padding: 0 10px 0 10px;
   width: 90%;
   min-width: fit-content;
   margin: 2px 0;
 }
 
-.concentrationnotifier a[name="render-item-sheet"] {
+.concentrationnotifier a[data-prompt="render-sheet"] {
   font-weight: bold;
   text-decoration: underline;
 }

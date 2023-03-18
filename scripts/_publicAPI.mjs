@@ -47,7 +47,7 @@ export class API {
     }
 
     function getConc() {
-      if (!!item) return API.isActorConcentratingOnItem(actor, item);
+      if (item) return API.isActorConcentratingOnItem(actor, item);
       return API.isActorConcentrating(actor);
     }
 

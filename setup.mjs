@@ -44,6 +44,5 @@ Hooks.once("setup", _characterFlags);
 Hooks.on("renderItemSheet", _createSheetCheckBox);
 Hooks.on("preUpdateActor", _prePromptCreator);
 Hooks.on("updateActor", _promptCreator);
-Hooks.on("renderChatLog", _clickPrompt);
-Hooks.on("renderChatPopout", _clickPrompt);
+Hooks.on("renderChatMessage", _clickPrompt);
 Hooks.on("dnd5e.useItem", _startConcentration);
