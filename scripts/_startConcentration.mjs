@@ -1,8 +1,5 @@
 import {MODULE} from "./settings.mjs";
-import {
-  _itemUseAffectsConcentration,
-  _requiresConcentration
-} from "./_helpers.mjs";
+import {_itemUseAffectsConcentration, _requiresConcentration} from "./_helpers.mjs";
 import {API} from "./_publicAPI.mjs";
 
 export async function _startConcentration(item) {
@@ -43,7 +40,7 @@ async function createEffectData(item) {
         data: {
           itemData: item.toObject(),
           castData: {
-            baseLevel: fromUuidSync(item.uuid).system.level,
+            baseLevel: fromUuidSync(item.uuid)?.system.level,
             castLevel: item.system.level,
             itemUuid: item.uuid
           }
