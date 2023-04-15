@@ -74,6 +74,7 @@ export class API {
     const data = isConc.flags[MODULE].data;
     const item = fromUuidSync(data.castData.itemUuid);
     const clone = item ? item.clone(data.itemData, {keepId: true}) : new Item.implementation(data.itemData, {parent: actor});
+    if (clone.type === "spell") clone.updateSource({"system.level": data.castData.castLevel});
 
     if (!clone) {
       ui.notifications.warn("CN.ItemNotFound", {localize: true});

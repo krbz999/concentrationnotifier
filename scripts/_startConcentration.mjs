@@ -2,6 +2,11 @@ import {MODULE} from "./settings.mjs";
 import {_itemUseAffectsConcentration, _requiresConcentration} from "./_helpers.mjs";
 import {API} from "./_publicAPI.mjs";
 
+/**
+ * Start the concentration when using an item.
+ * @param {Item} item           The item being used. If a spell, this is the upscaled version.
+ * @returns {ActiveEffect}      The active effect created on the actor, if any.
+ */
 export async function _startConcentration(item) {
   // item must be an owned item.
   if (!item.parent) return;
@@ -29,29 +34,28 @@ async function applyConcentration(item) {
 
 // create the data for the new concentration effect.
 async function createEffectData(item) {
+  const baseItem = fromUuidSync(item.uuid);
+  const itemData = game.items.fromCompendium(item, {addFlags: false});
+  const castData = {itemUuid: item.uuid};
+  if (item.type === "spell") {
+    itemData.system.level = baseItem?.system.level;
+    castData.baseLevel = baseItem?.system.level;
+    castData.castLevel = item.system.level;
+  }
+
+  const vaeIntro = "<p>" + game.i18n.format("CN.YouAreConcentratingOnItem", {name: item.name}) + "</p>";
+  const vaeContent = item.system.description.value;
+  const prepend = game.settings.get(MODULE, "prepend_effect_labels");
+
   return {
     icon: getModuleImage(item),
-    label: !game.settings.get(MODULE, "prepend_effect_labels") ? item.name : `${game.i18n.localize("DND5E.Concentration")} - ${item.name}`,
+    label: !prepend ? item.name : `${game.i18n.localize("DND5E.Concentration")} - ${item.name}`,
     origin: item.uuid ?? item.actor.uuid,
     duration: getItemDuration(item),
     flags: {
       core: {statusId: "concentration"},
-      concentrationnotifier: {
-        data: {
-          itemData: item.toObject(),
-          castData: {
-            baseLevel: fromUuidSync(item.uuid)?.system.level,
-            castLevel: item.system.level,
-            itemUuid: item.uuid
-          }
-        }
-      },
-      "visual-active-effects": {
-        data: {
-          intro: await TextEditor.enrichHTML("<p>" + game.i18n.format("CN.YouAreConcentratingOnItem", {name: item.name}) + "</p>", {async: true}),
-          content: item.system.description.value
-        }
-      }
+      concentrationnotifier: {data: {itemData, castData}},
+      "visual-active-effects": {data: {intro: await TextEditor.enrichHTML(vaeIntro, {async: true}), content: vaeContent}}
     }
   };
 }
@@ -104,12 +108,8 @@ function getModuleImage(item) {
 // end all concentration effects on an actor.
 async function breakConcentration(caster, message = true) {
   const actor = caster.actor ?? caster;
-  const deleteIds = actor.effects.filter(eff => {
-    return API.isEffectConcentration(eff);
-  }).map(i => i.id);
-  return actor.deleteEmbeddedDocuments("ActiveEffect", deleteIds, {
-    concMessage: message
-  });
+  const deleteIds = actor.effects.filter(eff => API.isEffectConcentration(eff)).map(i => i.id);
+  return actor.deleteEmbeddedDocuments("ActiveEffect", deleteIds, {concMessage: message});
 }
 
 export function _vaeButtons(effect, buttons) {
@@ -118,6 +118,7 @@ export function _vaeButtons(effect, buttons) {
   const data = effect.flags.concentrationnotifier.data;
   const item = fromUuidSync(data.castData.itemUuid);
   const clone = item?.clone(data.itemData, {keepId: true}) ?? new Item.implementation(data.itemData, {parent: effect.parent});
+  clone.prepareFinalAttributes();
 
   // Create attack roll button.
   if (clone.hasAttack) {
