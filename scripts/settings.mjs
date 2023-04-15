@@ -63,6 +63,16 @@ export function registerSettings() {
     default: false
   });
 
+  // whether to show the end conc/delete templates buttons on start/end conc messages.
+  game.settings.register(MODULE, "show_util_buttons", {
+    name: "CN.SettingShowUtilButtonsName",
+    hint: "CN.SettingShowUtilButtonsHint",
+    scope: "world",
+    config: true,
+    type: Boolean,
+    default: false
+  });
+
   // whether to show a warning that you are about to swap conc.
   game.settings.register(MODULE, "show_ability_use_warning", {
     name: "CN.SettingAbilityUseWarningName",

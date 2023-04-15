@@ -9,6 +9,13 @@
         </a>
       </div>
     </div>
+    {{#if showUtilButtons}}
+    <div class="buttons">
+      <button data-prompt="remove-templates" data-origin="{{itemUuid}}">
+        <i class="fa-solid fa-ruler-combined"></i> {{localize "CN.ButtonRemoveTemplates"}}
+      </button>
+    </div>
+    {{/if}}
   </div>
 </div>
 <hr>

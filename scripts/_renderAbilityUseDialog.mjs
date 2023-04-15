@@ -12,7 +12,7 @@ import {API} from "./_publicAPI.mjs";
 export function _preAbilityUseDialog(item, config) {
   if (!_requiresConcentration(item)) return;
   const reason = _itemUseAffectsConcentration(item);
-  if (reason && reason !== "FREE") {
+  if (reason && (reason !== "FREE")) {
     config.needsConfiguration = true;
   }
 }

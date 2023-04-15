@@ -9,6 +9,16 @@
         </a>
       </div>
     </div>
+    {{#if showUtilButtons}}
+    <div class="buttons">
+      <button data-prompt="end-concentration" data-effect-uuid="{{effectUuid}}">
+        <i class="fa-solid fa-circle-dot"></i> {{localize "CN.ButtonEndConcentration"}}
+      </button>
+      <button data-prompt="remove-templates" data-origin="{{itemUuid}}">
+        <i class="fa-solid fa-ruler-combined"></i> {{localize "CN.ButtonRemoveTemplates"}}
+      </button>
+    </div>
+    {{/if}}
   </div>
 </div>
 <hr>

@@ -64,7 +64,7 @@ export async function _promptCreator(actor, _, context, userId) {
     ability: abilityKey,
     actorUuid: actor.uuid,
     effectUuid: effect.uuid,
-    dc,
+    dc
   });
 
   const messageData = {

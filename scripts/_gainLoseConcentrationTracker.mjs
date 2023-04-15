@@ -20,8 +20,10 @@ export async function _gainConcentration(effect, context, userId) {
       actorName: effect.parent.name
     }),
     itemImg: data.itemData.img,
-    itemUuid: data.castData.itemUuid
-  }
+    itemUuid: data.castData.itemUuid,
+    effectUuid: effect.uuid,
+    showUtilButtons: game.settings.get(MODULE, "show_util_buttons")
+  };
   const template = `modules/${MODULE}/templates/concentrationGain.hbs`;
   const content = await renderTemplate(template, templateData);
   const publicMode = game.settings.get("core", "rollMode") === CONST.DICE_ROLL_MODES.PUBLIC;
@@ -37,8 +39,8 @@ export async function _gainConcentration(effect, context, userId) {
     whisper,
     speaker: ChatMessage.getSpeaker({
       alias: game.i18n.localize("CN.ModuleTitle")
-    }),
-  }
+    })
+  };
   return ChatMessage.create(messageData);
 }
 
@@ -63,8 +65,9 @@ export async function _loseConcentration(effect, context, userId) {
       actorName: effect.parent.name
     }),
     itemImg: data.itemData.img,
-    itemUuid: data.castData.itemUuid
-  }
+    itemUuid: data.castData.itemUuid,
+    showUtilButtons: game.settings.get(MODULE, "show_util_buttons")
+  };
   const template = `modules/${MODULE}/templates/concentrationLoss.hbs`;
   const content = await renderTemplate(template, templateData);
   const publicMode = game.settings.get("core", "rollMode") === CONST.DICE_ROLL_MODES.PUBLIC;
@@ -80,7 +83,7 @@ export async function _loseConcentration(effect, context, userId) {
     whisper,
     speaker: ChatMessage.getSpeaker({
       alias: game.i18n.localize("CN.ModuleTitle")
-    }),
-  }
+    })
+  };
   return ChatMessage.create(messageData);
 }

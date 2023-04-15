@@ -36,7 +36,7 @@ export function _itemUseAffectsConcentration(item, isDialog = false) {
   if (concNotSame) return "LEVEL";
 
   // For AbilityUseDialog warning, only show it for spells of 1st level or higher.
-  if (isDialog && item.type === "spell" && item.system.level > 0) return "LEVEL";
+  if (isDialog && (item.type === "spell") && (item.system.level > 0)) return "LEVEL";
 
   return false;
 }

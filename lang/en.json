@@ -32,6 +32,8 @@
   "CN.SettingPrependLabelName": "Prepend Effect Labels",
   "CN.SettingShowGainLoseConcentrationMessagesHint": "If enabled, messages will be shown about actors beginning or ending concentration.",
   "CN.SettingShowGainLoseConcentrationMessagesName": "Show Gain/Lose Prompts",
+  "CN.SettingShowUtilButtonsHint": "If enabled, show the 'End Concentration' and 'Remove Templates' buttons on the messages that appear when an actor starts or ends concentration.",
+  "CN.SettingShowUtilButtonsName": "Show Utility Buttons on Gain/Lose prompts",
   "CN.SettingUseItemIconHint": "If checked, the image used for concentration effects will be overridden by the item's image.",
   "CN.SettingUseItemIconName": "Use Item Icon",
   "CN.SettingVisualActiveEffectsButtonsHint": "If enabled, and using 'Visual Active Effects', concentration effects will be supplied with quick access buttons for rolling different properties of the item.",

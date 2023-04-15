@@ -8,7 +8,7 @@ export function _characterFlags() {
     hint: game.i18n.localize("CN.FlagConcentrationBonusHint"),
     section,
     type: String
-  }
+  };
 
   /* Change the ability being used for the saving throw. */
   CONFIG.DND5E.characterFlags["concentrationAbility"] = {
@@ -17,7 +17,7 @@ export function _characterFlags() {
     section,
     type: String,
     choices: {'': null, ...CONFIG.DND5E.abilities} // TODO: change in 2.2.x
-  }
+  };
 
   /* Set a flag for having advantage on Concentration saves. */
   CONFIG.DND5E.characterFlags["concentrationAdvantage"] = {
@@ -25,7 +25,7 @@ export function _characterFlags() {
     hint: game.i18n.localize("CN.FlagConcentrationAdvantageHint"),
     section,
     type: Boolean
-  }
+  };
 
   /* Set a flag for not being able to roll below 10. */
   CONFIG.DND5E.characterFlags["concentrationReliable"] = {
@@ -33,5 +33,5 @@ export function _characterFlags() {
     hint: game.i18n.localize("CN.FlagConcentrationReliableHint"),
     section,
     type: Boolean
-  }
+  };
 }
