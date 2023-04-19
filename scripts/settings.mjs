@@ -1,4 +1,11 @@
 export const MODULE = "concentrationnotifier";
+export const CONCENTRATION_REASON = {
+  NOT_REQUIRED: 0,
+  NOT_CONCENTRATING: 1,
+  DIFFERENT_ITEM: 2,
+  DIFFERENT_LEVEL: 3,
+  UPCASTABLE: 4
+};
 
 export function registerSettings() {
   // custom icon.

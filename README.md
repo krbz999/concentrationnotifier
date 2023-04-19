@@ -15,7 +15,8 @@ The module supplies new fields (found under Special Traits). These fields work w
 * `flags.dnd5e.concentrationAbility`: Change the ability that is used for the actor's concentration saves. For example, use Wisdom instead of Constitution by putting `wis` in this field.
 * `flags.dnd5e.concentrationAdvantage`: Set the default of concentration saves to be rolled with advantage.
 * `flags.dnd5e.concentrationBonus`: Give an actor a bonus to Concentration saves, such as `@abilities.int.mod` or `1d6`. Good for  Wizard Bladesingers. This field respects roll data.
-* `flags.dnd5e.concentrationReliable`: change concentration saves such that rolls on the d20s cannot go below 10.
+* `flags.dnd5e.concentrationReliable`: Change concentration saves such that rolls on the d20s cannot go below 10.
+* `flags.dnd5e.concentrationUnfocused`: Prevent an actor from starting concentration. If the 'Ability Use Warnings' setting is enabled, the actor will also be given a warning in the AbilityUseDialog that their item cannot be concentrated on.
 
 ## Helper Functions
 

@@ -1,42 +1,38 @@
-import {MODULE} from "./settings.mjs";
+import {CONCENTRATION_REASON, MODULE} from "./settings.mjs";
 import {API} from "./_publicAPI.mjs";
 
 /**
- * Returns whether an item or spell requires concentration.
- * @param {Item5e} item     The item or spell.
- * @returns {boolean}       Whether it requires concentration.
+ * Returns whether and why an item being used should affect current concentration. Used to determine if concentration
+ * should be changed, and for the ability use dialog to determine if it should display a warning. If no specific reason
+ * for one or other other is found, the function returns false.
+ * @param {Item5e} item           The item being used.
+ * @returns {number|boolean}      An integer from 'CONCENTRATION_REASON' or false.
  */
-export function _requiresConcentration(item) {
-  if (item.type === "spell") return !!item.system.components.concentration;
-  return !!item.flags[MODULE]?.data.requiresConcentration;
-}
+export function _itemUseAffectsConcentration(item) {
+  const isSpell = item.type === "spell";
 
-/**
- * Returns whether and why an item being used should affect current concentration. Used to determine
- * if concentration should be changed, and for the ability use dialog to determine if it should
- * display a warning. The returned value is either false or truthy.
- * @param {Item5e} item                   The item being used right now.
- * @param {boolean} [isDialog=false]      Whether the function is being used for the AbilityUseDialog.
- * @returns {string|boolean}              Truthy string, or false if the items are the same.
- */
-export function _itemUseAffectsConcentration(item, isDialog = false) {
-  // new item requires concentration:
-  if (!_requiresConcentration(item)) return false;
+  // Case 0: Does this item even require concentration? (Do Nothing)
+  let requires;
+  if (isSpell) requires = item.system.components.concentration;
+  else requires = item.flags[MODULE]?.data.requiresConcentration;
+  if (!requires) return CONCENTRATION_REASON.NOT_REQUIRED;
 
-  // if you are not concentrating:
-  const isConc = API.isActorConcentrating(item.parent);
-  if (!isConc) return "FREE";
+  /* The concentration effect already on the actor, if any. */
+  const effect = API.isActorConcentrating(item.actor);
 
-  // if you are concentrating on an entirely different item:
-  const concDiff = isConc.flags[MODULE].data.castData.itemUuid !== item.uuid;
-  if (concDiff) return "DIFFERENT";
+  // Case 1: Are you concentrating on something else?
+  if (!effect) return CONCENTRATION_REASON.NOT_CONCENTRATING;
 
-  // if you are concentrating on the same item but at a different level:
-  const concNotSame = isConc.flags[MODULE].data.castData.castLevel !== item.system.level;
-  if (concNotSame) return "LEVEL";
+  // Case 2: Are you concentrating on an entirely different item?
+  if (effect.flags[MODULE].data.castData.itemUuid !== item.uuid) return CONCENTRATION_REASON.DIFFERENT_ITEM;
 
-  // For AbilityUseDialog warning, only show it for spells of 1st level or higher.
-  if (isDialog && (item.type === "spell") && (item.system.level > 0)) return "LEVEL";
+  // Case 3: Are you concentrating on the same item at a different spell level?
+  if (effect.flags[MODULE].data.castData.castLevel !== item.system.level) return CONCENTRATION_REASON.DIFFERENT_LEVEL;
 
+  // Case 4: You are concentrating on the same item, at the same level, but it can be upcast.
+  const canUpcast = isSpell && (item.system.level > 0) && CONFIG.DND5E.spellUpcastModes.includes(item.system.preparation.mode);
+  if (canUpcast) return CONCENTRATION_REASON.UPCASTABLE;
+
+  // None of the above are true, so the usage is 'free' far as concentration is concerned.
   return false;
 }

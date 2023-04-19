@@ -1,35 +1,36 @@
-import {MODULE} from "./settings.mjs";
-import {_itemUseAffectsConcentration, _requiresConcentration} from "./_helpers.mjs";
+import {CONCENTRATION_REASON, MODULE} from "./settings.mjs";
+import {_itemUseAffectsConcentration} from "./_helpers.mjs";
 import {API} from "./_publicAPI.mjs";
 
 /**
- * Start the concentration when using an item.
- * @param {Item} item           The item being used. If a spell, this is the upscaled version.
- * @returns {ActiveEffect}      The active effect created on the actor, if any.
+ * Start the concentration when using an item if the actor is not concentrating at all, if they are concentrating
+ * on a different item, or if it is the same item but cast at a different level.
+ * @param {Item} item             The item being used. If a spell, this is the upscaled version.
+ * @returns {ActiveEffect[]}      The active effect created on the actor, if any.
  */
 export async function _startConcentration(item) {
   // item must be an owned item.
-  if (!item.parent) return;
+  if (!item.actor) return;
 
-  // item must require concentration.
-  if (!_requiresConcentration(item)) return;
+  // the actor must be able to concentrate.
+  if (item.actor.flags.dnd5e?.concentrationUnfocused) return;
 
-  // apply concentration.
-  return applyConcentration(item);
-}
-
-// apply concentration when using a specific item.
-async function applyConcentration(item) {
   // get whether and why to start or swap concentration.
   const reason = _itemUseAffectsConcentration(item);
-  if (!reason) return [];
+  const conc = CONCENTRATION_REASON;
+  const goodReason = [
+    conc.NOT_CONCENTRATING,
+    conc.DIFFERENT_ITEM,
+    conc.DIFFERENT_LEVEL
+  ].includes(reason);
+  if (!goodReason) return [];
 
-  // break concentration if different item or different level.
-  await breakConcentration(item.parent, false);
+  // Break the current concentration, but do not display a message.
+  await breakConcentration(item.actor, false);
 
-  // create effect data and start concentrating.
+  // Create the effect data and start concentrating on the new item.
   const effectData = await createEffectData(item);
-  return item.parent.createEmbeddedDocuments("ActiveEffect", [effectData]);
+  return item.actor.createEmbeddedDocuments("ActiveEffect", [effectData]);
 }
 
 // create the data for the new concentration effect.

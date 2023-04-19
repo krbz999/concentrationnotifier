@@ -34,4 +34,12 @@ export function _characterFlags() {
     section,
     type: Boolean
   };
+
+  /* Set a flag for not being able to concentrate on any items. */
+  CONFIG.DND5E.characterFlags["concentrationUnfocused"] = {
+    name: game.i18n.localize("CN.FlagConcentrationUnfocusedName"),
+    hint: game.i18n.localize("CN.FlagConcentrationUnfocusedHint"),
+    section,
+    type: Boolean
+  };
 }
