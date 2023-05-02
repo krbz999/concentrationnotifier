@@ -19,9 +19,8 @@ export function _clickPrompt(message, html) {
  */
 function _onClickSavingThrow(event) {
   const data = event.currentTarget.dataset;
-  const caster = fromUuidSync(data.actorUuid);
-  const actor = caster.actor ?? caster;
-  return actor.rollConcentrationSave(data.saveType, {targetValue: data.dc});
+  const actor = fromUuidSync(data.actorUuid);
+  return actor.rollConcentrationSave(data.saveType, {targetValue: data.dc, event});
 }
 
 /**
@@ -60,10 +59,13 @@ function _onClickEndConcentration(event) {
  * @returns {MeasuredTemplateDocument[]}      The deleted templates.
  */
 function _onClickRemoveTemplates(event) {
-  const ids = canvas?.scene.templates.filter(t => {
-    return t.isOwner && (t.flags.dnd5e?.origin === event.currentTarget.dataset.origin);
-  }).map(t => t.id);
-  return canvas?.scene.deleteEmbeddedDocuments("MeasuredTemplate", ids);
+  if (!canvas) return;
+  const origin = event.currentTarget.dataset.origin;
+  const ids = canvas.scene.templates.reduce((acc, t) => {
+    if (t.isOwner && (t.flags.dnd5e?.origin === origin)) acc.push(t.id);
+    return acc;
+  }, []);
+  return canvas.scene.deleteEmbeddedDocuments("MeasuredTemplate", ids);
 }
 
 /**

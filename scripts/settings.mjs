@@ -67,7 +67,7 @@ export function registerSettings() {
     scope: "world",
     config: true,
     type: Boolean,
-    default: false
+    default: true
   });
 
   // whether to show the end conc/delete templates buttons on start/end conc messages.
@@ -77,7 +77,7 @@ export function registerSettings() {
     scope: "world",
     config: true,
     type: Boolean,
-    default: false
+    default: true
   });
 
   // whether to show a warning that you are about to swap conc.
@@ -87,7 +87,7 @@ export function registerSettings() {
     scope: "world",
     config: true,
     type: Boolean,
-    default: false,
+    default: true,
     requiresReload: true
   });
 
@@ -98,7 +98,7 @@ export function registerSettings() {
     scope: "world",
     config: true,
     type: Boolean,
-    default: false,
+    default: true,
     requiresReload: true
   });
 }

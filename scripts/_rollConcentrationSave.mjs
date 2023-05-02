@@ -13,7 +13,6 @@ export const rollConcentrationSave = async function(ability, options = {}) {
   const rollConfig = {
     fumble: null,
     critical: null,
-    event,
     isConcSave: true,
     targetValue: 10,
     parts: []
