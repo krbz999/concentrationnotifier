@@ -33,19 +33,19 @@ export function _abilityUseDialog(dialog, html) {
   // If the item does not require concentration, do nothing.
   if (reason === conc.NOT_REQUIRED) return;
 
-  /* Can this actor concentrate on an item? */
+  // Can this actor concentrate on an item?
   const unfocused = dialog.item.actor.flags.dnd5e?.concentrationUnfocused;
 
   // If the actor is able to concentrate on an item, but aren't, do nothing.
   if ((reason === conc.NOT_CONCENTRATING) && !unfocused) return;
 
-  // construct warning.
+  // Construct warning.
   const notes = html[0].querySelector(".notes"); // insert below this.
   const effect = API.isActorConcentrating(dialog.item.actor);
   const locale = _getWarning(reason, dialog.item, effect);
   const div = document.createElement("DIV");
   div.innerHTML = `<p class="notification concentrationnotifier">${locale}</p>`;
-  notes.after(...div.children);
+  notes.after(div.firstElementChild);
   dialog.setPosition({height: "auto"});
 }
 

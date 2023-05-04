@@ -1,9 +1,9 @@
-/* for item sheets separator */
+/* Item Sheets */
 span.sep.concentrationnotifier {
   margin: 0 4px 0 0 !important;
 }
 
-/* PROMPT CARDS */
+/* Chat Messages */
 .concentrationnotifier div.card-contents.prompt-card .header {
   text-align: center;
   font-size: 25px;
@@ -35,7 +35,7 @@ span.sep.concentrationnotifier {
 
 .concentrationnotifier button[data-prompt="end-concentration"],
 .concentrationnotifier button[data-prompt="remove-templates"] {
-  padding: 0 10px 0 10px;
+  padding: 0 10px;
   width: 90%;
   min-width: fit-content;
   margin: 2px 0;
@@ -60,6 +60,7 @@ span.sep.concentrationnotifier {
   border-radius: 3px;
 }
 
+/* Ability Use Dialogs */
 .notification.concentrationnotifier {
   background: rgb(110 0 159 / 80%);
   border: 1px solid #503d51;

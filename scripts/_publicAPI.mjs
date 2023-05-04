@@ -1,7 +1,6 @@
 import {MODULE} from "./settings.mjs";
 
 export class API {
-
   /**
    * Determine whether an actor is concentrating.
    * @param {Token|TokenDocument|Actor} caster      The token, token document, or actor to test.

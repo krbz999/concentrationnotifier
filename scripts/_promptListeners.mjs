@@ -6,10 +6,13 @@ import {MODULE} from "./settings.mjs";
  * @param {html} html               The element of the message.
  */
 export function _clickPrompt(message, html) {
-  html[0].querySelector(".concentrationnotifier [data-prompt='saving-throw']")?.addEventListener("click", _onClickSavingThrow);
-  html[0].querySelector(".concentrationnotifier [data-prompt='end-concentration']")?.addEventListener("click", _onClickEndConcentration);
-  html[0].querySelector(".concentrationnotifier [data-prompt='remove-templates']")?.addEventListener("click", _onClickRemoveTemplates);
-  html[0].querySelector(".concentrationnotifier [data-prompt='render-sheet']")?.addEventListener("click", _onClickRenderSheet);
+  html[0].querySelectorAll(".concentrationnotifier [data-prompt]").forEach(n => {
+    const prompt = n.dataset.prompt;
+    if (prompt === "saving-throw") n.addEventListener("click", _onClickSavingThrow);
+    else if (prompt === "end-concentration") n.addEventListener("click", _onClickEndConcentration);
+    else if (prompt === "remove-templates") n.addEventListener("click", _onClickRemoveTemplates);
+    else if (prompt === "render-sheet") n.addEventListener("click", _onClickRenderSheet);
+  });
 }
 
 /**
@@ -31,13 +34,12 @@ function _onClickSavingThrow(event) {
 function _onClickEndConcentration(event) {
   const effect = fromUuidSync(event.currentTarget.dataset.effectUuid);
   if (event.shiftKey) return effect.delete();
-
   const name = effect.flags[MODULE].data.itemData.name;
-  const title = game.i18n.format("CN.ConfirmEndConcentrationTitle", {name});
-  const content = game.i18n.format("CN.ConfirmEndConcentrationText", {name});
   const id = `${MODULE}-deletePrompt-${effect.uuid.replaceAll(".", "-")}`;
   return new Dialog({
-    title, content, buttons: {
+    title: game.i18n.format("CN.ConfirmEndConcentrationTitle", {name}),
+    content: game.i18n.format("CN.ConfirmEndConcentrationText", {name}),
+    buttons: {
       yes: {
         icon: "<i class='fa-solid fa-check'></i>",
         label: game.i18n.localize("Yes"),
