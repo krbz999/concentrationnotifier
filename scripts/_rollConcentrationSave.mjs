@@ -23,18 +23,23 @@ export const rollConcentrationSave = async function(ability, options = {}) {
   if (reliableTalent) rollConfig.reliableTalent = reliableTalent;
 
   // Determine advantage.
-  const advantage = dnd.concentrationAdvantage && !event?.ctrlKey;
+  const advantage = dnd.concentrationAdvantage && !options.event?.ctrlKey;
   if (advantage) rollConfig.advantage = true;
 
   // Merge with any options passed in.
   foundry.utils.mergeObject(rollConfig, options);
 
   // Determine concentration bonus.
-  const concentrationBonus = dnd.concentrationBonus;
-  if (concentrationBonus && Roll.validate(concentrationBonus)) rollConfig.parts = [...rollConfig.parts, concentrationBonus];
+  const bonus = dnd.concentrationBonus && Roll.validate(dnd.concentrationBonus);
+  if (bonus) rollConfig.parts.push(dnd.concentrationBonus);
 
   // Hook event for users to modify the saving throw before it is passed to the regular roll.
   if (Hooks.call(`${MODULE}.preRollConcentrationSave`, this, rollConfig, abl) === false) return;
 
-  return this.rollAbilitySave(abl, rollConfig);
+  const roll = await this.rollAbilitySave(abl, rollConfig);
+
+  // Hook event that fires after the concentration save has been completed.
+  if (roll) Hooks.callAll(`${MODULE}.rollConcentrationSave`, this, roll, abl);
+
+  return roll;
 }
