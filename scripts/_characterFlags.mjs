@@ -1,6 +1,9 @@
 // create the concentration flags on actor Special Traits.
 export function _characterFlags() {
   const section = game.i18n.localize("DND5E.Concentration");
+  const abils = Object.entries(CONFIG.DND5E.abilities).map(v => {
+    return [v[0], v[1].label];
+  });
 
   /* Add bonus on top of the saving throw. */
   CONFIG.DND5E.characterFlags["concentrationBonus"] = {
@@ -16,7 +19,7 @@ export function _characterFlags() {
     hint: game.i18n.localize("CN.FlagConcentrationAbilityHint"),
     section,
     type: String,
-    choices: {'': null, ...CONFIG.DND5E.abilities} // TODO: change in 2.2.x
+    choices: Object.fromEntries([['', null], ...abils])
   };
 
   /* Set a flag for having advantage on Concentration saves. */

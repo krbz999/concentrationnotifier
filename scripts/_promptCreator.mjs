@@ -58,13 +58,13 @@ export async function _promptCreator(actor, update, context, userId) {
       dc,
       itemName: data.itemData.name,
       damage,
-      saveType: CONFIG.DND5E.abilities[abilityKey],
+      saveType: CONFIG.DND5E.abilities[abilityKey].label,
       actorName: actor.name,
       itemUuid: data.castData.itemUuid
     }),
     buttonSaveLabel: game.i18n.format("CN.ButtonSavingThrow", {
       dc,
-      saveType: CONFIG.DND5E.abilities[abilityKey]
+      saveType: CONFIG.DND5E.abilities[abilityKey].label
     }),
     hasTemplates: !!canvas?.scene.templates.find(t => t.flags?.dnd5e?.origin === data.castData.itemUuid),
     origin: data.castData.itemUuid,
@@ -124,13 +124,13 @@ export async function promptConcentrationSave(caster, {saveDC = 10, message} = {
     details: game.i18n.format("CN.NotifyConcentrationChallengeManual", {
       dc: saveDC,
       itemName: data.itemData.name,
-      saveType: CONFIG.DND5E.abilities[abilityKey],
+      saveType: CONFIG.DND5E.abilities[abilityKey].label,
       actorName: actor.name,
       itemUuid: data.castData.itemUuid
     }),
     buttonSaveLabel: game.i18n.format("CN.ButtonSavingThrow", {
       dc: saveDC,
-      saveType: CONFIG.DND5E.abilities[abilityKey]
+      saveType: CONFIG.DND5E.abilities[abilityKey].label
     }),
     hasTemplates: !!canvas?.scene.templates.find(t => t.flags?.dnd5e?.origin === data.castData.itemUuid),
     origin: data.castData.itemUuid,

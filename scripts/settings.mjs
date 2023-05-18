@@ -35,8 +35,8 @@ export function registerSettings() {
     scope: "world",
     config: true,
     type: String,
-    default: CONFIG.DND5E.abilities["con"] ? "con" : Object.keys(CONFIG.DND5E.abilities)[0],
-    choices: CONFIG.DND5E.abilities
+    default: ("con" in CONFIG.DND5E.abilities) ? "con" : Object.keys(CONFIG.DND5E.abilities)[0],
+    choices: Object.fromEntries(Object.entries(CONFIG.DND5E.abilities).map(([key, val]) => [key, val.label]))
   });
 
   // whether to prepend effect labels.
