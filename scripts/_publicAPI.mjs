@@ -7,7 +7,7 @@ export class API {
    * @returns {ActiveEffect|boolean}                The effect, if concentrating, otherwise false.
    */
   static isActorConcentrating(caster) {
-    return (caster.actor ?? caster).effects.find(API.isEffectConcentration) || false;
+    return (caster.actor ?? caster).appliedEffects.find(e => e.statuses.has("concentration")) || false;
   }
 
   /**
@@ -17,11 +17,9 @@ export class API {
    * @returns {ActiveEffect|boolean}                The effect, if concentrating, otherwise false.
    */
   static isActorConcentratingOnItem(caster, item) {
-    const actor = caster.actor ?? caster;
-    const effect = actor.effects.find(eff => {
-      return item.uuid === eff.flags[MODULE]?.data?.castData?.itemUuid;
-    });
-    return effect || false;
+    return (caster.actor ?? caster).appliedEffects.find(e => {
+      return item.uuid === e.flags[MODULE]?.data?.castData?.itemUuid;
+    }) || false;
   }
 
   /**
@@ -41,8 +39,8 @@ export class API {
    */
   static async breakConcentration(caster, {message = true} = {}) {
     const actor = caster.actor ?? caster;
-    const ids = actor.effects.reduce((acc, e) => {
-      if (API.isEffectConcentration(eff)) acc.push(e.id);
+    const ids = actor.appliedEffects.reduce((acc, e) => {
+      if (e.statuses.has("concentration")) acc.push(e.id);
       return acc;
     }, []);
     return actor.deleteEmbeddedDocuments("ActiveEffect", ids, {concMessage: message});
