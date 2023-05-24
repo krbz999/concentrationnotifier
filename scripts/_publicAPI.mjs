@@ -1,67 +1,78 @@
 import {MODULE} from "./settings.mjs";
 
 export class API {
-
-  // determine if you are concentrating at all.
+  /**
+   * Determine whether an actor is concentrating.
+   * @param {Token|TokenDocument|Actor} caster      The token, token document, or actor to test.
+   * @returns {ActiveEffect|boolean}                The effect, if concentrating, otherwise false.
+   */
   static isActorConcentrating(caster) {
-    const actor = caster.actor ?? caster;
-    const effect = actor.effects.find(eff => {
-      return API.isEffectConcentration(eff);
-    });
-    return effect || false;
+    return (caster.actor ?? caster).appliedEffects.find(e => e.statuses.has("concentration")) || false;
   }
 
-  // determine if you are concentrating on a specific item.
+  /**
+   * Determine if you are concentrating on a specific item.
+   * @param {Token|TokenDocument|Actor} caster      The token, token document, or actor to test.
+   * @param {Item} item                             The item to test concentration upon.
+   * @returns {ActiveEffect|boolean}                The effect, if concentrating, otherwise false.
+   */
   static isActorConcentratingOnItem(caster, item) {
-    const actor = caster.actor ?? caster;
-    const effect = actor.effects.find(eff => {
-      return item.uuid === eff.flags[MODULE]?.data?.castData?.itemUuid;
-    });
-    return effect || false;
+    return (caster.actor ?? caster).appliedEffects.find(e => {
+      return item.uuid === e.flags[MODULE]?.data?.castData?.itemUuid;
+    }) || false;
   }
 
-  // determine if effect is concentration effect.
+  /**
+   * Determine if an effect is a concentration effect.
+   * @param {ActiveEffect} effect     The active effect to test.
+   * @returns {boolean}               Whether the effect has 'concentration' as a status.
+   */
   static isEffectConcentration(effect) {
-    return effect.flags.core?.statusId === "concentration";
+    return effect.statuses.has("concentration");
   }
 
-  // end all concentration effects on an actor.
+  /**
+   * End all concentration effects on an actor.
+   * @param {Token|TokenDocument|Actor} caster      The token, token document, or actor to end concentration.
+   * @param {boolean} message                       Whether to display a message.
+   * @returns {ActiveEffect[]}                      An array of deleted effects.
+   */
   static async breakConcentration(caster, {message = true} = {}) {
     const actor = caster.actor ?? caster;
-    const deleteIds = actor.effects.filter(eff => {
-      return API.isEffectConcentration(eff);
-    }).map(i => i.id);
-    return actor.deleteEmbeddedDocuments("ActiveEffect", deleteIds, {
-      concMessage: message
-    });
+    const ids = actor.appliedEffects.reduce((acc, e) => {
+      if (e.statuses.has("concentration")) acc.push(e.id);
+      return acc;
+    }, []);
+    return actor.deleteEmbeddedDocuments("ActiveEffect", ids, {concMessage: message});
   }
 
-  // wait for concentration on item to be applied on actor.
+  /**
+   * Wait for concentration to be applied on an actor, optionally on a specific item.
+   * @param {Token|TokenDocument|Actor} caster      The token, token document, or actor to wait for.
+   * @param {Item} [item]                           The optional specific item.
+   * @param {number} [max_wait=10000]               The maximum time to wait.
+   * @returns {ActiveEffect|boolean}                The effect, if concentrating, otherwise false.
+   */
   static async waitForConcentrationStart(caster, {item, max_wait = 10000} = {}) {
     const actor = caster.actor ?? caster;
+    const getConc = item ? API.isActorConcentratingOnItem : API.isActorConcentrating;
 
-    async function wait(ms) {
-      return new Promise(resolve => {
-        setTimeout(resolve, ms);
-      });
-    }
-
-    function getConc() {
-      if (item) return API.isActorConcentratingOnItem(actor, item);
-      return API.isActorConcentrating(actor);
-    }
-
-    let conc = getConc();
+    let conc = getConc(actor, item);
     let waited = 0;
-    while (!conc && waited < max_wait) {
-      await wait(100);
+    while (!conc && (waited < max_wait)) {
+      await new Promise(r => setTimeout(r, 100));
       waited = waited + 100;
-      conc = getConc();
+      conc = getConc(actor, item);
     }
     return conc || false;
   }
 
-  // display the card of the item being concentrated on, at the appropriate level.
+  /**
+   * Redisplay the chat card of the item being concentrated on.
+   * If the item is a spell, display it at the correct level.
+   * @param {Token|TokenDocument|Actor} caster      The token, token document, or actor that is concentrating.
+   * @returns {ChatMessage}                         The created chat message.
+   */
   static async redisplayCard(caster) {
     const actor = caster.actor ?? caster;
     const isConc = CN.isActorConcentrating(actor);

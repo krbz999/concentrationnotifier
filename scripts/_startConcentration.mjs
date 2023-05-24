@@ -33,7 +33,11 @@ export async function _startConcentration(item) {
   return item.actor.createEmbeddedDocuments("ActiveEffect", [effectData]);
 }
 
-// create the data for the new concentration effect.
+/**
+ * Create the data for a new concentration effect.
+ * @param {Item} item     The item on which to start concentrating.
+ * @returns {object}      An object of data for an active effect.
+ */
 async function createEffectData(item) {
   const baseItem = fromUuidSync(item.uuid);
   const itemData = game.items.fromCompendium(item, {addFlags: false});
@@ -44,24 +48,27 @@ async function createEffectData(item) {
     castData.castLevel = item.system.level;
   }
 
-  const vaeIntro = "<p>" + game.i18n.format("CN.YouAreConcentratingOnItem", {name: item.name}) + "</p>";
-  const vaeContent = item.system.description.value;
   const prepend = game.settings.get(MODULE, "prepend_effect_labels");
 
   return {
     icon: getModuleImage(item),
-    label: !prepend ? item.name : `${game.i18n.localize("DND5E.Concentration")} - ${item.name}`,
-    origin: item.uuid ?? item.actor.uuid,
+    name: !prepend ? item.name : `${game.i18n.localize("DND5E.Concentration")} - ${item.name}`,
+    origin: item.uuid,
     duration: getItemDuration(item),
+    statuses: ["concentration"],
+    description: game.i18n.format("CN.YouAreConcentratingOnItem", {name: item.name}),
     flags: {
-      core: {statusId: "concentration"},
       concentrationnotifier: {data: {itemData, castData}},
-      "visual-active-effects": {data: {intro: await TextEditor.enrichHTML(vaeIntro, {async: true}), content: vaeContent}}
+      "visual-active-effects": {data: {content: item.system.description.value}}
     }
   };
 }
 
-// set up the duration of the effect depending on the item.
+/**
+ * Helper function to set the duration of the concentration effect to match its item.
+ * @param {Item} item     The item being concentrated on.
+ * @returns {object}      The duration object for an active effect.
+ */
 function getItemDuration(item) {
   const duration = item.system.duration;
 
@@ -88,7 +95,11 @@ function getItemDuration(item) {
   return {};
 }
 
-// get the image used for the effect.
+/**
+ * Helper function to set the icon of the concentration effect.
+ * @param {Item} item     The item being concentrated on.
+ * @returns {string}      The asset path used for the effect icon.
+ */
 function getModuleImage(item) {
   // whether or not to use the item img instead.
   const useItemImage = game.settings.get(MODULE, "concentration_icon_item");
@@ -106,13 +117,26 @@ function getModuleImage(item) {
   return moduleImage;
 }
 
-// end all concentration effects on an actor.
+/**
+ * End all concentration effects on an actor.
+ * @param {Token|TokenDocument|Actor} caster      The token, token document, or actor that is concentrating.
+ * @param {boolean} [message=true]                Whether to display a message when breaking concentration.
+ * @returns {ActiveEffect[]}                      An array of deleted active effects.
+ */
 async function breakConcentration(caster, message = true) {
   const actor = caster.actor ?? caster;
-  const deleteIds = actor.effects.filter(eff => API.isEffectConcentration(eff)).map(i => i.id);
-  return actor.deleteEmbeddedDocuments("ActiveEffect", deleteIds, {concMessage: message});
+  const ids = actor.effects.reduce((acc, e) => {
+    if (API.isEffectConcentration(e)) acc.push(e.id);
+    return acc;
+  }, []);
+  return actor.deleteEmbeddedDocuments("ActiveEffect", ids, {concMessage: message});
 }
 
+/**
+ * Create buttons for Visual Active Effects, with support for 'Roll Groups' and 'Effective Transferral'.
+ * @param {ActiveEffect} effect     The effect being displayed in VAE.
+ * @param {object[]} buttons        The current array of buttons, each with 'label' and 'callback'.
+ */
 export function _vaeButtons(effect, buttons) {
   const isConc = CN.isEffectConcentration(effect);
   if (!isConc) return;
@@ -125,7 +149,7 @@ export function _vaeButtons(effect, buttons) {
   if (clone.hasAttack) {
     buttons.push({
       label: game.i18n.localize("DND5E.Attack"),
-      callback: () => clone.rollAttack({event, spellLevel: data.castData.castLevel})
+      callback: (event) => clone.rollAttack({event, spellLevel: data.castData.castLevel})
     });
   }
 
@@ -139,18 +163,18 @@ export function _vaeButtons(effect, buttons) {
       const label = types.every(t => t in CONFIG.DND5E.damageTypes) ? "DAMAGE" : types.every(t => t in CONFIG.DND5E.damageTypes) ? "HEALING" : "MIXED";
       buttons.push({
         label: `${game.i18n.localize(`ROLLGROUPS.LABELS.${label}`)} (${groups[i].label})`,
-        callback: () => clone.rollDamageGroup({event, rollgroup: i, spellLevel: data.castData.castLevel})
+        callback: (event) => clone.rollDamageGroup({event, rollgroup: i, spellLevel: data.castData.castLevel})
       });
     }
   } else if (clone.isHealing) {
     buttons.push({
       label: game.i18n.localize("DND5E.Healing"),
-      callback: () => clone.rollDamage({event, spellLevel: data.castData.castLevel})
+      callback: (event) => clone.rollDamage({event, spellLevel: data.castData.castLevel})
     })
   } else if (clone.hasDamage) {
     buttons.push({
       label: game.i18n.localize("DND5E.Damage"),
-      callback: () => clone.rollDamage({event, spellLevel: data.castData.castLevel})
+      callback: (event) => clone.rollDamage({event, spellLevel: data.castData.castLevel})
     })
   }
 
@@ -158,14 +182,14 @@ export function _vaeButtons(effect, buttons) {
   if (clone.hasAreaTarget) {
     buttons.push({
       label: game.i18n.localize("DND5E.PlaceTemplate"),
-      callback: () => dnd5e.canvas.AbilityTemplate.fromItem(clone).drawPreview()
+      callback: (event) => dnd5e.canvas.AbilityTemplate.fromItem(clone).drawPreview()
     });
   }
 
   // Create redisplay button.
   buttons.push({
     label: game.i18n.localize("CN.DisplayItem"),
-    callback: () => CN.redisplayCard(effect.parent)
+    callback: (event) => CN.redisplayCard(effect.parent)
   });
 
   // Create effect transfer button.
@@ -181,7 +205,7 @@ export function _vaeButtons(effect, buttons) {
     if (effects.length) {
       buttons.push({
         label: game.i18n.localize("ET.Button.Label"),
-        callback: () => ET.effectTransferTrigger(clone, "button", data.castData.castLevel)
+        callback: (event) => ET.effectTransferTrigger(clone, "button", data.castData.castLevel)
       });
     }
   }
@@ -189,6 +213,6 @@ export function _vaeButtons(effect, buttons) {
   // Create concentration save button.
   buttons.push({
     label: game.i18n.localize("DND5E.Concentration"),
-    callback: () => effect.parent.rollConcentrationSave()
+    callback: (event) => effect.parent.rollConcentrationSave(null, {event})
   });
 }

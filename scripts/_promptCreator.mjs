@@ -2,7 +2,7 @@ import {MODULE} from "./settings.mjs";
 import {API} from "./_publicAPI.mjs";
 
 // store values for use in "updateActor" hook if HP has changed.
-export function _prePromptCreator(actor, data, context) {
+export function _prePromptCreator(actor, data, context, userId) {
   // Get old values. These always exist, but temp is null when 0.
   const hpOld = actor.system.attributes?.hp ?? {};
 
@@ -16,10 +16,17 @@ export function _prePromptCreator(actor, data, context) {
 
   // if damageTaken > 0, tag context for a saving throw.
   context[MODULE] = {save: damage > 0, damage};
+  if (damage > 0) {
+    /** A hook that is called when an actor's hit points are reduced. Returning false does not do anything here. */
+    Hooks.call(`${MODULE}.preDamageActor`, actor, data, context, userId);
+  } else if (damage < 0) {
+    /** A hook that is called when an actor's hit points are increased. Returning false does not do anything here. */
+    Hooks.call(`${MODULE}.preHealActor`, actor, data, context, userId);
+  }
 }
 
 // if the user is concentrating, and has taken damage, build a chat card, and call for a saving throw.
-export async function _promptCreator(actor, _, context, userId) {
+export async function _promptCreator(actor, update, context, userId) {
   // only do this for the one doing the update.
   if (userId !== game.user.id) return;
 
@@ -51,13 +58,13 @@ export async function _promptCreator(actor, _, context, userId) {
       dc,
       itemName: data.itemData.name,
       damage,
-      saveType: CONFIG.DND5E.abilities[abilityKey],
+      saveType: CONFIG.DND5E.abilities[abilityKey].label,
       actorName: actor.name,
       itemUuid: data.castData.itemUuid
     }),
     buttonSaveLabel: game.i18n.format("CN.ButtonSavingThrow", {
       dc,
-      saveType: CONFIG.DND5E.abilities[abilityKey]
+      saveType: CONFIG.DND5E.abilities[abilityKey].label
     }),
     hasTemplates: !!canvas?.scene.templates.find(t => t.flags?.dnd5e?.origin === data.castData.itemUuid),
     origin: data.castData.itemUuid,
@@ -78,6 +85,14 @@ export async function _promptCreator(actor, _, context, userId) {
       [MODULE]: {prompt: true, damage}
     }
   };
+
+  if (damage > 0) {
+    /** A hook that is called when an actor's hit points are reduced. */
+    Hooks.callAll(`${MODULE}.damageActor`, actor, update, context, userId);
+  } else if (damage < 0) {
+    /** A hook that is called when an actor's hit points are increased. */
+    Hooks.callAll(`${MODULE}.healActor`, actor, update, context, userId);
+  }
 
   // Create chat card.
   return ChatMessage.create(messageData);
@@ -109,13 +124,13 @@ export async function promptConcentrationSave(caster, {saveDC = 10, message} = {
     details: game.i18n.format("CN.NotifyConcentrationChallengeManual", {
       dc: saveDC,
       itemName: data.itemData.name,
-      saveType: CONFIG.DND5E.abilities[abilityKey],
+      saveType: CONFIG.DND5E.abilities[abilityKey].label,
       actorName: actor.name,
       itemUuid: data.castData.itemUuid
     }),
     buttonSaveLabel: game.i18n.format("CN.ButtonSavingThrow", {
       dc: saveDC,
-      saveType: CONFIG.DND5E.abilities[abilityKey]
+      saveType: CONFIG.DND5E.abilities[abilityKey].label
     }),
     hasTemplates: !!canvas?.scene.templates.find(t => t.flags?.dnd5e?.origin === data.castData.itemUuid),
     origin: data.castData.itemUuid,
