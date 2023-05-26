@@ -1,7 +1,7 @@
 <div class="concentrationnotifier">
   <div class="card-contents prompt-card">
     <div class="header">{{localize "DND5E.Concentration"}}</div>
-    <div class="details">{{{ifThen description description details}}}</div>
+    <div class="details">{{#if description}}{{{description}}}{{else}}{{{details}}}{{/if}}</div>
     <div class="buttons">
       <button data-prompt="saving-throw" data-dc="{{dc}}" data-save-type="{{ability}}" data-actor-uuid="{{actorUuid}}">
         <i class="fa-solid fa-dice-d20"></i> {{buttonSaveLabel}}
