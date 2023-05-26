@@ -55,9 +55,10 @@ async function createEffectData(item) {
     name: !prepend ? item.name : `${game.i18n.localize("DND5E.Concentration")} - ${item.name}`,
     origin: item.uuid,
     duration: getItemDuration(item),
-    statuses: ["concentration"],
+    statuses: !API.isV10 ? ["concentration"] : undefined,
     description: game.i18n.format("CN.YouAreConcentratingOnItem", {name: item.name}),
     flags: {
+      core: API.isV10 ? {statusId: "concentration"} : undefined,
       concentrationnotifier: {data: {itemData, castData}},
       "visual-active-effects": {data: {content: item.system.description.value}}
     }
