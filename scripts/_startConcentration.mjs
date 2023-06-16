@@ -49,10 +49,11 @@ async function createEffectData(item) {
   }
 
   const prepend = game.settings.get(MODULE, "prepend_effect_labels");
+  const name = !prepend ? item.name : `${game.i18n.localize("DND5E.Concentration")} - ${item.name}`;
 
   return {
     icon: getModuleImage(item),
-    name: !prepend ? item.name : `${game.i18n.localize("DND5E.Concentration")} - ${item.name}`,
+    [API.isV10 ? "label" : "name"]: name,
     origin: item.uuid,
     duration: getItemDuration(item),
     statuses: !API.isV10 ? ["concentration"] : undefined,
