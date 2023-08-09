@@ -1,17 +1,12 @@
 import {MODULE} from "./settings.mjs";
 
 export class API {
-  static get isV10() {
-    return game.release.generation < 11;
-  }
-
   /**
    * Determine whether an actor is concentrating.
    * @param {Token|TokenDocument|Actor} caster      The token, token document, or actor to test.
    * @returns {ActiveEffect|boolean}                The effect, if concentrating, otherwise false.
    */
   static isActorConcentrating(caster) {
-    if (API.isV10) return (caster.actor ?? caster).effects.find(e => e.flags.core?.statusId === "concentration") || false;
     return (caster.actor ?? caster).appliedEffects.find(e => e.statuses.has("concentration")) || false;
   }
 
@@ -22,10 +17,6 @@ export class API {
    * @returns {ActiveEffect|boolean}                The effect, if concentrating, otherwise false.
    */
   static isActorConcentratingOnItem(caster, item) {
-    if (API.isV10) return (caster.actor ?? caster).effects.find(e => {
-      return item.uuid === e.flags[MODULE]?.data?.castData?.itemUuid;
-    }) || false;
-
     return (caster.actor ?? caster).appliedEffects.find(e => {
       return item.uuid === e.flags[MODULE]?.data?.castData?.itemUuid;
     }) || false;
@@ -37,7 +28,6 @@ export class API {
    * @returns {boolean}               Whether the effect has 'concentration' as a status.
    */
   static isEffectConcentration(effect) {
-    if (API.isV10) return effect.flags.core?.statusId === "concentration";
     return effect.statuses.has("concentration");
   }
 
@@ -49,8 +39,7 @@ export class API {
    */
   static async breakConcentration(caster, {message = true} = {}) {
     const actor = caster.actor ?? caster;
-    const collection = API.isV10 ? actor.effects : actor.appliedEffects;
-    const ids = collection.reduce((acc, e) => {
+    const ids = actor.appliedEffects.reduce((acc, e) => {
       if (API.isEffectConcentration(e)) acc.push(e.id);
       return acc;
     }, []);

@@ -53,13 +53,12 @@ async function createEffectData(item) {
 
   return {
     icon: getModuleImage(item),
-    [API.isV10 ? "label" : "name"]: name,
+    name: name,
     origin: item.uuid,
     duration: getItemDuration(item),
-    statuses: !API.isV10 ? ["concentration"] : undefined,
+    statuses: ["concentration"],
     description: game.i18n.format("CN.YouAreConcentratingOnItem", {name: item.name}),
     flags: {
-      core: API.isV10 ? {statusId: "concentration"} : undefined,
       concentrationnotifier: {data: {itemData, castData}},
       "visual-active-effects": {data: {content: item.system.description.value}}
     }
