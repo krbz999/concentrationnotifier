@@ -1,6 +1,6 @@
 import {MODULE, registerSettings} from "./scripts/settings.mjs";
 import {_characterFlags} from "./scripts/_characterFlags.mjs";
-import {_createSheetCheckBox} from "./scripts/_createSheetCheckbox.mjs";
+import {_addScrollConcentration, _createSheetCheckBox} from "./scripts/_createSheetCheckbox.mjs";
 import {_gainConcentration, _loseConcentration} from "./scripts/_gainLoseConcentrationTracker.mjs";
 import {promptConcentrationSave, _prePromptCreator, _promptCreator} from "./scripts/_promptCreator.mjs";
 import {_clickPrompt} from "./scripts/_promptListeners.mjs";
@@ -46,3 +46,4 @@ Hooks.on("preUpdateActor", _prePromptCreator);
 Hooks.on("updateActor", _promptCreator);
 Hooks.on("renderChatMessage", _clickPrompt);
 Hooks.on("dnd5e.useItem", _startConcentration);
+Hooks.on("dnd5e.createScrollFromSpell", _addScrollConcentration);

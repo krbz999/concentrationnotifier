@@ -12,9 +12,7 @@ export function _itemUseAffectsConcentration(item) {
   const isSpell = item.type === "spell";
 
   // Case 0: Does this item even require concentration? (Do Nothing)
-  let requires;
-  if (isSpell) requires = item.system.components.concentration;
-  else requires = item.flags[MODULE]?.data.requiresConcentration;
+  const requires = itemRequiresConcentration(item);
   if (!requires) return CONCENTRATION_REASON.NOT_REQUIRED;
 
   /* The concentration effect already on the actor, if any. */
@@ -35,4 +33,12 @@ export function _itemUseAffectsConcentration(item) {
 
   // None of the above are true, so the usage is 'free' far as concentration is concerned.
   return false;
+}
+
+function itemRequiresConcentration(item) {
+  const isSpell = item.type === "spell";
+  if (isSpell) return item.system.components.concentration;
+
+  const units = item.system.duration?.units;
+  return (units in CONFIG.DND5E.scalarTimePeriods) && !!item.flags[MODULE]?.data.requiresConcentration;
 }
