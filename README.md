@@ -9,6 +9,8 @@ At its core, a chat message will notify all active clients when an actor starts 
 * The active effect used to track concentration is named after the item, e.g., 'Bless' or 'Concentration - Bless'. The format can be toggled in the settings.
 * If an actor who is already concentrating on an item uses a different item that requires concentration (or the same item but at a different level for spells), the active effect will get swapped. The effects otherwise have a duration equal to the item's duration, as set in the details of the item.
 
+Additionally, when a scroll is made from a spell that requires concentration, that will also be tagged as requiring concentration.
+
 ## Character Flags
 
 The module supplies new fields (found under Special Traits). These fields work with Active Effects.
