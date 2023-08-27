@@ -101,4 +101,14 @@ export function registerSettings() {
     default: true,
     requiresReload: true
   });
+
+  // Split item names at ":" for concentration effects.
+  game.settings.register(MODULE, "splitItemNames", {
+    name: "CN.SettingSplitItemNames",
+    hint: "CN.SettingSplitItemNamesHint",
+    scope: "world",
+    config: true,
+    type: Boolean,
+    default: true
+  });
 }

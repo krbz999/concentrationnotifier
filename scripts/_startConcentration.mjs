@@ -48,21 +48,34 @@ async function createEffectData(item) {
     castData.castLevel = item.system.level;
   }
 
+  const shortened = getShortName(item);
   const prepend = game.settings.get(MODULE, "prepend_effect_labels");
-  const name = !prepend ? item.name : `${game.i18n.localize("DND5E.Concentration")} - ${item.name}`;
 
   return {
     icon: getModuleImage(item),
-    name: name,
+    name: !prepend ? shortened : `${game.i18n.localize("DND5E.Concentration")} - ${shortened}`,
     origin: item.uuid,
     duration: getItemDuration(item),
     statuses: ["concentration"],
-    description: game.i18n.format("CN.YouAreConcentratingOnItem", {name: item.name}),
+    description: game.i18n.format("CN.YouAreConcentratingOnItem", {name: shortened}),
     flags: {
       concentrationnotifier: {data: {itemData, castData}},
       "visual-active-effects": {data: {content: item.system.description.value}}
     }
   };
+}
+
+/**
+ * Helper function to generate the concentration effect's name.
+ * @param {Item} item     The item for which to make an effect.
+ * @returns {string}      The name for the effect.
+ */
+function getShortName(item) {
+  const split = game.settings.get(MODULE, "splitItemNames");
+  if (!split) return item.name;
+  const parts = item.name.split(":");
+  parts.shift();
+  return parts.join(":").trim();
 }
 
 /**
