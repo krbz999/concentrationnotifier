@@ -71,11 +71,12 @@ async function createEffectData(item) {
  * @returns {string}      The name for the effect.
  */
 function getShortName(item) {
-  const split = game.settings.get(MODULE, "splitItemNames");
+  const split = game.settings.get(MODULE, "splitItemNames") && item.name.includes(":");
   if (!split) return item.name;
   const parts = item.name.split(":");
   parts.shift();
-  return parts.join(":").trim();
+  const name = parts.join(":").trim();
+  return name ? name : item.name;
 }
 
 /**
