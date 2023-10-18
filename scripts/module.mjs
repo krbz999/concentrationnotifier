@@ -12,6 +12,7 @@ class Module {
   /** Initialize module. */
   static init() {
     Module._characterFlags();
+    Module._registerSettings();
     Hooks.on("renderItemSheet", Module._renderItemSheet);
     Hooks.on("dnd5e.createScrollFromSpell", Module._createScrollFromSpell);
     Hooks.on("renderChatMessage", Module._renderChatMessage);
@@ -96,6 +97,39 @@ class Module {
         section: "DND5E.Concentration",
         ...values
       };
+    });
+  }
+
+  /**
+   * Register settings.
+   */
+  static _registerSettings() {
+    [
+      {key: "concentration_icon", name: "DefaultIcon", type: String, default: "icons/magic/light/orb-lightbulb-gray.webp"},
+      {key: "concentration_icon_item", name: "UseItemIcon", type: Boolean, default: true},
+      {
+        key: "defaultConcentrationAbility", name: "DefaultConcentrationAbility", type: String,
+        default: ("con" in CONFIG.DND5E.abilities) ? "con" : Object.keys(CONFIG.DND5E.abilities)[0],
+        choices: Object.fromEntries(Object.entries(CONFIG.DND5E.abilities).map(([key, val]) => [key, val.label]))
+      },
+      {key: "prepend_effect_labels", name: "PrependLabel", type: Boolean, default: false},
+      {key: "showGainLoseMessages", name: "ShowGainLoseConcentrationMessages", type: Boolean, default: true, requiresReload: true},
+      {key: "always_whisper_messages", name: "WhisperMessages", type: Boolean, default: true},
+      {key: "show_util_buttons", name: "ShowUtilButtons", type: Boolean, default: true},
+      {key: "show_ability_use_warning", name: "AbilityUseWarning", type: Boolean, default: true, requiresReload: true},
+      {key: "create_vae_quickButtons", name: "VisualActiveEffectsButtons", type: Boolean, default: true, requiresReload: true},
+      {key: "splitItemNames", name: "SplitItemNames", type: Boolean, default: true}
+    ].forEach(d => {
+      game.settings.register(Module.ID, d.key, {
+        name: `CN.Setting${d.name}`,
+        hint: `CN.Setting${d.name}Hint`,
+        scope: d.scope ?? "world",
+        config: d.config ?? true,
+        type: d.type,
+        default: d.default ?? undefined,
+        choices: d.choices ?? undefined,
+        requiresReload: d.requiresReload ?? false
+      });
     });
   }
 
