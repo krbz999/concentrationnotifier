@@ -1,10 +1,5 @@
-/* Item Sheets */
-span.sep.concentrationnotifier {
-  margin: 0 4px 0 0 !important;
-}
-
 /* Chat Messages */
-.concentrationnotifier div.card-contents.prompt-card .header {
+.chat-message .concentrationnotifier .header {
   text-align: center;
   font-size: 25px;
   font-family: "Modesto Condensed";
@@ -13,51 +8,30 @@ span.sep.concentrationnotifier {
   border-top: 2px solid black;
   border-bottom: 2px solid black;
 }
-
-.concentrationnotifier div.card-contents.prompt-card .details,
-.concentrationnotifier div.item-image {
-  margin: 0.5em 0.5em 0 0.5em;
-}
-
-.concentrationnotifier .prompt-card .buttons {
-  margin-top: 10px;
+.chat-message .concentrationnotifier .content {
   display: flex;
-  flex-direction: column;
-  align-items: center;
+  margin: 0 0.25em;
 }
-
-.concentrationnotifier button[data-prompt="saving-throw"] {
-  border-radius: 8px;
-  margin-bottom: 0.5em;
-  border-right: outset;
-  border-bottom: outset;
+.chat-message .concentrationnotifier .content .details {
+  flex: 4;
 }
-
-.concentrationnotifier button[data-prompt="end-concentration"],
-.concentrationnotifier button[data-prompt="remove-templates"] {
-  padding: 0 10px;
-  width: 90%;
-  min-width: fit-content;
-  margin: 2px 0;
+.chat-message .concentrationnotifier .content .item-image {
+  flex: 1;
 }
-
-.concentrationnotifier a[data-prompt="render-sheet"] {
-  font-weight: bold;
-  text-decoration: underline;
-}
-
-.concentrationnotifier .gain-loss-details {
-  display: grid;
-  grid-template-columns: 3fr 1fr;
-}
-
-.concentrationnotifier .item-image a:hover {
+.chat-message .concentrationnotifier .content .item-image:hover {
   filter: drop-shadow(0 0 3px red);
 }
-
-.concentrationnotifier .item-image img {
+.chat-message .concentrationnotifier .content .item-image img {
   border: none;
   border-radius: 3px;
+}
+.chat-message .concentrationnotifier .card-buttons button[data-prompt="save"] {
+  border-radius: 8px;
+  margin-bottom: 0.5em;
+  border-bottom: outset;
+  font-size: 14px;
+  line-height: 22px;
+  height: 28px;
 }
 
 /* Ability Use Dialogs */
@@ -65,7 +39,6 @@ span.sep.concentrationnotifier {
   background: rgb(110 0 159 / 80%);
   border: 1px solid #503d51;
 }
-
 .notification.concentrationnotifier::before {
   content: "\f071";
 }

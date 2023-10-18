@@ -1,0 +1,30 @@
+<div class="concentrationnotifier chat-card dnd5e" data-uuid="{{actor.uuid}}">
+  {{#if isPrompt}}
+  <div class="header">{{localize "DND5E.Concentration"}}</div>
+  {{/if}}
+  <div class="content">
+    <div class="details">{{{details}}}</div>
+    {{#unless isPrompt}}
+    <a class="item-image" data-prompt="item" data-uuid="{{origin}}"><img src="{{item.img}}"></a>
+    {{/unless}}
+  </div>
+  {{#if (or showUtilButtons isPrompt)}}
+  <div class="card-buttons">
+    {{#if isPrompt}}
+    <button data-prompt="save" data-target="{{dc}}" data-ability="{{ability}}" data-uuid="{{actor.uuid}}">
+      <i class="fa-solid fa-dice-d20"></i> {{buttonSaveLabel}}
+    </button>
+    {{/if}}
+    {{#if (or showEnd isPrompt)}}
+    <button data-prompt="end" data-uuid="{{effect.uuid}}">
+      <i class="fa-solid fa-times"></i> {{localize "CN.ButtonEndConcentration"}}
+    </button>
+    {{/if}}
+    {{#if hasTemplates}}
+    <button data-prompt="templates" data-origin="{{origin}}">
+      <i class="fa-solid fa-ruler-combined"></i> {{localize "CN.ButtonRemoveTemplates"}}
+    </button>
+    {{/if}}
+  </div>
+  {{/if}}
+</div>
