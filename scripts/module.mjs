@@ -17,6 +17,57 @@ class Module {
     Hooks.on("renderChatMessage", Module._renderChatMessage);
     Hooks.on("createActiveEffect", Module._createActiveEffect);
     Hooks.on("deleteActiveEffect", Module._deleteActiveEffect);
+    Hooks.on("preUpdateActor", Module._preUpdateActor);
+    Hooks.on("updateActor", Module._updateActor);
+  }
+
+  /**
+   * When an actor is updated, store the changes to hit points for reference later.
+   * @param {Actor5e} actor       The actor to be updated.
+   * @param {object} update       The update to be performed.
+   * @param {object} options      The update options.
+   * @param {string} userId       The id of the user performing the update.
+   */
+  static _preUpdateActor(actor, update, options, userId) {
+    const healthA = actor.system.attributes?.hp || {};
+    const healthB = update.system?.attributes?.hp || {};
+    const totalA = (healthA.temp ?? 0) + (healthA.value ?? 0);
+    const totalB = (healthB.temp ?? healthA.temp ?? 0) + (healthB.value ?? healthA.value ?? 0);
+    const damage = totalA - totalB;
+
+    const hook = (damage > 0) ? "preDamageActor" : (damage < 0) ? "preHealActor" : null;
+    options[Module.ID] = {save: damage > 0, damage: damage};
+
+    // If damage taken or healing performed, call a hook. Explicitly return false to prevent the update.
+    if (hook && (Hooks.call(`${Module.ID}.${hook}`, actor, update, options, userId) === false)) return false;
+  }
+
+  /**
+   * When an actor is updated, create a prompt for concentration saving throws if they were damaged.
+   * @param {Actor5e} actor               The actor that was updated.
+   * @param {object} update               The update that was performed.
+   * @param {object} options              The update options.
+   * @param {string} userId               The id of the user performing the update.
+   * @returns {Promise<ChatMessage>}      The created chat message.
+   */
+  static async _updateActor(actor, update, options, userId) {
+    if (game.user.id !== userId) return;
+    const {save, damage} = options[Module.ID] || {};
+    if (!save) return;
+    const effect = Module.isActorConcentrating(actor);
+    if (!effect) return;
+    if (effect.flags[Module.ID].data.castData.unbreakable) return;
+
+    const data = Module._getData(actor, effect, options);
+    const messageData = {
+      content: await renderTemplate(`modules/${Module.ID}/templates/concentration-prompt.hbs`, data),
+      whisper: game.users.filter(u => actor.testUserPermission(u, "OWNER")).map(u => u.id),
+      speaker: ChatMessage.getSpeaker({alias: game.i18n.localize("CN.ModuleTitle")}),
+      flags: {core: {canPopout: true}, [Module.ID]: {prompt: true, damage: damage}}
+    };
+    const hook = (damage > 0) ? "damageActor" : (damage < 0) ? "healActor" : null;
+    if (hook) Hooks.callAll(`${Module.ID}.${hook}`, actor, update, options, userId);
+    return ChatMessage.implementation.create(messageData);
   }
 
   /**
@@ -116,20 +167,10 @@ class Module {
     if (!Module.isEffectConcentration(effect)) return;
     if (!(effect.parent instanceof CONFIG.Actor.documentClass)) return;
 
-    const data = effect.flags[Module.ID].data;
-    const templateData = {
-      details: game.i18n.format(`CN.NotifyConcentrationHas${type === 1 ? "Begun" : "Ended"}`, {
-        itemName: data.itemData.name, actorName: effect.parent.name
-      }),
-      itemImg: data.itemData.img,
-      itemUuid: data.castData.itemUuid,
-      effectUuid: effect.uuid,
-      showUtilButtons: game.settings.get(Module.ID, "show_util_buttons"),
-      showEnd: type === 1
-    };
+    const templateData = Module._getData(effect.parent, effect, options, type);
     const template = `modules/${Module.ID}/templates/concentration-notify.hbs`;
     const isPublic = game.settings.get("core", "rollMode") === CONST.DICE_ROLL_MODES.PUBLIC;
-    const alwaysWhisper = game.settings.get(Module.ID, "alwayus_whisper_messages");
+    const alwaysWhisper = game.settings.get(Module.ID, "always_whisper_messages");
     let whisper;
     if (isPublic && !alwaysWhisper) whisper = [];
     else whisper = game.users.filter(u => effect.parent.testUserPermission(u, "OWNER")).map(u => u.id);
@@ -140,6 +181,46 @@ class Module {
       speaker: {alias: game.i18n.localize("CN.ModuleTitle")}
     };
     return ChatMessage.implementation.create(messageData);
+  }
+
+  /**
+   * Create the handlebars template data for prompts and notifications.
+   * @param {Actor5e} actor             The actor being damaged, or the owner of the effect.
+   * @param {ActiveEffect5e} effect     The concentration effect created or deleted or concentrated on.
+   * @param {object} options            The actor update options, or the effect creation or deletion options.
+   * @param {number|null} [type]        A number (1 or 0) for effects being created/deleted, otherwise undefined.
+   */
+  static _getData(actor, effect, options, type = null) {
+    const data = effect.flags[Module.ID].data;
+    const detailsTemplate = `CN.NotifyConcentration${{0: "Ended", 1: "Begun"}[type] ?? "Challenge"}.hbs`;
+    const damage = options[Module.ID]?.damage ?? 10;
+    const dc = Math.max(10, Math.floor(Math.abs(damage) / 2));
+    const ability = actor.flags.dnd5e?.concentrationAbility ?? game.settings.get(Module.ID, "defaultConcentrationAbility");
+    const saveType = CONFIG.DND5E.abilities[ability].label;
+    const detailsData = {
+      itemName: data.itemData.name,
+      actorName: actor.name,
+      dc: dc,
+      damage: damage,
+      saveType: saveType,
+      itemUuid: data.castData.itemUuid
+    };
+    const details = game.i18n.format(detailsTemplate, detailsData);
+    const buttonSaveLabel = game.i18n.format("CN.ButtonSavingThrow", {dc: dc, saveType: saveType});
+
+    return {
+      details: details,
+      buttonSaveLabel: buttonSaveLabel,
+      hasTemplates: !!canvas?.scene.templates.find(t => t.flags?.dnd5e?.origin === data.castData.itemUuid),
+      origin: data.castData.itemUuid,
+      actorUuid: actor.uuid,
+      effectUuid: effect.uuid,
+      dc: dc,
+      itemImg: data.itemData.img,
+      itemUuid: data.castData.itemUuid,
+      showUtilButtons: game.settings.get(Module.ID, "show_util_buttons"),
+      showEnd: type === 1
+    };
   }
 
   /* ---------------------------- */
