@@ -1,5 +1,7 @@
 <div class="concentrationnotifier chat-card dnd5e" data-uuid="{{actor.uuid}}">
+  {{#if isPrompt}}
   <div class="header">{{localize "DND5E.Concentration"}}</div>
+  {{/if}}
   <div class="content">
     <div class="details">{{{details}}}</div>
     {{#unless isPrompt}}

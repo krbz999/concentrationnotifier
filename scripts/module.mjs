@@ -336,6 +336,7 @@ class Module {
    * @param {string} userId       The id of the user performing the update.
    */
   static _preUpdateActor(actor, update, options, userId) {
+    if (options.isRest || options.isAdvancement) return;
     const healthA = actor.system.attributes?.hp || {};
     const healthB = update.system?.attributes?.hp || {};
     const totalA = (healthA.temp ?? 0) + (healthA.value ?? 0);
