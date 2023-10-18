@@ -813,56 +813,6 @@ class Module {
     const item = await fromUuid(uuid);
     return item.sheet.render(true);
   }
-
-  /* ---------------------------- */
-  /*                              */
-  /*      COLLECTION HANDLING     */
-  /*                              */
-  /* ---------------------------- */
-
-  /**
-   * A mapping of all currently concentrating actors. This collection is dynamically updated when effects change,
-   * and should not be considered an ultimate truth.
-   * @type {Collection<Actor5e>}
-   */
-  get collection() {
-    const collection = this._collection ??= new foundry.utils.Collection();
-    for (const key of collection.keys()) if (!Module.isActorConcentrating(collection.get(key))) collection.delete(key);
-    return collection;
-  }
-
-  /**
-   * Convert a key, which can be a document, to the uuid of an actor, if possible.
-   * @param {Item5e|Token5e|TokenDocument5e|Actor5e|string} key     A document or uuid of an actor.
-   * @returns {string|null}                                         An actor uuid.
-   */
-  _convertKey(key) {
-    const classes = [CONFIG.Item.documentClass, CONFIG.Token.documentClass, CONFIG.Token.objectClass];
-    if (classes.some(cls => key instanceof cls)) return key.actor?.uuid ?? null;
-    else if (key instanceof CONFIG.Actor.documentClass) return key.uuid ?? null;
-    return key;
-  }
-
-  /**
-   * Get an actor from the collection of concentrating actors.
-   * @param {Item5e|Token5e|TokenDocument5e|Actor5e|string} key     A document or uuid of an actor.
-   * @returns {Actor5e}                                             The stored actor with this uuid.
-   */
-  get(key) {
-    key = this._convertKey(key);
-    return this.collection.get(key) ?? null;
-  }
-
-  /**
-   * Set an actor in the collection of concentrating actors.
-   * @param {Item5e|Token5e|TokenDocument5e|Actor5e|string} key     A document or uuid of an actor.
-   */
-  set(key) {
-    key = this._convertKey(key);
-    const actor = fromUuidSync(key);
-    if (!(actor instanceof CONFIG.Actor.documentClass)) return null;
-    return this.collection.set(key, actor);
-  }
 }
 
 Hooks.once("init", Module.init);
