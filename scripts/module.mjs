@@ -20,8 +20,78 @@ class Module {
     Hooks.on("deleteActiveEffect", Module._deleteActiveEffect);
     Hooks.on("preUpdateActor", Module._preUpdateActor);
     Hooks.on("updateActor", Module._updateActor);
+    Hooks.on("dnd5e.preUseItem", Module._preUseItem);
+    Hooks.on("renderAbilityUseDialog", Module._renderAbilityUseDialog);
     globalThis.CN = Module;
     Actor.implementation.prototype.rollConcentrationSave = Module._rollConcentrationSave;
+  }
+
+  /**
+   * When using an item that requires concentration, force the AbilityUseDialog to display
+   * a warning about loss of concentration if the item being used is an entirely different
+   * item than the one being concentrated on, if it's the same item but at a different level,
+   * or if it's the same item but it can be upcast naturally.
+   * @TODO FIX IN 2.4
+   * @param {Item5e} item       The item about to be used.
+   * @param {object} config     The item usage configuration.
+   */
+  static _preUseItem(item, config) {
+    if (!game.settings.get(Module.ID, "show_ability_use_warning")) return;
+    const force = [
+      Module.REASON.DIFFERENT_ITEM,
+      Module.REASON.DIFFERENT_LEVEL,
+      Module.REASON.UPCASTABLE
+    ].includes(Module._itemUseAffectsConcentration(item));
+    const unfocused = item.actor.flags.dnd5e?.concentrationUnfocused;
+    if (force || unfocused) config.needsConfiguration = true;
+  }
+
+  /**
+   * If a reason was found to warn about the potential loss (or lack) of concentration
+   * as a result of using this item (potentially at only a different level), inject the
+   * warning into the AbilityUseDialog
+   * @param {AbilityUseDialog} dialog     The dialog application instance.
+   * @param {HTMLElement} html            The html of the dialog.
+   */
+  static _renderAbilityUseDialog(dialog, [html]) {
+    if (!game.settings.get(Module.ID, "show_ability_use_warning")) return;
+    const reason = Module._itemUseAffectsConcentration(dialog.item);
+    if (reason === Module.REASON.NOT_REQUIRED) return;
+    const unfocused = dialog.item.actor.flags.dnd5e?.concentrationUnfocused;
+    if ((reason === Module.REASON.NOT_CONCENTRATING) && !unfocused) return;
+
+    // Construct warning.
+    const effect = Module.isActorConcentrating(dialog.item.actor);
+    const locale = Module._getAbilityUseWarning(reason, dialog.item, effect);
+    const div = document.createElement("DIV");
+    div.innerHTML = `<p class="notification concentrationnotifier">${locale}</p>`;
+    html.querySelector(".notes").after(div.firstElementChild);
+    dialog.setPosition({height: "auto"});
+  }
+
+  /**
+   * Helper method for localization string in the AbilityUseDialog warning, depending
+   * on the reason that the new item may end concentration.
+   * @param {number} reason             An integer from 'REASON'.
+   * @param {Item5e} item               The item triggering the AbilityUseDialog.
+   * @param {ActiveEffect5e} effect     The actor's current concentration effect.
+   * @returns {string}                  The warning message to display.
+   */
+  static _getAbilityUseWarning(reason, item, effect) {
+    let string = "";
+    if (item.actor.flags.dnd5e?.concentrationUnfocused) {
+      string = `CN.AbilityDialogWarningUnfocused${(item.type === "spell") ? "Spell" : "Item"}`;
+    } else if (reason === Module.REASON.DIFFERENT_ITEM) {
+      // This will end concentration on a different item.
+      string = `CN.AbilityDialogWarning${(item.type === "spell") ? "Spell" : "Item"}`;
+    } else if ([Module.REASON.DIFFERENT_LEVEL, Module.REASON.UPCASTABLE].includes(reason)) {
+      // This will end concentration on the same item, unless cast at the same level.
+      string = "CN.AbilityDialogWarningSpellLevel";
+    }
+    return game.i18n.format(string, {
+      item: effect.flags[Module.ID]?.data.itemData.name,
+      level: effect.flags[Module.ID]?.data.castData.castLevel?.ordinalString()
+    });
   }
 
   /**
