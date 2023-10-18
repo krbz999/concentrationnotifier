@@ -136,7 +136,7 @@ function getModuleImage(item) {
  * End all concentration effects on an actor.
  * @param {Token|TokenDocument|Actor} caster      The token, token document, or actor that is concentrating.
  * @param {boolean} [message=true]                Whether to display a message when breaking concentration.
- * @returns {ActiveEffect[]}                      An array of deleted active effects.
+ * @returns {Promise<ActiveEffect[]>}             An array of deleted active effects.
  */
 async function breakConcentration(caster, message = true) {
   const actor = caster.actor ?? caster;

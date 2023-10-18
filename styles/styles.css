@@ -2,7 +2,6 @@
 span.sep.concentrationnotifier {
   margin: 0 4px 0 0 !important;
 }
-
 /* Chat Messages */
 .concentrationnotifier div.card-contents.prompt-card .header {
   text-align: center;
@@ -13,26 +12,22 @@ span.sep.concentrationnotifier {
   border-top: 2px solid black;
   border-bottom: 2px solid black;
 }
-
 .concentrationnotifier div.card-contents.prompt-card .details,
 .concentrationnotifier div.item-image {
   margin: 0.5em 0.5em 0 0.5em;
 }
-
 .concentrationnotifier .prompt-card .buttons {
   margin-top: 10px;
   display: flex;
   flex-direction: column;
   align-items: center;
 }
-
 .concentrationnotifier button[data-prompt="saving-throw"] {
   border-radius: 8px;
   margin-bottom: 0.5em;
   border-right: outset;
   border-bottom: outset;
 }
-
 .concentrationnotifier button[data-prompt="end-concentration"],
 .concentrationnotifier button[data-prompt="remove-templates"] {
   padding: 0 10px;
@@ -40,32 +35,26 @@ span.sep.concentrationnotifier {
   min-width: fit-content;
   margin: 2px 0;
 }
-
 .concentrationnotifier a[data-prompt="render-sheet"] {
   font-weight: bold;
   text-decoration: underline;
 }
-
 .concentrationnotifier .gain-loss-details {
   display: grid;
   grid-template-columns: 3fr 1fr;
 }
-
 .concentrationnotifier .item-image a:hover {
   filter: drop-shadow(0 0 3px red);
 }
-
 .concentrationnotifier .item-image img {
   border: none;
   border-radius: 3px;
 }
-
 /* Ability Use Dialogs */
 .notification.concentrationnotifier {
   background: rgb(110 0 159 / 80%);
   border: 1px solid #503d51;
 }
-
 .notification.concentrationnotifier::before {
   content: "\f071";
 }
