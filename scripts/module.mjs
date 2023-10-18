@@ -397,7 +397,7 @@ class Module {
       concentrationUnfocused: {type: Boolean}
     };
     Object.entries(data).forEach(([key, values]) => {
-      CONFIG.DND5E[key] = {
+      CONFIG.DND5E.characterFlags[key] = {
         name: `CN.Flag${key.capitalize()}`,
         hint: `CN.Flag${key.capitalize()}Hint`,
         section: "DND5E.Concentration",
@@ -741,12 +741,25 @@ class Module {
    */
   static _renderChatMessage(message, [html]) {
     html.querySelectorAll(".concentrationnotifier [data-prompt]").forEach(n => {
-      const action = n.dataset.prompt;
-      if (action === "save") n.addEventListener("click", Module._onClickSave);
-      else if (action === "end") n.addEventListener("click", Module._onClickEnd);
-      else if (action === "templates") n.addEventListener("click", Module._onClickTemplates);
-      else if (action === "item") n.addEventListener("click", Module._onClickItem);
+      const owner = fromUuidSync(n.closest(`.${Module.ID}`).dataset.uuid).isOwner;
+      if (!owner) n.remove();
+      n.addEventListener("click", Module._onChatCardAction);
     });
+  }
+
+  /**
+   * Handle disabling and enabling a chat card button.
+   * @param {PointerEvent} event      The initiating click event.
+   */
+  static async _onChatCardAction(event) {
+    const button = event.currentTarget;
+    button.disabled = true;
+    const action = button.dataset.prompt;
+    if (action === "save") await Module._onClickSave(event);
+    else if (action === "end") await Module._onClickEnd(event);
+    else if (action === "templates") await Module._onClickTemplates(event);
+    else if (action === "item") await Module._onClickItem(event);
+    button.disabled = false;
   }
 
   /**
