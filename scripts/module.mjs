@@ -20,6 +20,40 @@ class Module {
     Hooks.on("deleteActiveEffect", Module._deleteActiveEffect);
     Hooks.on("preUpdateActor", Module._preUpdateActor);
     Hooks.on("updateActor", Module._updateActor);
+    globalThis.CN = Module;
+    Actor.implementation.prototype.rollConcentrationSave = Module._rollConcentrationSave;
+  }
+
+  /**
+   * New actor prototype method for rolling concentration saving throws.
+   * @param {string} [ability]        A key from `CONFIG.DND5E.abilities`.
+   * @param {object} [options={}]     Options that modify the roll.
+   * @returns {Promise<D20Roll>}
+   */
+  static async _rollConcentrationSave(ability = null, options = {}) {
+    if (!this.isOwner) return;
+    const dnd = this.flags.dnd5e || {};
+    ability ??= dnd.concentrationAbility ?? game.settings.get(Module.ID, "defaultConcentrationAbility");
+    const config = {fumble: null, critical: null, isConcSave: true, targetValue: 10, parts: []};
+
+    // Apply reliable talent and advantage.
+    if (dnd.concentrationReliable) config.reliableTalent = true;
+    if (dnd.concentrationAdvantage && !options.event?.ctrlKey) config.advantage = true;
+
+    foundry.utils.mergeObject(config, options);
+
+    const bonus = dnd.concentrationBonus && Roll.validate(dnd.concentrationBonus);
+    if (bonus) config.parts.push(dnd.concentrationBonus);
+
+    // Hook event for users to modify the saving throw before it is passed to the regular roll.
+    if (Hooks.call(`${Module.ID}.preRollConcentrationSave`, this, config, ability) === false) return;
+
+    const roll = await this.rollAbilitySave(ability, config);
+
+    // Hook event that fires after the concentration save has been completed.
+    if (roll) Hooks.callAll(`${Module.ID}.rollConcentrationSave`, this, roll, ability);
+
+    return roll;
   }
 
   /**
@@ -173,6 +207,7 @@ class Module {
    * @returns {Promise<ChatMessage>}
    */
   static async _createActiveEffect(effect, options, userId) {
+    if (!game.settings.get(Module.ID, "showGainLoseMessages")) return;
     return Module._notifyConcentration(effect, options, userId, 1);
   }
 
@@ -184,6 +219,7 @@ class Module {
    * @returns {Promise<ChatMessage>}
    */
   static async _deleteActiveEffect(effect, options, userId) {
+    if (!game.settings.get(Module.ID, "showGainLoseMessages")) return;
     return Module._notifyConcentration(effect, options, userId, 0);
   }
 
