@@ -537,7 +537,7 @@ class Module {
     const detailsTemplate = `CN.NotifyConcentration${{0: "Ended", 1: "Begun"}[type] ?? "Challenge"}`;
     const damage = options[Module.ID]?.damage ?? 10;
     const dc = Math.max(10, Math.floor(Math.abs(damage) / 2));
-    const ability = actor.flags.dnd5e?.concentrationAbility ?? game.settings.get(Module.ID, "defaultConcentrationAbility");
+    const ability = Module._getAbility(actor);
     const saveType = CONFIG.DND5E.abilities[ability].label;
     const origin = data.castData.itemUuid;
     const detailsData = {
@@ -556,6 +556,7 @@ class Module {
       effect: effect,
       item: data.itemData,
       details: details,
+      ability: ability,
       buttonSaveLabel: buttonSaveLabel,
       hasTemplates: !!canvas?.scene.templates.find(t => t.flags?.dnd5e?.origin === origin),
       origin: origin,
@@ -564,6 +565,20 @@ class Module {
       showEnd: type === 1,
       isPrompt: type === null
     };
+  }
+
+  /**
+   * Determine saving throw ability used by this actor.
+   * @param {Actor5e} actor     An actor making a concentration saving throw.
+   * @returns {string}          A key in `CONFIG.DND5E.abilities`.
+   */
+  static _getAbility(actor) {
+    const config = CONFIG.DND5E.abilities;
+    const flag = actor.flags.dnd5e?.concentrationAbility;
+    if (flag in config) return flag;
+    const sett = game.settings.get(Module.ID, "defaultConcentrationAbility");
+    if (sett in config) return sett;
+    return "con";
   }
 
   /* ---------------------------- */
