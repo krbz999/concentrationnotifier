@@ -4,6 +4,13 @@ class Module {
   static ICON = "icons/magic/light/orb-lightbulb-gray.webp";
   static REASON = {NOT_REQUIRED: 0, NOT_CONCENTRATING: 1, DIFFERENT_ITEM: 2, DIFFERENT_LEVEL: 3, UPCASTABLE: 4};
 
+  /**
+   * An array to keep track of functions used to filter out whether an item should
+   * be considered for regular concentration. If any of these functions explicitly
+   * return `false`, an item will not require concentration by normal means.
+   */
+  static ITEM_FILTERS = [];
+
   /* ---------------------------- */
   /*                              */
   /*         MODULE SETUP         */
@@ -12,21 +19,21 @@ class Module {
 
   /** Initialize module. */
   static init() {
-    Module._characterFlags();
-    Module._registerSettings();
-    Hooks.on("renderItemSheet", Module._renderItemSheet);
-    Hooks.on("dnd5e.createScrollFromSpell", Module._createScrollFromSpell);
-    Hooks.on("renderChatMessage", Module._renderChatMessage);
-    Hooks.on("createActiveEffect", Module._createActiveEffect);
-    Hooks.on("deleteActiveEffect", Module._deleteActiveEffect);
-    Hooks.on("preUpdateActor", Module._preUpdateActor);
-    Hooks.on("updateActor", Module._updateActor);
-    Hooks.on("dnd5e.preUseItem", Module._preUseItem);
-    Hooks.on("renderAbilityUseDialog", Module._renderAbilityUseDialog);
-    Hooks.on("visual-active-effects.createEffectButtons", Module._VAEcreateEffectButtons);
-    Hooks.on("dnd5e.useItem", Module._useItem);
-    globalThis.CN = Module;
-    Actor.implementation.prototype.rollConcentrationSave = Module._rollConcentrationSave;
+    this._characterFlags();
+    this._registerSettings();
+    Hooks.on("renderItemSheet", this._renderItemSheet.bind(this));
+    Hooks.on("dnd5e.createScrollFromSpell", this._createScrollFromSpell.bind(this));
+    Hooks.on("renderChatMessage", this._renderChatMessage.bind(this));
+    Hooks.on("createActiveEffect", this._createActiveEffect.bind(this));
+    Hooks.on("deleteActiveEffect", this._deleteActiveEffect.bind(this));
+    Hooks.on("preUpdateActor", this._preUpdateActor.bind(this));
+    Hooks.on("updateActor", this._updateActor.bind(this));
+    Hooks.on("dnd5e.preUseItem", this._preUseItem.bind(this));
+    Hooks.on("renderAbilityUseDialog", this._renderAbilityUseDialog.bind(this));
+    Hooks.on("visual-active-effects.createEffectButtons", this._VAEcreateEffectButtons.bind(this));
+    Hooks.on("dnd5e.useItem", this._useItem.bind(this));
+    globalThis.CN = this;
+    Actor.implementation.prototype.rollConcentrationSave = this._rollConcentrationSave;
   }
 
   /**
@@ -35,9 +42,9 @@ class Module {
    * @param {object[]} buttons          The current array of buttons, each with 'label' and 'callback'.
    */
   static _VAEcreateEffectButtons(effect, buttons) {
-    const isConc = Module.isEffectConcentration(effect);
+    const isConc = this.isEffectConcentration(effect);
     if (!isConc) return;
-    const data = effect.flags[Module.ID].data;
+    const data = effect.flags[this.ID].data;
     const item = fromUuidSync(data.castData.itemUuid);
 
     let clone;
@@ -91,7 +98,7 @@ class Module {
     /* Create button to display the item being concentrated on in chat. */
     buttons.push({
       label: game.i18n.localize("CN.DisplayItem"),
-      callback: (event) => Module.redisplayCard(effect.parent)
+      callback: (event) => this.redisplayCard(effect.parent)
     });
 
     /* Create button for 'Effective Transferral' support. */
@@ -129,17 +136,17 @@ class Module {
     if (item.actor.flags.dnd5e?.concentrationUnfocused) return;
 
     const goodReason = [
-      Module.REASON.NOT_CONCENTRATING,
-      Module.REASON.DIFFERENT_ITEM,
-      Module.REASON.DIFFERENT_LEVEL
-    ].includes(Module._itemUseAffectsConcentration(item));
+      this.REASON.NOT_CONCENTRATING,
+      this.REASON.DIFFERENT_ITEM,
+      this.REASON.DIFFERENT_LEVEL
+    ].includes(this._itemUseAffectsConcentration(item));
     if (!goodReason) return [];
 
     // Break the current concentration, but do not display a message.
-    await Module.breakConcentration(item.actor, {message: false});
+    await this.breakConcentration(item.actor, {message: false});
 
     // Create the effect data and start concentrating on the new item.
-    const effectData = await Module._createEffectData(item);
+    const effectData = await this._createEffectData(item);
     return item.actor.createEmbeddedDocuments("ActiveEffect", [effectData]);
   }
 
@@ -157,17 +164,17 @@ class Module {
       castData.baseLevel = baseItem?.system.level;
       castData.castLevel = item.system.level;
     }
-    const shortened = Module._getShortName(item);
-    const prepend = game.settings.get(Module.ID, "prepend_effect_labels");
+    const shortened = this._getShortName(item);
+    const prepend = game.settings.get(this.ID, "prepend_effect_labels");
     return {
-      icon: await Module._getModuleImage(item),
+      icon: await this._getModuleImage(item),
       name: !prepend ? shortened : `${game.i18n.localize("DND5E.Concentration")} - ${shortened}`,
       origin: item.uuid,
-      duration: Module.getItemDuration(item),
-      statuses: [Module.STATUS],
+      duration: this.getItemDuration(item),
+      statuses: [this.STATUS],
       description: game.i18n.format("CN.YouAreConcentratingOnItem", {name: shortened}),
       flags: {
-        [Module.ID]: {data: {itemData, castData}},
+        [this.ID]: {data: {itemData, castData}},
         "visual-active-effects": {data: {content: item.system.description.value}}
       }
     };
@@ -179,7 +186,7 @@ class Module {
    * @returns {string}        The name for the effect.
    */
   static _getShortName(item) {
-    const split = game.settings.get(Module.ID, "splitItemNames") && item.name.includes(":");
+    const split = game.settings.get(this.ID, "splitItemNames") && item.name.includes(":");
     if (!split) return item.name;
     const parts = item.name.split(":");
     parts.shift();
@@ -195,12 +202,12 @@ class Module {
   static async _getModuleImage(item) {
     // Case 1: The item has an image, and it is prioritised.
     const hasItemImage = await srcExists(item.img);
-    if (hasItemImage && game.settings.get(Module.ID, "concentration_icon_item")) return item.img;
+    if (hasItemImage && game.settings.get(this.ID, "concentration_icon_item")) return item.img;
 
     // Case 2: Use the image in the settings, if it exists.
-    const moduleImage = game.settings.get(Module.ID, "concentration_icon")?.trim();
+    const moduleImage = game.settings.get(this.ID, "concentration_icon")?.trim();
     const exists = await srcExists(moduleImage);
-    return exists ? moduleImage : Module.ICON;
+    return exists ? moduleImage : this.ICON;
   }
 
   /**
@@ -238,14 +245,14 @@ class Module {
    * @param {object} config     The item usage configuration.
    */
   static _preUseItem(item, config) {
-    if (!game.settings.get(Module.ID, "show_ability_use_warning")) return;
+    if (!game.settings.get(this.ID, "show_ability_use_warning")) return;
     const force = [
-      Module.REASON.DIFFERENT_ITEM,
-      Module.REASON.DIFFERENT_LEVEL,
-      Module.REASON.UPCASTABLE
-    ].includes(Module._itemUseAffectsConcentration(item));
+      this.REASON.DIFFERENT_ITEM,
+      this.REASON.DIFFERENT_LEVEL,
+      this.REASON.UPCASTABLE
+    ].includes(this._itemUseAffectsConcentration(item));
     const unfocused = item.actor.flags.dnd5e?.concentrationUnfocused;
-    if (force || unfocused) config.needsConfiguration = true;
+    if (force || unfocused) config.needsConfiguration = config.concentration = true;
   }
 
   /**
@@ -256,15 +263,15 @@ class Module {
    * @param {HTMLElement} html            The html of the dialog.
    */
   static _renderAbilityUseDialog(dialog, [html]) {
-    if (!game.settings.get(Module.ID, "show_ability_use_warning")) return;
-    const reason = Module._itemUseAffectsConcentration(dialog.item);
-    if (reason === Module.REASON.NOT_REQUIRED) return;
+    if (!game.settings.get(this.ID, "show_ability_use_warning")) return;
+    const reason = this._itemUseAffectsConcentration(dialog.item);
+    if (reason === this.REASON.NOT_REQUIRED) return;
     const unfocused = dialog.item.actor.flags.dnd5e?.concentrationUnfocused;
-    if ((reason === Module.REASON.NOT_CONCENTRATING) && !unfocused) return;
+    if ((reason === this.REASON.NOT_CONCENTRATING) && !unfocused) return;
 
     // Construct warning.
-    const effect = Module.isActorConcentrating(dialog.item.actor);
-    const locale = Module._getAbilityUseWarning(reason, dialog.item, effect);
+    const effect = this.isActorConcentrating(dialog.item.actor);
+    const locale = this._getAbilityUseWarning(reason, dialog.item, effect);
     const div = document.createElement("DIV");
     div.innerHTML = `<p class="notification concentrationnotifier">${locale}</p>`;
     html.querySelector(".notes").after(div.firstElementChild);
@@ -283,16 +290,16 @@ class Module {
     let string = "";
     if (item.actor.flags.dnd5e?.concentrationUnfocused) {
       string = `CN.AbilityDialogWarningUnfocused${(item.type === "spell") ? "Spell" : "Item"}`;
-    } else if (reason === Module.REASON.DIFFERENT_ITEM) {
+    } else if (reason === this.REASON.DIFFERENT_ITEM) {
       // This will end concentration on a different item.
       string = `CN.AbilityDialogWarning${(item.type === "spell") ? "Spell" : "Item"}`;
-    } else if ([Module.REASON.DIFFERENT_LEVEL, Module.REASON.UPCASTABLE].includes(reason)) {
+    } else if ([this.REASON.DIFFERENT_LEVEL, this.REASON.UPCASTABLE].includes(reason)) {
       // This will end concentration on the same item, unless cast at the same level.
       string = "CN.AbilityDialogWarningSpellLevel";
     }
     return game.i18n.format(string, {
-      item: effect.flags[Module.ID]?.data.itemData.name,
-      level: effect.flags[Module.ID]?.data.castData.castLevel?.ordinalString()
+      item: effect.flags[this.ID]?.data.itemData.name,
+      level: effect.flags[this.ID]?.data.castData.castLevel?.ordinalString()
     });
   }
 
@@ -344,10 +351,10 @@ class Module {
     const damage = totalA - totalB;
 
     const hook = (damage > 0) ? "preDamageActor" : (damage < 0) ? "preHealActor" : null;
-    options[Module.ID] = {save: damage > 0, damage: damage};
+    options[this.ID] = {save: damage > 0, damage: damage};
 
     // If damage taken or healing performed, call a hook. Explicitly return false to prevent the update.
-    if (hook && (Hooks.call(`${Module.ID}.${hook}`, actor, update, options, userId) === false)) return false;
+    if (hook && (Hooks.call(`${this.ID}.${hook}`, actor, update, options, userId) === false)) return false;
   }
 
   /**
@@ -360,21 +367,21 @@ class Module {
    */
   static async _updateActor(actor, update, options, userId) {
     if (game.user.id !== userId) return;
-    const {save, damage} = options[Module.ID] || {};
+    const {save, damage} = options[this.ID] || {};
     if (!save) return;
-    const effect = Module.isActorConcentrating(actor);
+    const effect = this.isActorConcentrating(actor);
     if (!effect) return;
-    if (effect.flags[Module.ID].data.castData.unbreakable) return;
+    if (effect.flags[this.ID].data.castData.unbreakable) return;
 
-    const data = Module._getData(actor, effect, options);
+    const data = this._getData(actor, effect, options);
     const messageData = {
-      content: await renderTemplate(`modules/${Module.ID}/templates/concentration-notify.hbs`, data),
+      content: await renderTemplate(`modules/${this.ID}/templates/concentration-notify.hbs`, data),
       whisper: game.users.filter(u => actor.testUserPermission(u, "OWNER")).map(u => u.id),
       speaker: ChatMessage.getSpeaker({alias: game.i18n.localize("CN.ModuleTitle")}),
-      flags: {core: {canPopout: true}, [Module.ID]: {prompt: true, damage: damage}}
+      flags: {core: {canPopout: true}, [this.ID]: {prompt: true, damage: damage}}
     };
     const hook = (damage > 0) ? "damageActor" : (damage < 0) ? "healActor" : null;
-    if (hook) Hooks.callAll(`${Module.ID}.${hook}`, actor, update, options, userId);
+    if (hook) Hooks.callAll(`${this.ID}.${hook}`, actor, update, options, userId);
     return ChatMessage.implementation.create(messageData);
   }
 
@@ -426,7 +433,7 @@ class Module {
       {key: "show_ability_use_warning", name: "AbilityUseWarning", type: Boolean, default: true, requiresReload: true},
       {key: "splitItemNames", name: "SplitItemNames", type: Boolean, default: true}
     ].forEach(d => {
-      game.settings.register(Module.ID, d.key, {
+      game.settings.register(this.ID, d.key, {
         name: `CN.Setting${d.name}`,
         hint: `CN.Setting${d.name}Hint`,
         scope: d.scope ?? "world",
@@ -454,9 +461,9 @@ class Module {
     if (!(item.system.duration?.units in CONFIG.DND5E.scalarTimePeriods)) return;
 
     const div = document.createElement("DIV");
-    const template = `modules/${Module.ID}/templates/concentration-checkbox.hbs`;
+    const template = `modules/${this.ID}/templates/concentration-checkbox.hbs`;
     div.innerHTML = await renderTemplate(template, {
-      requiresConcentration: item.flags[Module.ID]?.data?.requiresConcentration
+      requiresConcentration: item.flags[this.ID]?.data?.requiresConcentration
     });
     durationSelect.after(...div.children);
   }
@@ -468,7 +475,7 @@ class Module {
    */
   static _createScrollFromSpell(spell, spellScrollData) {
     const conc = spell.system?.components?.concentration;
-    if (conc) foundry.utils.setProperty(spellScrollData, `flags.${Module.ID}.data.requiresConcentration`, true);
+    if (conc) foundry.utils.setProperty(spellScrollData, `flags.${this.ID}.data.requiresConcentration`, true);
   }
 
   /**
@@ -479,8 +486,8 @@ class Module {
    * @returns {Promise<ChatMessage>}
    */
   static async _createActiveEffect(effect, options, userId) {
-    if (!game.settings.get(Module.ID, "showGainLoseMessages")) return;
-    return Module._notifyConcentration(effect, options, userId, 1);
+    if (!game.settings.get(this.ID, "showGainLoseMessages")) return;
+    return this._notifyConcentration(effect, options, userId, 1);
   }
 
   /**
@@ -491,8 +498,8 @@ class Module {
    * @returns {Promise<ChatMessage>}
    */
   static async _deleteActiveEffect(effect, options, userId) {
-    if (!game.settings.get(Module.ID, "showGainLoseMessages")) return;
-    return Module._notifyConcentration(effect, options, userId, 0);
+    if (!game.settings.get(this.ID, "showGainLoseMessages")) return;
+    return this._notifyConcentration(effect, options, userId, 0);
   }
 
   /**
@@ -506,13 +513,13 @@ class Module {
   static async _notifyConcentration(effect, options, userId, type) {
     if (game.user.id !== userId) return;
     if (options.concMessage === false) return;
-    if (!Module.isEffectConcentration(effect)) return;
+    if (!this.isEffectConcentration(effect)) return;
     if (!(effect.parent instanceof CONFIG.Actor.documentClass)) return;
 
-    const templateData = Module._getData(effect.parent, effect, options, type);
-    const template = `modules/${Module.ID}/templates/concentration-notify.hbs`;
+    const templateData = this._getData(effect.parent, effect, options, type);
+    const template = `modules/${this.ID}/templates/concentration-notify.hbs`;
     const isPublic = game.settings.get("core", "rollMode") === CONST.DICE_ROLL_MODES.PUBLIC;
-    const alwaysWhisper = game.settings.get(Module.ID, "always_whisper_messages");
+    const alwaysWhisper = game.settings.get(this.ID, "always_whisper_messages");
     let whisper;
     if (isPublic && !alwaysWhisper) whisper = [];
     else whisper = game.users.filter(u => effect.parent.testUserPermission(u, "OWNER")).map(u => u.id);
@@ -533,11 +540,11 @@ class Module {
    * @param {number|null} [type]        A number (1 or 0) for effects being created/deleted, otherwise undefined.
    */
   static _getData(actor, effect, options, type = null) {
-    const data = effect.flags[Module.ID].data;
+    const data = effect.flags[this.ID].data;
     const detailsTemplate = `CN.NotifyConcentration${{0: "Ended", 1: "Begun"}[type] ?? "Challenge"}`;
-    const damage = options[Module.ID]?.damage ?? 10;
+    const damage = options[this.ID]?.damage ?? 10;
     const dc = Math.max(10, Math.floor(Math.abs(damage) / 2));
-    const ability = Module._getAbility(actor);
+    const ability = this._getAbility(actor);
     const saveType = CONFIG.DND5E.abilities[ability].label;
     const origin = data.castData.itemUuid;
     const detailsData = {
@@ -561,7 +568,7 @@ class Module {
       hasTemplates: !!canvas?.scene.templates.find(t => t.flags?.dnd5e?.origin === origin),
       origin: origin,
       dc: dc,
-      showUtilButtons: game.settings.get(Module.ID, "show_util_buttons"),
+      showUtilButtons: game.settings.get(this.ID, "show_util_buttons"),
       showEnd: type === 1,
       isPrompt: type === null
     };
@@ -576,7 +583,7 @@ class Module {
     const config = CONFIG.DND5E.abilities;
     const flag = actor.flags.dnd5e?.concentrationAbility;
     if (flag in config) return flag;
-    const sett = game.settings.get(Module.ID, "defaultConcentrationAbility");
+    const sett = game.settings.get(this.ID, "defaultConcentrationAbility");
     if (sett in config) return sett;
     return "con";
   }
@@ -593,15 +600,15 @@ class Module {
    * @returns {Promise<ChatMessage>}
    */
   static async redisplayCard(caster) {
-    const actor = Module._getActor(caster);
+    const actor = this._getActor(caster);
     if (!actor) return null;
-    const isConc = Module.isActorConcentrating(actor);
+    const isConc = this.isActorConcentrating(actor);
     if (!isConc) {
       ui.notifications.warn(game.i18n.format("CN.WarningActorNotConcentrating", {name: actor.name}));
       return null;
     }
 
-    const data = isConc.flags[Module.ID].data;
+    const data = isConc.flags[this.ID].data;
     const item = await fromUuid(data.castData.itemUuid);
     let clone;
     if (item) clone = item.clone(data.itemData, {keepId: true});
@@ -626,9 +633,9 @@ class Module {
    * @returns {Promise<ActiveEffect5e|boolean>}           The effect, if concentrating, otherwise false.
    */
   static async waitForConcentrationStart(caster, {item, max_wait = 10000} = {}) {
-    const actor = Module._getActor(caster);
+    const actor = this._getActor(caster);
     if (!actor) return false;
-    const getConc = item ? Module.isActorConcentratingOnItem : Module.isActorConcentrating;
+    const getConc = item ? this.isActorConcentratingOnItem : this.isActorConcentrating;
 
     let conc = getConc(actor, item);
     let waited = 0;
@@ -647,10 +654,10 @@ class Module {
    * @returns {Promise<ActiveEffect5e[]>}                 The array of deleted effects.
    */
   static async breakConcentration(caster, {message = true} = {}) {
-    const actor = Module._getActor(caster);
+    const actor = this._getActor(caster);
     if (!actor) return [];
     const ids = actor.appliedEffects.reduce((acc, e) => {
-      if (Module.isEffectConcentration(e)) acc.push(e.id);
+      if (this.isEffectConcentration(e)) acc.push(e.id);
       return acc;
     }, []);
     return actor.deleteEmbeddedDocuments("ActiveEffect", ids, {concMessage: message});
@@ -662,7 +669,7 @@ class Module {
    * @returns {boolean}
    */
   static isEffectConcentration(effect) {
-    return effect.statuses.has(Module.STATUS);
+    return effect.statuses.has(this.STATUS);
   }
 
   /**
@@ -671,11 +678,15 @@ class Module {
    * @returns {boolean}
    */
   static itemRequiresConcentration(item) {
+    const exclude = this.ITEM_FILTERS.some(f => f(item));
+    if(exclude) return false;
+
     const isSpell = item.type === "spell";
     if (isSpell) return item.system.components.concentration;
 
     const units = item.system.duration?.units in CONFIG.DND5E.scalarTimePeriods;
-    return units && !!item.flags[Module.ID]?.data.requiresConcentration;
+    const flags = !!item.flags[this.ID]?.data.requiresConcentration;
+    return units && flags;
   }
 
   /**
@@ -684,8 +695,8 @@ class Module {
    * @returns {ActiveEffect5e|boolean}                    The effect, if concentrating, otherwise false.
    */
   static isActorConcentrating(caster) {
-    const actor = Module._getActor(caster);
-    return actor ? actor.appliedEffects.find(e => e.statuses.has(Module.STATUS)) : false;
+    const actor = this._getActor(caster);
+    return actor ? actor.appliedEffects.find(e => e.statuses.has(this.STATUS)) ?? false : false;
   }
 
   /**
@@ -695,8 +706,9 @@ class Module {
    * @returns {ActiveEffect5e|boolean}                    The effect, if concentrating, otherwise false.
    */
   static isActorConcentratingOnItem(caster, item) {
-    const actor = Module._getActor(caster);
-    return actor ? actor.appliedEffects.find(e => item.uuid === e.flags[Module.ID]?.data?.castData?.itemUuid) : false;
+    const actor = this._getActor(caster);
+    if (!actor) return false;
+    return actor.appliedEffects.find(e => item.uuid === e.flags[this.ID]?.data?.castData?.itemUuid) ?? false;
   }
 
   /**
@@ -721,24 +733,24 @@ class Module {
     const {level, preparation} = item.system;
 
     // Case 0: Does this item even require concentration? (Do Nothing)
-    const requires = Module.itemRequiresConcentration(item);
-    if (!requires) return Module.REASON.NOT_REQUIRED;
+    const requires = this.itemRequiresConcentration(item);
+    if (!requires) return this.REASON.NOT_REQUIRED;
 
     /* The concentration effect already on the actor, if any. */
-    const effect = Module.isActorConcentrating(item.actor);
+    const effect = this.isActorConcentrating(item.actor);
 
     // Case 1: Are you concentrating on something else?
-    if (!effect) return Module.REASON.NOT_CONCENTRATING;
-    const cast = effect.flags[Module.ID]?.data.castData ?? {};
+    if (!effect) return this.REASON.NOT_CONCENTRATING;
+    const cast = effect.flags[this.ID]?.data.castData ?? {};
 
     // Case 2: Are you concentrating on an entirely different item?
-    if (cast.itemUuid !== item.uuid) return Module.REASON.DIFFERENT_ITEM;
+    if (cast.itemUuid !== item.uuid) return this.REASON.DIFFERENT_ITEM;
 
     // Case 3: Are you concentrating on the same item at a different spell level?
-    if (cast.castLevel !== item.system.level) return Module.REASON.DIFFERENT_LEVEL;
+    if (cast.castLevel !== item.system.level) return this.REASON.DIFFERENT_LEVEL;
 
     // Case 4: You are concentrating on the same item, at the same level, but it can be upcast.
-    if ((level > 0) && CONFIG.DND5E.spellUpcastModes.includes(preparation.mode)) return Module.REASON.UPCASTABLE;
+    if ((level > 0) && CONFIG.DND5E.spellUpcastModes.includes(preparation.mode)) return this.REASON.UPCASTABLE;
 
     // None of the above are true, so the usage is 'free' far as concentration is concerned.
     return false;
@@ -757,9 +769,9 @@ class Module {
    */
   static _renderChatMessage(message, [html]) {
     html.querySelectorAll(".concentrationnotifier [data-prompt]").forEach(n => {
-      const owner = fromUuidSync(n.closest(`.${Module.ID}`).dataset.uuid).isOwner;
+      const owner = fromUuidSync(n.closest(`.${this.ID}`).dataset.uuid).isOwner;
       if (!owner) n.remove();
-      n.addEventListener("click", Module._onChatCardAction);
+      else n.addEventListener("click", this._onChatCardAction.bind(this));
     });
   }
 
@@ -771,10 +783,10 @@ class Module {
     const button = event.currentTarget;
     button.disabled = true;
     const action = button.dataset.prompt;
-    if (action === "save") await Module._onClickSave(event);
-    else if (action === "end") await Module._onClickEnd(event);
-    else if (action === "templates") await Module._onClickTemplates(event);
-    else if (action === "item") await Module._onClickItem(event);
+    if (action === "save") await this._onClickSave(event);
+    else if (action === "end") await this._onClickEnd(event);
+    else if (action === "templates") await this._onClickTemplates(event);
+    else if (action === "item") await this._onClickItem(event);
     button.disabled = false;
   }
 
@@ -798,7 +810,7 @@ class Module {
     const uuid = event.currentTarget.dataset.uuid;
     const effect = await fromUuid(uuid);
     if (event.shiftKey) return effect.delete();
-    const name = effect.flags[Module.ID].data.itemData.name;
+    const name = effect.flags[this.ID].data.itemData.name;
     return Dialog.wait({
       title: game.i18n.format("CN.ConfirmEndConcentrationTitle", {name}),
       content: game.i18n.format("CN.ConfirmEndConcentrationText", {name}),
@@ -814,7 +826,7 @@ class Module {
         }
       },
       close: () => null
-    }, {id: `${Module.ID}-delete-${effect.id}`});
+    }, {id: `${this.ID}-delete-${effect.id}`});
   }
 
   /**
@@ -842,6 +854,49 @@ class Module {
     const item = await fromUuid(uuid);
     return item.sheet.render(true);
   }
+
+  /**
+   * Factory method to extend the module for other concentration groupings.
+   * @param {string} status         The sluggified string to use for statuses instead of 'concentration'.
+   * @param {function} require      A function that is run to determine requiring this type of concentration.
+   * @returns {Module|null}         A subclass of this module.
+   */
+  static extendModule(status, require) {
+    if (!status || foundry.utils.getType(status) !== "string" || ["concentration", "concentrating"].includes(status)) {
+      console.error(`${this.ID} | The provided new status '${status}' is not valid.`);
+      return null;
+    }
+
+    if (!require || !(require instanceof Function)) {
+      console.error(`${this.id} | The provided function to determine requiring concentration is not valid.`);
+      return null;
+    }
+
+    // Factory function.
+    const build = () => class extends Module {
+      /** @override */
+      static STATUS = status;
+
+      /** @override */
+      static init() {
+        Hooks.on("createActiveEffect", this._createActiveEffect.bind(this));
+        Hooks.on("deleteActiveEffect", this._deleteActiveEffect.bind(this));
+        Hooks.on("updateActor", this._updateActor.bind(this));
+        Hooks.on("dnd5e.preUseItem", this._preUseItem.bind(this));
+        Hooks.on("renderAbilityUseDialog", this._renderAbilityUseDialog.bind(this));
+        Hooks.on("visual-active-effects.createEffectButtons", this._VAEcreateEffectButtons.bind(this));
+        Hooks.on("dnd5e.useItem", this._useItem.bind(this));
+      }
+
+      /** @override */
+      static itemRequiresConcentration = require;
+    }
+
+    const Cls = build(status, require);
+    Cls.init();
+    Module.ITEM_FILTERS.push(require);
+    return Cls;
+  }
 }
 
-Hooks.once("init", Module.init);
+Hooks.once("init", () => Module.init());
