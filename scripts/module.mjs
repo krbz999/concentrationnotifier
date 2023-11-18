@@ -635,15 +635,15 @@ class Module {
   static async waitForConcentrationStart(caster, {item, max_wait = 10000} = {}) {
     const actor = this._getActor(caster);
     if (!actor) return false;
-    const getConc = item ? this.isActorConcentratingOnItem : this.isActorConcentrating;
 
-    let conc = getConc(actor, item);
+    let conc;
     let waited = 0;
-    while (!conc && (waited < max_wait)) {
+    do {
+      conc = (item ? this.isActorConcentratingOnItem : this.isActorConcentrating).call(this, actor, item);
+      if (conc) return conc;
       await new Promise(r => setTimeout(r, 100));
-      waited = waited + 100;
-      conc = getConc(actor, item);
-    }
+      waited += 100;
+    } while (!conc && (waited < max_wait));
     return conc ?? false;
   }
 
@@ -679,7 +679,7 @@ class Module {
    */
   static itemRequiresConcentration(item) {
     const exclude = this.ITEM_FILTERS.some(f => f(item));
-    if(exclude) return false;
+    if (exclude) return false;
 
     const isSpell = item.type === "spell";
     if (isSpell) return item.system.components.concentration;
@@ -696,7 +696,8 @@ class Module {
    */
   static isActorConcentrating(caster) {
     const actor = this._getActor(caster);
-    return actor ? actor.appliedEffects.find(e => e.statuses.has(this.STATUS)) ?? false : false;
+    if (!actor) return false;
+    return actor.appliedEffects.find(e => e.statuses.has(this.STATUS)) ?? false;
   }
 
   /**
@@ -753,7 +754,7 @@ class Module {
     if ((level > 0) && CONFIG.DND5E.spellUpcastModes.includes(preparation.mode)) return this.REASON.UPCASTABLE;
 
     // None of the above are true, so the usage is 'free' far as concentration is concerned.
-    return false;
+    return this.REASON.NOT_REQUIRED;
   }
 
   /* ---------------------------- */
