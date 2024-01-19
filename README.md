@@ -1,4 +1,4 @@
-Interested in following along with development of any of my modules? Join the [Discord server](https://discord.gg/QAG8eWABGT). 
+Interested in following along with development of any of my modules? Join the [Discord server](https://discord.gg/QAG8eWABGT).
 
 # Concentration Notifier
 
@@ -14,6 +14,8 @@ At its core, a chat message will notify all active clients when an actor starts 
 Additionally, when a scroll is made from a spell that requires concentration, that will also be tagged as requiring concentration.
 
 ## Character Flags
+
+** NOTE: The module known as 'Dynamic Active Effects Using Active Effects' (or DAE for short) is known to break this simple behaviour due to DAE's very poor implementation. It is strongly advised to remove DAE. **
 
 The module supplies new fields (found under Special Traits). These fields work with Active Effects.
 * `flags.dnd5e.concentrationAbility`: Change the ability that is used for the actor's concentration saves. For example, use Wisdom instead of Constitution by putting `wis` in this field.
