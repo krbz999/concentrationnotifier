@@ -1,3 +1,5 @@
+Interested in following along with development of any of my modules? Join the [Discord server](https://discord.gg/QAG8eWABGT). 
+
 # Concentration Notifier
 
 This is a module for `dnd5e` helping Dungeon Masters and players track concentration.
