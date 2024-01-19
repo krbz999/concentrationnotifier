@@ -315,14 +315,19 @@ class Module {
     ability ??= dnd.concentrationAbility ?? game.settings.get(Module.ID, "defaultConcentrationAbility");
     const config = {fumble: null, critical: null, isConcSave: true, targetValue: 10, parts: []};
 
-    // Apply reliable talent and advantage.
+    // Apply reliable talent.
     if (dnd.concentrationReliable) config.reliableTalent = true;
-    if (dnd.concentrationAdvantage && !options.event?.ctrlKey) config.advantage = true;
+
+    // Apply advantage.
+    const {advantageMode} = CONFIG.Dice.D20Roll.determineAdvantageMode({event: options.event});
+    if (dnd.concentrationAdvantage && (advantageMode !== CONFIG.Dice.D20Roll.ADV_MODE.DISADVANTAGE)) {
+      config.advantage = true;
+    }
 
     foundry.utils.mergeObject(config, options);
 
-    const bonus = dnd.concentrationBonus && Roll.validate(dnd.concentrationBonus);
-    if (bonus) config.parts.push(dnd.concentrationBonus);
+    const bonus = dnd.concentrationBonus && Roll.validate(`${dnd.concentrationBonus}`);
+    if (bonus) config.parts.push(`${dnd.concentrationBonus}`);
 
     // Hook event for users to modify the saving throw before it is passed to the regular roll.
     if (Hooks.call(`${Module.ID}.preRollConcentrationSave`, this, config, ability) === false) return;
