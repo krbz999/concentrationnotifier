@@ -53,6 +53,12 @@
       "name": "Português (Brasil)",
       "path": "lang/pt-BR.json",
       "flags": {}
+    },
+    {
+      "lang": "ko",
+      "name": "한국어",
+      "path": "lang/ko.json",
+      "flags": {}
     }
   ],
   "url": "https://github.com/krbz999/concentrationnotifier",
