@@ -21,8 +21,6 @@ class Module {
   static init() {
     this._characterFlags();
     this._registerSettings();
-    Hooks.on("renderItemSheet", this._renderItemSheet.bind(this));
-    Hooks.on("dnd5e.createScrollFromSpell", this._createScrollFromSpell.bind(this));
     Hooks.on("renderChatMessage", this._renderChatMessage.bind(this));
     Hooks.on("createActiveEffect", this._createActiveEffect.bind(this));
     Hooks.on("deleteActiveEffect", this._deleteActiveEffect.bind(this));
@@ -239,8 +237,8 @@ class Module {
    * When using an item that requires concentration, force the AbilityUseDialog to display
    * a warning about loss of concentration if the item being used is an entirely different
    * item than the one being concentrated on, if it's the same item but at a different level,
-   * or if it's the same item but it can be upcast naturally.
-   * @TODO FIX IN 2.4
+   * or if it's the same item but it can be upcast naturally, or to warn about not being
+   * able to concentrate due to being 'unfocused'.
    * @param {Item5e} item       The item about to be used.
    * @param {object} config     The item usage configuration.
    */
@@ -251,8 +249,8 @@ class Module {
       this.REASON.DIFFERENT_LEVEL,
       this.REASON.UPCASTABLE
     ].includes(this._itemUseAffectsConcentration(item));
-    const unfocused = item.actor.flags.dnd5e?.concentrationUnfocused;
-    if (force || unfocused) config.needsConfiguration = config.concentration = true;
+    const unfocused = item.requiresConcentration && item.actor.flags.dnd5e?.concentrationUnfocused;
+    if (force || unfocused) config.concentration = true;
   }
 
   /**
@@ -271,7 +269,7 @@ class Module {
 
     // Construct warning.
     const effect = this.isActorConcentrating(dialog.item.actor);
-    const locale = this._getAbilityUseWarning(reason, dialog.item, effect);
+    const locale = this._getAbilityUseWarning(reason, dialog.item, effect ? effect : null);
     const div = document.createElement("DIV");
     div.innerHTML = `<p class="notification concentrationnotifier">${locale}</p>`;
     html.querySelector(".notes").after(div.firstElementChild);
@@ -281,12 +279,12 @@ class Module {
   /**
    * Helper method for localization string in the AbilityUseDialog warning, depending
    * on the reason that the new item may end concentration.
-   * @param {number} reason             An integer from 'REASON'.
-   * @param {Item5e} item               The item triggering the AbilityUseDialog.
-   * @param {ActiveEffect5e} effect     The actor's current concentration effect.
-   * @returns {string}                  The warning message to display.
+   * @param {number} reason               An integer from 'REASON'.
+   * @param {Item5e} item                 The item triggering the AbilityUseDialog.
+   * @param {ActiveEffect5e} [effect]     The actor's current concentration effect.
+   * @returns {string}                    The warning message to display.
    */
-  static _getAbilityUseWarning(reason, item, effect) {
+  static _getAbilityUseWarning(reason, item, effect = null) {
     let string = "";
     if (item.actor.flags.dnd5e?.concentrationUnfocused) {
       string = `CN.AbilityDialogWarningUnfocused${(item.type === "spell") ? "Spell" : "Item"}`;
@@ -298,8 +296,8 @@ class Module {
       string = "CN.AbilityDialogWarningSpellLevel";
     }
     return game.i18n.format(string, {
-      item: effect.flags[this.ID]?.data.itemData.name,
-      level: effect.flags[this.ID]?.data.castData.castLevel?.ordinalString()
+      item: effect?.flags[this.ID]?.data.itemData.name,
+      level: effect?.flags[this.ID]?.data.castData.castLevel?.ordinalString()
     });
   }
 
@@ -382,7 +380,7 @@ class Module {
     const messageData = {
       content: await renderTemplate(`modules/${this.ID}/templates/concentration-notify.hbs`, data),
       whisper: game.users.filter(u => actor.testUserPermission(u, "OWNER")).map(u => u.id),
-      speaker: ChatMessage.getSpeaker({alias: game.i18n.localize("CN.ModuleTitle")}),
+      speaker: ChatMessage.implementation.getSpeaker({alias: game.i18n.localize("CN.ModuleTitle")}),
       flags: {core: {canPopout: true}, [this.ID]: {prompt: true, damage: damage}}
     };
     const hook = (damage > 0) ? "damageActor" : (damage < 0) ? "healActor" : null;
@@ -449,38 +447,6 @@ class Module {
         requiresReload: d.requiresReload ?? false
       });
     });
-  }
-
-  /**
-   * Hook function to add a checkbox for concentration on non-spell items.
-   * @param {ItemSheet5e} sheet     The item sheet.
-   * @param {HTMLElement} html      The element of the sheet.
-   */
-  static async _renderItemSheet(sheet, [html]) {
-    const item = sheet.document;
-    if (item.type === "spell") return;
-    const durationSelect = html.querySelector("[name='system.duration.units']");
-    if (!durationSelect) return;
-
-    // The current duration type must be in `CONFIG.DND5E.scalarTimePeriods`.
-    if (!(item.system.duration?.units in CONFIG.DND5E.scalarTimePeriods)) return;
-
-    const div = document.createElement("DIV");
-    const template = `modules/${this.ID}/templates/concentration-checkbox.hbs`;
-    div.innerHTML = await renderTemplate(template, {
-      requiresConcentration: item.flags[this.ID]?.data?.requiresConcentration
-    });
-    durationSelect.after(...div.children);
-  }
-
-  /**
-   * Hook function to add the concentration value to created scrolls.
-   * @param {Item5e|object} spell         The spell or item data to be made into a scroll.
-   * @param {object} spellScrollData      The final item data used to make the scroll.
-   */
-  static _createScrollFromSpell(spell, spellScrollData) {
-    const conc = spell.system?.components?.concentration;
-    if (conc) foundry.utils.setProperty(spellScrollData, `flags.${this.ID}.data.requiresConcentration`, true);
   }
 
   /**
@@ -685,13 +651,7 @@ class Module {
   static itemRequiresConcentration(item) {
     const exclude = this.ITEM_FILTERS.some(f => f(item));
     if (exclude) return false;
-
-    const isSpell = item.type === "spell";
-    if (isSpell) return item.system.components.concentration;
-
-    const units = item.system.duration?.units in CONFIG.DND5E.scalarTimePeriods;
-    const flags = !!item.flags[this.ID]?.data.requiresConcentration;
-    return units && flags;
+    return item.requiresConcentration;
   }
 
   /**
@@ -874,7 +834,7 @@ class Module {
     }
 
     if (!require || !(require instanceof Function)) {
-      console.error(`${this.id} | The provided function to determine requiring concentration is not valid.`);
+      console.error(`${this.ID} | The provided function to determine requiring concentration is not valid.`);
       return null;
     }
 

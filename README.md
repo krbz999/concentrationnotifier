@@ -66,3 +66,8 @@ Hooks.once("setup", () => CN.extendModule("nine-concentration", function itemReq
   return (item.type === "spell") && (item.system.level >= 9) && item.system.components.concentration;
 }));
 ```
+
+# Migration
+If you are using this module in version 3.0.0 or later of the dnd5e system and have previously made use of the checkbox this module implemented to allow for concentration on items that are not spells, be aware this module no longer has this capability, as most items are now able to be tagged as having 'concentration' with no effort needed from Concentration Notifier.
+
+You will need to find these items yourself and tag them appropriately.
