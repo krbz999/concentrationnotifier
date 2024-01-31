@@ -49,11 +49,10 @@ Using a macro to set the flag `unbreakable` within `castData` to `true` will pre
 If you want to support other 'groupings' of concentration, this is quite simple to do. For example, if you want to support concentration on Hex for the Witch class from Valda's Spire of Secrets, which are tracked separately from spells, you would run this script in a module or world script.
 ```js
 Hooks.once("setup", () => CN.extendModule("hex-concentration", function itemRequiresConcentration(item) {
-  if (item.type !== "feat") return false;
-  const type = item.system.type;
-  const units = item.system.duration?.units in CONFIG.DND5E.scalarTimePeriods;
-  const flags = !!item.flags.concentrationnotifier?.data.requiresConcentration;
-  return units && flags && (type.value === "class") && (type.subtype === "witchHex");
+  return item.type === "feat"
+    && item.system.type.value === "class"
+    && item.system.type.subtype === "witchHex"
+    && item.requiresConcentration;
 }));
 ```
 This assumes the existence of 'witchHex' added as a custom class feature type.
@@ -63,7 +62,7 @@ The `extendModule` function takes the new status (a string, which must be differ
 Here is another example, which causes the module to track concentration separately for all spells that are cast at 9th level or higher.
 ```js
 Hooks.once("setup", () => CN.extendModule("nine-concentration", function itemRequiresConcentration(item) {
-  return (item.type === "spell") && (item.system.level >= 9) && item.system.components.concentration;
+  return (item.type === "spell") && (item.system.level >= 9) && item.requiresConcentration;
 }));
 ```
 
