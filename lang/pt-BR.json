@@ -1,6 +1,5 @@
 {
   "CN.ButtonEndConcentration": "Quebrar Concentração",
-  "CN.ButtonSavingThrow": "Salvaguarda de {saveType} CD {dc}",
   "CN.ConfirmEndConcentrationText": "Isso encerrará a concentração de {name}.",
   "CN.ConfirmEndConcentrationTitle": "Encerrar concentração de {name}?",
   "CN.FlagConcentrationAbility": "Atributo de Concentração",

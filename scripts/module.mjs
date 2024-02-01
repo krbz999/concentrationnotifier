@@ -1,8 +1,11 @@
 class Module {
   static ID = "concentrationnotifier";
-  static STATUS = "concentration";
-  static ICON = "icons/magic/light/orb-lightbulb-gray.webp";
+  static STATUS = "concentrating";
+  static get ICON() {
+    return CONFIG.DND5E.statusEffects?.concentrating?.icon ?? "icons/magic/light/orb-lightbulb-gray.webp";
+  }
   static REASON = {NOT_REQUIRED: 0, NOT_CONCENTRATING: 1, DIFFERENT_ITEM: 2, DIFFERENT_LEVEL: 3, UPCASTABLE: 4};
+  static EFFECT_ID = "dnd5econcentrati";
 
   /**
    * An array to keep track of functions used to filter out whether an item should
@@ -126,26 +129,32 @@ class Module {
   /**
    * Start the concentration when using an item if the actor is not concentrating at all, if they
    * are concentrating on a different item, or if it is the same item but cast at a different level.
-   * @param {Item5e} item                     The item being used. If a spell, this is the upscaled version.
-   * @returns {Promise<ActiveEffect5e[]>}     The active effect created on the actor, if any.
+   * @param {Item5e} item                         The item being used. If a spell, this is the upscaled version.
+   * @returns {Promise<ActiveEffect5e|null>}      The active effect created on the actor, if any.
    */
   static async _useItem(item) {
-    if (!item.isEmbedded) return;
-    if (item.actor.flags.dnd5e?.concentrationUnfocused) return;
+    if (!item.isEmbedded) return null;
+    if (item.actor.flags.dnd5e?.concentrationUnfocused) return null;
 
     const goodReason = [
       this.REASON.NOT_CONCENTRATING,
       this.REASON.DIFFERENT_ITEM,
       this.REASON.DIFFERENT_LEVEL
     ].includes(this._itemUseAffectsConcentration(item));
-    if (!goodReason) return [];
+    if (!goodReason) return null;
 
     // Break the current concentration, but do not display a message.
     await this.breakConcentration(item.actor, {message: false});
 
     // Create the effect data and start concentrating on the new item.
     const effectData = await this._createEffectData(item);
-    return item.actor.createEmbeddedDocuments("ActiveEffect", [effectData]);
+
+    let keepId = false;
+    if (!item.actor.effects.has(this.EFFECT_ID)) {
+      keepId = true;
+      effectData._id = this.EFFECT_ID;
+    }
+    return ActiveEffect.create(effectData, {parent: item.actor, keepId});
   }
 
   /**
@@ -374,13 +383,16 @@ class Module {
     if (!save) return;
     const effect = this.isActorConcentrating(actor);
     if (!effect) return;
-    if (effect.flags[this.ID].data.castData.unbreakable) return;
+    if (effect.flags[this.ID]?.data.castData.unbreakable) return;
 
     const data = this._getData(actor, effect, options);
     const messageData = {
       content: await renderTemplate(`modules/${this.ID}/templates/concentration-notify.hbs`, data),
       whisper: game.users.filter(u => actor.testUserPermission(u, "OWNER")).map(u => u.id),
-      speaker: ChatMessage.implementation.getSpeaker({alias: game.i18n.localize("CN.ModuleTitle")}),
+      speaker: ChatMessage.implementation.getSpeaker({
+        actor: actor,
+        alias: game.i18n.localize("CN.ModuleTitle")
+      }),
       flags: {core: {canPopout: true}, [this.ID]: {prompt: true, damage: damage}}
     };
     const hook = (damage > 0) ? "damageActor" : (damage < 0) ? "healActor" : null;
@@ -498,7 +510,10 @@ class Module {
       content: await renderTemplate(template, templateData),
       whisper: whisper,
       flags: {core: {canPopout: true}},
-      speaker: {alias: game.i18n.localize("CN.ModuleTitle")}
+      speaker: ChatMessage.implementation.getSpeaker({
+        actor: effect.parent,
+        alias: game.i18n.localize("CN.ModuleTitle")
+      })
     };
     return ChatMessage.implementation.create(messageData);
   }
@@ -511,23 +526,22 @@ class Module {
    * @param {number|null} [type]        A number (1 or 0) for effects being created/deleted, otherwise undefined.
    */
   static _getData(actor, effect, options, type = null) {
-    const data = effect.flags[this.ID].data;
+    const data = effect.flags[this.ID]?.data ?? {};
     const detailsTemplate = `CN.NotifyConcentration${{0: "Ended", 1: "Begun"}[type] ?? "Challenge"}`;
     const damage = options[this.ID]?.damage ?? 10;
     const dc = Math.max(10, Math.floor(Math.abs(damage) / 2));
     const ability = this._getAbility(actor);
     const saveType = CONFIG.DND5E.abilities[ability].label;
-    const origin = data.castData.itemUuid;
+    const origin = data.castData?.itemUuid;
     const detailsData = {
-      itemName: data.itemData.name,
+      itemName: data.itemData?.name,
       actorName: actor.name,
       dc: dc,
       damage: damage,
       saveType: saveType,
       itemUuid: origin
     };
-    const details = game.i18n.format(detailsTemplate, detailsData);
-    const buttonSaveLabel = game.i18n.format("CN.ButtonSavingThrow", {dc: dc, saveType: saveType});
+    const details = game.i18n.format(detailsTemplate + (!origin ? "NoItem" : ""), detailsData);
 
     return {
       actor: actor,
@@ -535,10 +549,10 @@ class Module {
       item: data.itemData,
       details: details,
       ability: ability,
-      buttonSaveLabel: buttonSaveLabel,
       hasTemplates: !!canvas?.scene.templates.find(t => t.flags?.dnd5e?.origin === origin),
       origin: origin,
       dc: dc,
+      saveType: saveType,
       showUtilButtons: game.settings.get(this.ID, "show_util_buttons"),
       showEnd: type === 1,
       isPrompt: type === null
@@ -752,7 +766,6 @@ class Module {
     if (action === "save") await this._onClickSave(event);
     else if (action === "end") await this._onClickEnd(event);
     else if (action === "templates") await this._onClickTemplates(event);
-    else if (action === "item") await this._onClickItem(event);
     button.disabled = false;
   }
 
@@ -764,7 +777,7 @@ class Module {
   static async _onClickSave(event) {
     const data = event.currentTarget.dataset;
     const actor = await fromUuid(data.uuid);
-    return actor.rollConcentrationSave(data.ability, {targetValue: data.target, event});
+    return actor.rollConcentrationSave(data.ability, {targetValue: parseInt(data.target), event});
   }
 
   /**
@@ -775,8 +788,10 @@ class Module {
   static async _onClickEnd(event) {
     const uuid = event.currentTarget.dataset.uuid;
     const effect = await fromUuid(uuid);
+    if (!effect) return null;
     if (event.shiftKey) return effect.delete();
-    const name = effect.flags[this.ID].data.itemData.name;
+    const name = effect.flags[this.ID]?.data.itemData.name ?? null;
+    if (!name) return effect.deleteDialog();
     return Dialog.wait({
       title: game.i18n.format("CN.ConfirmEndConcentrationTitle", {name}),
       content: game.i18n.format("CN.ConfirmEndConcentrationText", {name}),
@@ -808,17 +823,6 @@ class Module {
       return acc;
     }, []);
     return canvas.scene.deleteEmbeddedDocuments("MeasuredTemplate", ids);
-  }
-
-  /**
-   * Render the item being concentrated on.
-   * @param {PointerEvent} event          The initiating click event.
-   * @returns {Promise<ItemSheet5e>}      The rendered item sheet.
-   */
-  static async _onClickItem(event) {
-    const uuid = event.currentTarget.dataset.uuid;
-    const item = await fromUuid(uuid);
-    return item.sheet.render(true);
   }
 
   /**
