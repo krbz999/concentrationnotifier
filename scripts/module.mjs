@@ -45,77 +45,81 @@ class Module {
   static _VAEcreateEffectButtons(effect, buttons) {
     const isConc = this.isEffectConcentration(effect);
     if (!isConc) return;
-    const data = effect.flags[this.ID].data;
-    const item = fromUuidSync(data.castData.itemUuid);
+    const data = effect.flags[this.ID]?.data;
+    const isItem = !!data;
 
-    let clone;
-    if (item) clone = item.clone(data.itemData, {keepId: true});
-    else clone = new Item.implementation(data.itemData, {parent: effect.parent});
+    if (isItem) {
+      const item = fromUuidSync(data.castData?.itemUuid);
 
-    clone.prepareData();
-    clone.prepareFinalAttributes();
+      let clone;
+      if (item) clone = item.clone(data.itemData, {keepId: true});
+      else clone = new Item.implementation(data.itemData, {parent: effect.parent});
 
-    /* Create attack roll button. */
-    if (clone.hasAttack) {
-      buttons.push({
-        label: game.i18n.localize("DND5E.Attack"),
-        callback: (event) => clone.rollAttack({event, spellLevel: data.castData.castLevel})
-      });
-    }
+      clone.prepareData();
+      clone.prepareFinalAttributes();
 
-    /* Create damage roll buttons, with 'Roll Groups' support. */
-    const rollGroups = game.modules.get("rollgroups")?.active;
-    const groups = clone.flags.rollgroups?.config?.groups ?? [];
-    const parts = clone.system.damage.parts.filter(([f]) => f);
-    if (rollGroups && groups.length && (parts.length > 1)) {
-      for (let i = 0; i < groups.length; i++) {
-        const types = groups[i].parts.map(t => parts[t][1]);
-        const label = types.every(t => t in CONFIG.DND5E.damageTypes) ? "Damage" : types.every(t => t in CONFIG.DND5E.damageTypes) ? "Healing" : "Mixed";
+      /* Create attack roll button. */
+      if (clone.hasAttack) {
         buttons.push({
-          label: `${game.i18n.localize(`ROLLGROUPS.${label}`)} (${groups[i].label})`,
-          callback: (event) => clone.rollDamageGroup({event, rollgroup: i, spellLevel: data.castData.castLevel})
+          label: game.i18n.localize("DND5E.Attack"),
+          callback: (event) => clone.rollAttack({event, spellLevel: data.castData.castLevel})
         });
       }
-    } else if (clone.isHealing) {
-      buttons.push({
-        label: game.i18n.localize("DND5E.Healing"),
-        callback: (event) => clone.rollDamage({event, spellLevel: data.castData.castLevel})
-      })
-    } else if (clone.hasDamage) {
-      buttons.push({
-        label: game.i18n.localize("DND5E.Damage"),
-        callback: (event) => clone.rollDamage({event, spellLevel: data.castData.castLevel})
-      })
-    }
 
-    /* Create button to create a measured template. */
-    if (clone.hasAreaTarget) {
-      buttons.push({
-        label: game.i18n.localize("DND5E.PlaceTemplate"),
-        callback: (event) => dnd5e.canvas.AbilityTemplate.fromItem(clone).drawPreview()
-      });
-    }
-
-    /* Create button to display the item being concentrated on in chat. */
-    buttons.push({
-      label: game.i18n.localize("CN.DisplayItem"),
-      callback: (event) => this.redisplayCard(effect.parent)
-    });
-
-    /* Create button for 'Effective Transferral' support. */
-    if (game.modules.get("effective-transferral")?.active) {
-      const effects = clone.effects.filter(e => {
-        const _et = e.transfer === false;
-        const _st = game.settings.get("effective-transferral", "includeEquipTransfer");
-        const _eb = e.flags["effective-transferral"]?.transferBlock?.button;
-        const _nb = game.settings.get("effective-transferral", "neverButtonTransfer");
-        return (_et || _st) && (!_eb && !_nb);
-      });
-      if (effects.length) {
+      /* Create damage roll buttons, with 'Roll Groups' support. */
+      const rollGroups = game.modules.get("rollgroups")?.active;
+      const groups = clone.flags.rollgroups?.config?.groups ?? [];
+      const parts = clone.system.damage.parts.filter(([f]) => f);
+      if (rollGroups && groups.length && (parts.length > 1)) {
+        for (let i = 0; i < groups.length; i++) {
+          const types = groups[i].parts.map(t => parts[t][1]);
+          const label = types.every(t => t in CONFIG.DND5E.damageTypes) ? "Damage" : types.every(t => t in CONFIG.DND5E.damageTypes) ? "Healing" : "Mixed";
+          buttons.push({
+            label: `${game.i18n.localize(`ROLLGROUPS.${label}`)} (${groups[i].label})`,
+            callback: (event) => clone.rollDamageGroup({event, rollgroup: i, spellLevel: data.castData.castLevel})
+          });
+        }
+      } else if (clone.isHealing) {
         buttons.push({
-          label: game.i18n.localize("ET.Button.Label"),
-          callback: (event) => ET.effectTransferTrigger(clone, "button", data.castData.castLevel)
+          label: game.i18n.localize("DND5E.Healing"),
+          callback: (event) => clone.rollDamage({event, spellLevel: data.castData.castLevel})
+        })
+      } else if (clone.hasDamage) {
+        buttons.push({
+          label: game.i18n.localize("DND5E.Damage"),
+          callback: (event) => clone.rollDamage({event, spellLevel: data.castData.castLevel})
+        })
+      }
+
+      /* Create button to create a measured template. */
+      if (clone.hasAreaTarget) {
+        buttons.push({
+          label: game.i18n.localize("DND5E.PlaceTemplate"),
+          callback: (event) => dnd5e.canvas.AbilityTemplate.fromItem(clone).drawPreview()
         });
+      }
+
+      /* Create button to display the item being concentrated on in chat. */
+      buttons.push({
+        label: game.i18n.localize("CN.DisplayItem"),
+        callback: (event) => this.redisplayCard(effect.parent)
+      });
+
+      /* Create button for 'Effective Transferral' support. */
+      if (game.modules.get("effective-transferral")?.active) {
+        const effects = clone.effects.filter(e => {
+          const _et = e.transfer === false;
+          const _st = game.settings.get("effective-transferral", "includeEquipTransfer");
+          const _eb = e.flags["effective-transferral"]?.transferBlock?.button;
+          const _nb = game.settings.get("effective-transferral", "neverButtonTransfer");
+          return (_et || _st) && (!_eb && !_nb);
+        });
+        if (effects.length) {
+          buttons.push({
+            label: game.i18n.localize("ET.Button.Label"),
+            callback: (event) => ET.effectTransferTrigger(clone, "button", data.castData.castLevel)
+          });
+        }
       }
     }
 
@@ -320,7 +324,7 @@ class Module {
     if (!this.isOwner) return;
     const dnd = this.flags.dnd5e || {};
     ability ??= dnd.concentrationAbility ?? game.settings.get(Module.ID, "defaultConcentrationAbility");
-    const config = {fumble: null, critical: null, isConcSave: true, targetValue: 10, parts: []};
+    const config = {isConcSave: true, targetValue: 10, parts: []};
 
     // Apply reliable talent.
     if (dnd.concentrationReliable) config.reliableTalent = true;
