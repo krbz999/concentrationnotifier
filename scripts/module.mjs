@@ -782,7 +782,7 @@ class Module {
   static async _onClickSave(event) {
     const data = event.currentTarget.dataset;
     const actor = await fromUuid(data.uuid);
-    return actor.rollConcentrationSave(data.ability, {targetValue: parseInt(data.target), event});
+    return actor.rollConcentrationSave(data.ability, {targetValue: parseInt(data.dc), event});
   }
 
   /**

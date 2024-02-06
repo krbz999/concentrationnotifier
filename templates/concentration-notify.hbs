@@ -3,7 +3,7 @@
   {{#if (or showUtilButtons isPrompt)}}
   <div class="card-buttons">
     {{#if isPrompt}}
-    <button data-prompt="save" data-target="{{dc}}" data-ability="{{ability}}" data-uuid="{{actor.uuid}}">
+    <button data-prompt="save" data-dc="{{dc}}" data-ability="{{ability}}" data-uuid="{{actor.uuid}}">
       <i class="fa-solid fa-shield-heart"></i> {{localize "DND5E.SavingThrowDC" dc=dc ability=saveType}}
     </button>
     {{/if}}
