@@ -304,13 +304,14 @@ class Module {
     } else if (reason === this.REASON.DIFFERENT_ITEM) {
       // This will end concentration on a different item.
       string = `CN.AbilityDialogWarning${(item.type === "spell") ? "Spell" : "Item"}`;
+      if (!effect?.flags[this.ID]?.data?.itemData?.name) string += "NoItem";
     } else if ([this.REASON.DIFFERENT_LEVEL, this.REASON.UPCASTABLE].includes(reason)) {
       // This will end concentration on the same item, unless cast at the same level.
       string = "CN.AbilityDialogWarningSpellLevel";
     }
     return game.i18n.format(string, {
-      item: effect?.flags[this.ID]?.data.itemData.name,
-      level: effect?.flags[this.ID]?.data.castData.castLevel?.ordinalString()
+      item: effect?.flags[this.ID]?.data?.itemData?.name,
+      level: effect?.flags[this.ID]?.data?.castData?.castLevel?.ordinalString()
     });
   }
 
