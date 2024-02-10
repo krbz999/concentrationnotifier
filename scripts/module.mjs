@@ -12,7 +12,7 @@ class Module {
    * be considered for regular concentration. If any of these functions explicitly
    * return `false`, an item will not require concentration by normal means.
    */
-  static ITEM_FILTERS = [];
+  static ITEM_FILTERS = new Map();
 
   /* ---------------------------- */
   /*                              */
@@ -73,9 +73,14 @@ class Module {
       if (rollGroups && groups.length && (parts.length > 1)) {
         for (let i = 0; i < groups.length; i++) {
           const types = groups[i].parts.map(t => parts[t][1]);
-          const label = types.every(t => t in CONFIG.DND5E.damageTypes) ? "Damage" : types.every(t => t in CONFIG.DND5E.damageTypes) ? "Healing" : "Mixed";
+          const string = types.every(t => {
+            return t in CONFIG.DND5E.damageTypes;
+          }) ? "Damage" : types.every(t => {
+            return t in CONFIG.DND5E.healingTypes;
+          }) ? "Healing" : "Mixed";
+          const label = groups[i].label ? `(${groups[i].label})` : "";
           buttons.push({
-            label: `${game.i18n.localize(`ROLLGROUPS.${label}`)} (${groups[i].label})`,
+            label: `${game.i18n.localize(`ROLLGROUPS.${string}`)} ${label}`,
             callback: (event) => clone.rollDamageGroup({event, rollgroup: i, spellLevel: data.castData.castLevel})
           });
         }
@@ -83,12 +88,12 @@ class Module {
         buttons.push({
           label: game.i18n.localize("DND5E.Healing"),
           callback: (event) => clone.rollDamage({event, spellLevel: data.castData.castLevel})
-        })
+        });
       } else if (clone.hasDamage) {
         buttons.push({
           label: game.i18n.localize("DND5E.Damage"),
           callback: (event) => clone.rollDamage({event, spellLevel: data.castData.castLevel})
-        })
+        });
       }
 
       /* Create button to create a measured template. */
@@ -104,23 +109,6 @@ class Module {
         label: game.i18n.localize("CN.DisplayItem"),
         callback: (event) => this.redisplayCard(effect.parent)
       });
-
-      /* Create button for 'Effective Transferral' support. */
-      if (game.modules.get("effective-transferral")?.active) {
-        const effects = clone.effects.filter(e => {
-          const _et = e.transfer === false;
-          const _st = game.settings.get("effective-transferral", "includeEquipTransfer");
-          const _eb = e.flags["effective-transferral"]?.transferBlock?.button;
-          const _nb = game.settings.get("effective-transferral", "neverButtonTransfer");
-          return (_et || _st) && (!_eb && !_nb);
-        });
-        if (effects.length) {
-          buttons.push({
-            label: game.i18n.localize("ET.Button.Label"),
-            callback: (event) => ET.effectTransferTrigger(clone, "button", data.castData.castLevel)
-          });
-        }
-      }
     }
 
     /* Create button for rolling concentration saving throw. */
@@ -668,9 +656,19 @@ class Module {
    * @returns {boolean}
    */
   static itemRequiresConcentration(item) {
-    const exclude = this.ITEM_FILTERS.some(f => f(item));
-    if (exclude) return false;
+    const status = this._extensionItemRequiresConcentration(item);
+    if (status && (status !== this.STATUS)) return false;
     return item.requiresConcentration;
+  }
+
+  /**
+   * Get the status of the first extension that can handle concentration for this item.
+   * @param {Item5e} item
+   * @returns {string|null}
+   */
+  static _extensionItemRequiresConcentration(item) {
+    for (const [k, fn] of Module.ITEM_FILTERS) if (fn(item)) return k;
+    return null;
   }
 
   /**
@@ -853,6 +851,9 @@ class Module {
       static STATUS = status;
 
       /** @override */
+      static EFFECT_ID = foundry.utils.randomID();
+
+      /** @override */
       static init() {
         Hooks.on("createActiveEffect", this._createActiveEffect.bind(this));
         Hooks.on("deleteActiveEffect", this._deleteActiveEffect.bind(this));
@@ -864,12 +865,16 @@ class Module {
       }
 
       /** @override */
-      static itemRequiresConcentration = require;
+      static itemRequiresConcentration(item) {
+        const status = this._extensionItemRequiresConcentration(item);
+        if (status && (status !== this.STATUS)) return false;
+        return require.call(this, item);
+      }
     }
 
     const Cls = build(status, require);
     Cls.init();
-    Module.ITEM_FILTERS.push(require);
+    Module.ITEM_FILTERS.set(status, require);
     return Cls;
   }
 }
