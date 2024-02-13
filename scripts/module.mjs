@@ -1,15 +1,18 @@
 class Module {
   static ID = "concentrationnotifier";
-  static STATUS = "concentration";
-  static ICON = "icons/magic/light/orb-lightbulb-gray.webp";
+  static STATUS = "concentrating";
+  static get ICON() {
+    return CONFIG.DND5E.statusEffects?.concentrating?.icon ?? "icons/magic/light/orb-lightbulb-gray.webp";
+  }
   static REASON = {NOT_REQUIRED: 0, NOT_CONCENTRATING: 1, DIFFERENT_ITEM: 2, DIFFERENT_LEVEL: 3, UPCASTABLE: 4};
+  static EFFECT_ID = "dnd5econcentrati";
 
   /**
    * An array to keep track of functions used to filter out whether an item should
    * be considered for regular concentration. If any of these functions explicitly
    * return `false`, an item will not require concentration by normal means.
    */
-  static ITEM_FILTERS = [];
+  static ITEM_FILTERS = new Map();
 
   /* ---------------------------- */
   /*                              */
@@ -21,8 +24,6 @@ class Module {
   static init() {
     this._characterFlags();
     this._registerSettings();
-    Hooks.on("renderItemSheet", this._renderItemSheet.bind(this));
-    Hooks.on("dnd5e.createScrollFromSpell", this._createScrollFromSpell.bind(this));
     Hooks.on("renderChatMessage", this._renderChatMessage.bind(this));
     Hooks.on("createActiveEffect", this._createActiveEffect.bind(this));
     Hooks.on("deleteActiveEffect", this._deleteActiveEffect.bind(this));
@@ -44,78 +45,70 @@ class Module {
   static _VAEcreateEffectButtons(effect, buttons) {
     const isConc = this.isEffectConcentration(effect);
     if (!isConc) return;
-    const data = effect.flags[this.ID].data;
-    const item = fromUuidSync(data.castData.itemUuid);
+    const data = effect.flags[this.ID]?.data;
+    const isItem = !!data;
 
-    let clone;
-    if (item) clone = item.clone(data.itemData, {keepId: true});
-    else clone = new Item.implementation(data.itemData, {parent: effect.parent});
+    if (isItem) {
+      const item = fromUuidSync(data.castData?.itemUuid);
 
-    clone.prepareData();
-    clone.prepareFinalAttributes();
+      let clone;
+      if (item) clone = item.clone(data.itemData, {keepId: true});
+      else clone = new Item.implementation(data.itemData, {parent: effect.parent});
 
-    /* Create attack roll button. */
-    if (clone.hasAttack) {
-      buttons.push({
-        label: game.i18n.localize("DND5E.Attack"),
-        callback: (event) => clone.rollAttack({event, spellLevel: data.castData.castLevel})
-      });
-    }
+      clone.prepareData();
+      clone.prepareFinalAttributes();
 
-    /* Create damage roll buttons, with 'Roll Groups' support. */
-    const rollGroups = game.modules.get("rollgroups")?.active;
-    const groups = clone.flags.rollgroups?.config?.groups ?? [];
-    const parts = clone.system.damage.parts.filter(([f]) => f);
-    if (rollGroups && groups.length && (parts.length > 1)) {
-      for (let i = 0; i < groups.length; i++) {
-        const types = groups[i].parts.map(t => parts[t][1]);
-        const label = types.every(t => t in CONFIG.DND5E.damageTypes) ? "Damage" : types.every(t => t in CONFIG.DND5E.damageTypes) ? "Healing" : "Mixed";
+      /* Create attack roll button. */
+      if (clone.hasAttack) {
         buttons.push({
-          label: `${game.i18n.localize(`ROLLGROUPS.${label}`)} (${groups[i].label})`,
-          callback: (event) => clone.rollDamageGroup({event, rollgroup: i, spellLevel: data.castData.castLevel})
+          label: game.i18n.localize("DND5E.Attack"),
+          callback: (event) => clone.rollAttack({event, spellLevel: data.castData.castLevel})
         });
       }
-    } else if (clone.isHealing) {
-      buttons.push({
-        label: game.i18n.localize("DND5E.Healing"),
-        callback: (event) => clone.rollDamage({event, spellLevel: data.castData.castLevel})
-      })
-    } else if (clone.hasDamage) {
-      buttons.push({
-        label: game.i18n.localize("DND5E.Damage"),
-        callback: (event) => clone.rollDamage({event, spellLevel: data.castData.castLevel})
-      })
-    }
 
-    /* Create button to create a measured template. */
-    if (clone.hasAreaTarget) {
-      buttons.push({
-        label: game.i18n.localize("DND5E.PlaceTemplate"),
-        callback: (event) => dnd5e.canvas.AbilityTemplate.fromItem(clone).drawPreview()
-      });
-    }
-
-    /* Create button to display the item being concentrated on in chat. */
-    buttons.push({
-      label: game.i18n.localize("CN.DisplayItem"),
-      callback: (event) => this.redisplayCard(effect.parent)
-    });
-
-    /* Create button for 'Effective Transferral' support. */
-    if (game.modules.get("effective-transferral")?.active) {
-      const effects = clone.effects.filter(e => {
-        const _et = e.transfer === false;
-        const _st = game.settings.get("effective-transferral", "includeEquipTransfer");
-        const _eb = e.flags["effective-transferral"]?.transferBlock?.button;
-        const _nb = game.settings.get("effective-transferral", "neverButtonTransfer");
-        return (_et || _st) && (!_eb && !_nb);
-      });
-      if (effects.length) {
+      /* Create damage roll buttons, with 'Roll Groups' support. */
+      const rollGroups = game.modules.get("rollgroups")?.active;
+      const groups = clone.flags.rollgroups?.config?.groups ?? [];
+      const parts = clone.system.damage.parts.filter(([f]) => f);
+      if (rollGroups && groups.length && (parts.length > 1)) {
+        for (let i = 0; i < groups.length; i++) {
+          const types = groups[i].parts.map(t => parts[t][1]);
+          const string = types.every(t => {
+            return t in CONFIG.DND5E.damageTypes;
+          }) ? "Damage" : types.every(t => {
+            return t in CONFIG.DND5E.healingTypes;
+          }) ? "Healing" : "Mixed";
+          const label = groups[i].label ? `(${groups[i].label})` : "";
+          buttons.push({
+            label: `${game.i18n.localize(`ROLLGROUPS.${string}`)} ${label}`,
+            callback: (event) => clone.rollDamageGroup({event, rollgroup: i, spellLevel: data.castData.castLevel})
+          });
+        }
+      } else if (clone.isHealing) {
         buttons.push({
-          label: game.i18n.localize("ET.Button.Label"),
-          callback: (event) => ET.effectTransferTrigger(clone, "button", data.castData.castLevel)
+          label: game.i18n.localize("DND5E.Healing"),
+          callback: (event) => clone.rollDamage({event, spellLevel: data.castData.castLevel})
+        });
+      } else if (clone.hasDamage) {
+        buttons.push({
+          label: game.i18n.localize("DND5E.Damage"),
+          callback: (event) => clone.rollDamage({event, spellLevel: data.castData.castLevel})
         });
       }
+
+      /* Create button to create a measured template. */
+      if (clone.hasAreaTarget) {
+        buttons.push({
+          label: game.i18n.localize("DND5E.PlaceTemplate"),
+          callback: (event) => dnd5e.canvas.AbilityTemplate.fromItem(clone).drawPreview()
+        });
+      }
+
+      /* Create button to display the item being concentrated on in chat. */
+      buttons.push({
+        label: game.i18n.localize("CN.DisplayItem"),
+        callback: (event) => this.redisplayCard(effect.parent)
+      });
     }
 
     /* Create button for rolling concentration saving throw. */
@@ -128,26 +121,32 @@ class Module {
   /**
    * Start the concentration when using an item if the actor is not concentrating at all, if they
    * are concentrating on a different item, or if it is the same item but cast at a different level.
-   * @param {Item5e} item                     The item being used. If a spell, this is the upscaled version.
-   * @returns {Promise<ActiveEffect5e[]>}     The active effect created on the actor, if any.
+   * @param {Item5e} item                         The item being used. If a spell, this is the upscaled version.
+   * @returns {Promise<ActiveEffect5e|null>}      The active effect created on the actor, if any.
    */
   static async _useItem(item) {
-    if (!item.isEmbedded) return;
-    if (item.actor.flags.dnd5e?.concentrationUnfocused) return;
+    if (!item.isEmbedded) return null;
+    if (item.actor.flags.dnd5e?.concentrationUnfocused) return null;
 
     const goodReason = [
       this.REASON.NOT_CONCENTRATING,
       this.REASON.DIFFERENT_ITEM,
       this.REASON.DIFFERENT_LEVEL
     ].includes(this._itemUseAffectsConcentration(item));
-    if (!goodReason) return [];
+    if (!goodReason) return null;
 
     // Break the current concentration, but do not display a message.
     await this.breakConcentration(item.actor, {message: false});
 
     // Create the effect data and start concentrating on the new item.
     const effectData = await this._createEffectData(item);
-    return item.actor.createEmbeddedDocuments("ActiveEffect", [effectData]);
+
+    let keepId = false;
+    if (!item.actor.effects.has(this.EFFECT_ID)) {
+      keepId = true;
+      effectData._id = this.EFFECT_ID;
+    }
+    return ActiveEffect.create(effectData, {parent: item.actor, keepId});
   }
 
   /**
@@ -239,8 +238,8 @@ class Module {
    * When using an item that requires concentration, force the AbilityUseDialog to display
    * a warning about loss of concentration if the item being used is an entirely different
    * item than the one being concentrated on, if it's the same item but at a different level,
-   * or if it's the same item but it can be upcast naturally.
-   * @TODO FIX IN 2.4
+   * or if it's the same item but it can be upcast naturally, or to warn about not being
+   * able to concentrate due to being 'unfocused'.
    * @param {Item5e} item       The item about to be used.
    * @param {object} config     The item usage configuration.
    */
@@ -251,8 +250,8 @@ class Module {
       this.REASON.DIFFERENT_LEVEL,
       this.REASON.UPCASTABLE
     ].includes(this._itemUseAffectsConcentration(item));
-    const unfocused = item.actor.flags.dnd5e?.concentrationUnfocused;
-    if (force || unfocused) config.needsConfiguration = config.concentration = true;
+    const unfocused = item.requiresConcentration && item.actor.flags.dnd5e?.concentrationUnfocused;
+    if (force || unfocused) config.concentration = true;
   }
 
   /**
@@ -271,7 +270,7 @@ class Module {
 
     // Construct warning.
     const effect = this.isActorConcentrating(dialog.item.actor);
-    const locale = this._getAbilityUseWarning(reason, dialog.item, effect);
+    const locale = this._getAbilityUseWarning(reason, dialog.item, effect ? effect : null);
     const div = document.createElement("DIV");
     div.innerHTML = `<p class="notification concentrationnotifier">${locale}</p>`;
     html.querySelector(".notes").after(div.firstElementChild);
@@ -281,25 +280,26 @@ class Module {
   /**
    * Helper method for localization string in the AbilityUseDialog warning, depending
    * on the reason that the new item may end concentration.
-   * @param {number} reason             An integer from 'REASON'.
-   * @param {Item5e} item               The item triggering the AbilityUseDialog.
-   * @param {ActiveEffect5e} effect     The actor's current concentration effect.
-   * @returns {string}                  The warning message to display.
+   * @param {number} reason               An integer from 'REASON'.
+   * @param {Item5e} item                 The item triggering the AbilityUseDialog.
+   * @param {ActiveEffect5e} [effect]     The actor's current concentration effect.
+   * @returns {string}                    The warning message to display.
    */
-  static _getAbilityUseWarning(reason, item, effect) {
+  static _getAbilityUseWarning(reason, item, effect = null) {
     let string = "";
     if (item.actor.flags.dnd5e?.concentrationUnfocused) {
       string = `CN.AbilityDialogWarningUnfocused${(item.type === "spell") ? "Spell" : "Item"}`;
     } else if (reason === this.REASON.DIFFERENT_ITEM) {
       // This will end concentration on a different item.
       string = `CN.AbilityDialogWarning${(item.type === "spell") ? "Spell" : "Item"}`;
+      if (!effect?.flags[this.ID]?.data?.itemData?.name) string += "NoItem";
     } else if ([this.REASON.DIFFERENT_LEVEL, this.REASON.UPCASTABLE].includes(reason)) {
       // This will end concentration on the same item, unless cast at the same level.
       string = "CN.AbilityDialogWarningSpellLevel";
     }
     return game.i18n.format(string, {
-      item: effect.flags[this.ID]?.data.itemData.name,
-      level: effect.flags[this.ID]?.data.castData.castLevel?.ordinalString()
+      item: effect?.flags[this.ID]?.data?.itemData?.name,
+      level: effect?.flags[this.ID]?.data?.castData?.castLevel?.ordinalString()
     });
   }
 
@@ -313,7 +313,7 @@ class Module {
     if (!this.isOwner) return;
     const dnd = this.flags.dnd5e || {};
     ability ??= dnd.concentrationAbility ?? game.settings.get(Module.ID, "defaultConcentrationAbility");
-    const config = {fumble: null, critical: null, isConcSave: true, targetValue: 10, parts: []};
+    const config = {isConcSave: true, targetValue: 10, parts: []};
 
     // Apply reliable talent.
     if (dnd.concentrationReliable) config.reliableTalent = true;
@@ -376,13 +376,16 @@ class Module {
     if (!save) return;
     const effect = this.isActorConcentrating(actor);
     if (!effect) return;
-    if (effect.flags[this.ID].data.castData.unbreakable) return;
+    if (effect.flags[this.ID]?.data.castData.unbreakable) return;
 
     const data = this._getData(actor, effect, options);
     const messageData = {
       content: await renderTemplate(`modules/${this.ID}/templates/concentration-notify.hbs`, data),
       whisper: game.users.filter(u => actor.testUserPermission(u, "OWNER")).map(u => u.id),
-      speaker: ChatMessage.getSpeaker({alias: game.i18n.localize("CN.ModuleTitle")}),
+      speaker: ChatMessage.implementation.getSpeaker({
+        actor: actor,
+        alias: game.i18n.localize("CN.ModuleTitle")
+      }),
       flags: {core: {canPopout: true}, [this.ID]: {prompt: true, damage: damage}}
     };
     const hook = (damage > 0) ? "damageActor" : (damage < 0) ? "healActor" : null;
@@ -423,21 +426,55 @@ class Module {
    * Register settings.
    */
   static _registerSettings() {
-    [
-      {key: "concentration_icon", name: "DefaultIcon", type: String, default: "icons/magic/light/orb-lightbulb-gray.webp"},
-      {key: "concentration_icon_item", name: "UseItemIcon", type: Boolean, default: true},
-      {
-        key: "defaultConcentrationAbility", name: "DefaultConcentrationAbility", type: String,
-        default: ("con" in CONFIG.DND5E.abilities) ? "con" : Object.keys(CONFIG.DND5E.abilities)[0],
-        choices: Object.fromEntries(Object.entries(CONFIG.DND5E.abilities).map(([key, val]) => [key, val.label]))
-      },
-      {key: "prepend_effect_labels", name: "PrependLabel", type: Boolean, default: false},
-      {key: "showGainLoseMessages", name: "ShowGainLoseConcentrationMessages", type: Boolean, default: true, requiresReload: true},
-      {key: "always_whisper_messages", name: "WhisperMessages", type: Boolean, default: true},
-      {key: "show_util_buttons", name: "ShowUtilButtons", type: Boolean, default: true},
-      {key: "show_ability_use_warning", name: "AbilityUseWarning", type: Boolean, default: true, requiresReload: true},
-      {key: "splitItemNames", name: "SplitItemNames", type: Boolean, default: true}
-    ].forEach(d => {
+    [{
+      key: "concentration_icon",
+      name: "DefaultIcon",
+      type: String,
+      default: "icons/magic/light/orb-lightbulb-gray.webp"
+    }, {
+      key: "concentration_icon_item",
+      name: "UseItemIcon",
+      type: Boolean,
+      default: true
+    }, {
+      key: "defaultConcentrationAbility",
+      name: "DefaultConcentrationAbility",
+      type: String,
+      default: ("con" in CONFIG.DND5E.abilities) ? "con" : Object.keys(CONFIG.DND5E.abilities)[0],
+      choices: Object.fromEntries(Object.entries(CONFIG.DND5E.abilities).map(([key, val]) => [key, val.label]))
+    }, {
+      key: "prepend_effect_labels",
+      name: "PrependLabel",
+      type: Boolean,
+      default: false
+    }, {
+      key: "showGainLoseMessages",
+      name: "ShowGainLoseConcentrationMessages",
+      type: Boolean,
+      default: true,
+      requiresReload: true
+    }, {
+      key: "always_whisper_messages",
+      name: "WhisperMessages",
+      type: Boolean,
+      default: true
+    }, {
+      key: "show_util_buttons",
+      name: "ShowUtilButtons",
+      type: Boolean,
+      default: true
+    }, {
+      key: "show_ability_use_warning",
+      name: "AbilityUseWarning",
+      type: Boolean,
+      default: true,
+      requiresReload: true
+    }, {
+      key: "splitItemNames",
+      name: "SplitItemNames",
+      type: Boolean,
+      default: true
+    }].forEach(d => {
       game.settings.register(this.ID, d.key, {
         name: `CN.Setting${d.name}`,
         hint: `CN.Setting${d.name}Hint`,
@@ -449,38 +486,6 @@ class Module {
         requiresReload: d.requiresReload ?? false
       });
     });
-  }
-
-  /**
-   * Hook function to add a checkbox for concentration on non-spell items.
-   * @param {ItemSheet5e} sheet     The item sheet.
-   * @param {HTMLElement} html      The element of the sheet.
-   */
-  static async _renderItemSheet(sheet, [html]) {
-    const item = sheet.document;
-    if (item.type === "spell") return;
-    const durationSelect = html.querySelector("[name='system.duration.units']");
-    if (!durationSelect) return;
-
-    // The current duration type must be in `CONFIG.DND5E.scalarTimePeriods`.
-    if (!(item.system.duration?.units in CONFIG.DND5E.scalarTimePeriods)) return;
-
-    const div = document.createElement("DIV");
-    const template = `modules/${this.ID}/templates/concentration-checkbox.hbs`;
-    div.innerHTML = await renderTemplate(template, {
-      requiresConcentration: item.flags[this.ID]?.data?.requiresConcentration
-    });
-    durationSelect.after(...div.children);
-  }
-
-  /**
-   * Hook function to add the concentration value to created scrolls.
-   * @param {Item5e|object} spell         The spell or item data to be made into a scroll.
-   * @param {object} spellScrollData      The final item data used to make the scroll.
-   */
-  static _createScrollFromSpell(spell, spellScrollData) {
-    const conc = spell.system?.components?.concentration;
-    if (conc) foundry.utils.setProperty(spellScrollData, `flags.${this.ID}.data.requiresConcentration`, true);
   }
 
   /**
@@ -532,7 +537,10 @@ class Module {
       content: await renderTemplate(template, templateData),
       whisper: whisper,
       flags: {core: {canPopout: true}},
-      speaker: {alias: game.i18n.localize("CN.ModuleTitle")}
+      speaker: ChatMessage.implementation.getSpeaker({
+        actor: effect.parent,
+        alias: game.i18n.localize("CN.ModuleTitle")
+      })
     };
     return ChatMessage.implementation.create(messageData);
   }
@@ -545,23 +553,22 @@ class Module {
    * @param {number|null} [type]        A number (1 or 0) for effects being created/deleted, otherwise undefined.
    */
   static _getData(actor, effect, options, type = null) {
-    const data = effect.flags[this.ID].data;
+    const data = effect.flags[this.ID]?.data ?? {};
     const detailsTemplate = `CN.NotifyConcentration${{0: "Ended", 1: "Begun"}[type] ?? "Challenge"}`;
     const damage = options[this.ID]?.damage ?? 10;
     const dc = Math.max(10, Math.floor(Math.abs(damage) / 2));
     const ability = this._getAbility(actor);
     const saveType = CONFIG.DND5E.abilities[ability].label;
-    const origin = data.castData.itemUuid;
+    const origin = data.castData?.itemUuid;
     const detailsData = {
-      itemName: data.itemData.name,
+      itemName: data.itemData?.name,
       actorName: actor.name,
       dc: dc,
       damage: damage,
       saveType: saveType,
       itemUuid: origin
     };
-    const details = game.i18n.format(detailsTemplate, detailsData);
-    const buttonSaveLabel = game.i18n.format("CN.ButtonSavingThrow", {dc: dc, saveType: saveType});
+    const details = game.i18n.format(detailsTemplate + (!origin ? "NoItem" : ""), detailsData);
 
     return {
       actor: actor,
@@ -569,10 +576,10 @@ class Module {
       item: data.itemData,
       details: details,
       ability: ability,
-      buttonSaveLabel: buttonSaveLabel,
       hasTemplates: !!canvas?.scene.templates.find(t => t.flags?.dnd5e?.origin === origin),
       origin: origin,
       dc: dc,
+      saveType: saveType,
       showUtilButtons: game.settings.get(this.ID, "show_util_buttons"),
       showEnd: type === 1,
       isPrompt: type === null
@@ -683,15 +690,19 @@ class Module {
    * @returns {boolean}
    */
   static itemRequiresConcentration(item) {
-    const exclude = this.ITEM_FILTERS.some(f => f(item));
-    if (exclude) return false;
+    const status = this._extensionItemRequiresConcentration(item);
+    if (status && (status !== this.STATUS)) return false;
+    return item.requiresConcentration;
+  }
 
-    const isSpell = item.type === "spell";
-    if (isSpell) return item.system.components.concentration;
-
-    const units = item.system.duration?.units in CONFIG.DND5E.scalarTimePeriods;
-    const flags = !!item.flags[this.ID]?.data.requiresConcentration;
-    return units && flags;
+  /**
+   * Get the status of the first extension that can handle concentration for this item.
+   * @param {Item5e} item
+   * @returns {string|null}
+   */
+  static _extensionItemRequiresConcentration(item) {
+    for (const [k, fn] of Module.ITEM_FILTERS) if (fn(item)) return k;
+    return null;
   }
 
   /**
@@ -792,7 +803,6 @@ class Module {
     if (action === "save") await this._onClickSave(event);
     else if (action === "end") await this._onClickEnd(event);
     else if (action === "templates") await this._onClickTemplates(event);
-    else if (action === "item") await this._onClickItem(event);
     button.disabled = false;
   }
 
@@ -804,7 +814,7 @@ class Module {
   static async _onClickSave(event) {
     const data = event.currentTarget.dataset;
     const actor = await fromUuid(data.uuid);
-    return actor.rollConcentrationSave(data.ability, {targetValue: data.target, event});
+    return actor.rollConcentrationSave(data.ability, {targetValue: parseInt(data.dc), event});
   }
 
   /**
@@ -815,8 +825,10 @@ class Module {
   static async _onClickEnd(event) {
     const uuid = event.currentTarget.dataset.uuid;
     const effect = await fromUuid(uuid);
+    if (!effect) return null;
     if (event.shiftKey) return effect.delete();
-    const name = effect.flags[this.ID].data.itemData.name;
+    const name = effect.flags[this.ID]?.data.itemData.name ?? null;
+    if (!name) return effect.deleteDialog();
     return Dialog.wait({
       title: game.i18n.format("CN.ConfirmEndConcentrationTitle", {name}),
       content: game.i18n.format("CN.ConfirmEndConcentrationText", {name}),
@@ -851,17 +863,6 @@ class Module {
   }
 
   /**
-   * Render the item being concentrated on.
-   * @param {PointerEvent} event          The initiating click event.
-   * @returns {Promise<ItemSheet5e>}      The rendered item sheet.
-   */
-  static async _onClickItem(event) {
-    const uuid = event.currentTarget.dataset.uuid;
-    const item = await fromUuid(uuid);
-    return item.sheet.render(true);
-  }
-
-  /**
    * Factory method to extend the module for other concentration groupings.
    * @param {string} status         The sluggified string to use for statuses instead of 'concentration'.
    * @param {function} require      A function that is run to determine requiring this type of concentration.
@@ -874,7 +875,7 @@ class Module {
     }
 
     if (!require || !(require instanceof Function)) {
-      console.error(`${this.id} | The provided function to determine requiring concentration is not valid.`);
+      console.error(`${this.ID} | The provided function to determine requiring concentration is not valid.`);
       return null;
     }
 
@@ -882,6 +883,9 @@ class Module {
     const build = () => class extends Module {
       /** @override */
       static STATUS = status;
+
+      /** @override */
+      static EFFECT_ID = foundry.utils.randomID();
 
       /** @override */
       static init() {
@@ -895,12 +899,16 @@ class Module {
       }
 
       /** @override */
-      static itemRequiresConcentration = require;
+      static itemRequiresConcentration(item) {
+        const status = this._extensionItemRequiresConcentration(item);
+        if (status && (status !== this.STATUS)) return false;
+        return require.call(this, item);
+      }
     }
 
     const Cls = build(status, require);
     Cls.init();
-    Module.ITEM_FILTERS.push(require);
+    Module.ITEM_FILTERS.set(status, require);
     return Cls;
   }
 }

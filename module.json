@@ -11,30 +11,10 @@
       "patreon": "https://patreon.com/zhell"
     }
   ],
-  "compatibility": {
-    "minimum": "11",
-    "maximum": "11",
-    "verified": "11"
-  },
-  "esmodules": [
-    "scripts/module.mjs"
-  ],
-  "styles": [
-    "styles/styles.css"
-  ],
-  "relationships": {
-    "systems": [
-      {
-        "id": "dnd5e",
-        "type": "system",
-        "manifest": "https://raw.githubusercontent.com/foundryvtt/dnd5e/master/system.json",
-        "compatibility": {
-          "minimum": "2.3.0",
-          "maximum": "2.4.9"
-        }
-      }
-    ]
-  },
+  "compatibility": {"minimum": "11.315", "maximum": "11", "verified": "11"},
+  "esmodules": ["scripts/module.mjs"],
+  "styles": ["styles/styles.css"],
+  "relationships": {"systems": [{"id": "dnd5e", "compatibility": {"minimum": "3.0.0", "maximum": "3.0.9"}}]},
   "languages": [
     {
       "lang": "en",
@@ -61,6 +41,7 @@
       "flags": {}
     }
   ],
+  "flags": {"hotReload": {"paths": ["styles/styles.css"], "extensions": ["css"]}},
   "url": "https://github.com/krbz999/concentrationnotifier",
   "manifest": "https://github.com/krbz999/concentrationnotifier/releases/latest/download/module.json",
   "download": "AUTOMATIC"

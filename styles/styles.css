@@ -1,44 +1,9 @@
-/* Chat Messages */
-.chat-message .concentrationnotifier .header {
-  text-align: center;
-  font-size: 25px;
-  font-family: "Modesto Condensed";
-  margin: 0.25em;
-  border-radius: 3px;
-  border-top: 2px solid black;
-  border-bottom: 2px solid black;
-}
-.chat-message .concentrationnotifier .content {
-  display: flex;
-  margin: 0 0.25em;
-}
-.chat-message .concentrationnotifier .content .details {
-  flex: 4;
-}
-.chat-message .concentrationnotifier .content .item-image {
-  flex: 1;
-}
-.chat-message .concentrationnotifier .content .item-image:hover {
-  filter: drop-shadow(0 0 3px red);
-}
-.chat-message .concentrationnotifier .content .item-image img {
-  border: none;
-  border-radius: 3px;
-}
-.chat-message .concentrationnotifier .card-buttons button[data-prompt="save"] {
-  border-radius: 8px;
-  margin-bottom: 0.5em;
-  border-bottom: outset;
-  font-size: 14px;
-  line-height: 22px;
-  height: 28px;
-}
-
 /* Ability Use Dialogs */
 .notification.concentrationnotifier {
   background: rgb(110 0 159 / 80%);
   border: 1px solid #503d51;
-}
-.notification.concentrationnotifier::before {
-  content: "\f071";
+
+  &::before {
+    content: "\f071";
+  }
 }

@@ -6,7 +6,6 @@
   "CN.AbilityDialogWarningUnfocusedSpell": "Du kannst diesen Zauber wirken, aber dich nicht auf ihn konzentrieren.",
   "CN.ButtonEndConcentration": "Konzentration beenden",
   "CN.ButtonRemoveTemplates": "Schablonen entfernen",
-  "CN.ButtonSavingThrow": "Rettungswurf SG {dc} {saveType}",
   "CN.ConfirmEndConcentrationText": "Dies beendet die Konzentration auf {name}.",
   "CN.ConfirmEndConcentrationTitle": "Konzentration auf {name} beenden?",
   "CN.DisplayItem": "Item anzeigen",
