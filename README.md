@@ -15,8 +15,6 @@ Additionally, when a scroll is made from a spell that requires concentration, th
 
 ## Character Flags
 
-** NOTE: The module known as 'Dynamic Active Effects Using Active Effects' (or DAE for short) is known to break this simple behaviour due to DAE's very poor implementation. It is strongly advised to remove DAE. **
-
 The module supplies new fields (found under Special Traits). These fields work with Active Effects.
 * `flags.dnd5e.concentrationAbility`: Change the ability that is used for the actor's concentration saves. For example, use Wisdom instead of Constitution by putting `wis` in this field.
 * `flags.dnd5e.concentrationAdvantage`: Set the default of concentration saves to be rolled with advantage.
